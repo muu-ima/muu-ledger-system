@@ -1,0 +1,275 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import type { LedgerItem } from "@/types/ledger";
+
+const tabs = [
+  "古物台帳",
+  "EC販売",
+  "仕入れ表",
+  "為替レート",
+  "ペイメント",
+  "仕入れ元データ",
+];
+
+const categories = [
+  "カメラ",
+  "フィギュア",
+  "プラモデル",
+  "ラジコン",
+  "ゲームソフト",
+  "ホビー",
+  "車用品",
+  "時計",
+  "その他",
+];
+
+const supplierOptions = [
+  "メルカリ",
+  "メルカリショップ",
+  "楽天市場",
+  "Amazon",
+  "yahooフリマ",
+  "トレファク",
+];
+
+const statusLabel = {
+  in_stock: "在庫",
+  sold: "売却",
+  returned: "返品",
+  disposed: "処分",
+};
+
+function formatYen(value: number) {
+  if (!value) return "";
+  return `¥${value.toLocaleString("ja-JP")}`;
+}
+
+function saleValue(item: LedgerItem) {
+  if (item.salePrice) return formatYen(item.salePrice);
+  if (item.status === "in_stock") return "在庫";
+  return "";
+}
+
+export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [query, setQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("古物台帳");
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("kobutsu:sidebar-open");
+    if (saved) setSidebarOpen(saved === "1");
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("kobutsu:sidebar-open", sidebarOpen ? "1" : "0");
+  }, [sidebarOpen]);
+
+  const visibleItems = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return items;
+
+    return items.filter((item) =>
+      [
+        item.managementNo,
+        item.category,
+        item.itemName,
+        item.acquiredFrom,
+        item.soldTo,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(needle),
+    );
+  }, [items, query]);
+
+  return (
+    <div className="workspace">
+      <header className="appHeader">
+        <div>
+          <div className="brand">Kobutsu Ledger</div>
+          <p>古物台帳・EC販売・仕入れ管理</p>
+        </div>
+
+        <nav className="topNav" aria-label="メインメニュー">
+          {tabs.slice(0, 4).map((tab) => (
+            <button
+              key={tab}
+              className={activeTab === tab ? "active" : ""}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab}
+            </button>
+          ))}
+        </nav>
+      </header>
+
+      <div className="workArea">
+        <aside className={sidebarOpen ? "sidebar open" : "sidebar"}>
+          <div className="sidebarHeader">
+            <button
+              className="iconButton"
+              type="button"
+              onClick={() => setSidebarOpen((value) => !value)}
+              aria-label={sidebarOpen ? "フィルターを閉じる" : "フィルターを開く"}
+            >
+              {sidebarOpen ? "‹" : "›"}
+            </button>
+            <span>フィルター</span>
+            <span className="sidebarSpacer" />
+          </div>
+
+          <div className="sidebarBody">
+            <div className="sheetList" aria-label="シート">
+              {tabs.map((tab) => (
+                <button
+                  key={tab}
+                  className={activeTab === tab ? "selected" : ""}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            <fieldset>
+              <legend>商品カテゴリ</legend>
+              {categories.map((category) => (
+                <label key={category} className="checkRow">
+                  <input type="checkbox" />
+                  <span>{category}</span>
+                </label>
+              ))}
+            </fieldset>
+
+            <fieldset>
+              <legend>基本情報</legend>
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="SKU / 商品名 / 仕入先"
+              />
+              <input placeholder="注文番号" />
+              <input placeholder="buyer ID" />
+            </fieldset>
+
+            <fieldset>
+              <legend>仕入先</legend>
+              {supplierOptions.map((supplier) => (
+                <label key={supplier} className="checkRow">
+                  <input type="checkbox" />
+                  <span>{supplier}</span>
+                </label>
+              ))}
+            </fieldset>
+
+            <button className="filterButton" type="button">
+              絞り込む
+            </button>
+          </div>
+        </aside>
+
+        <main className="ledgerMain">
+          <section className="ledgerTop">
+            <div>
+              <h1>{activeTab}</h1>
+              <p>スプレッドシート運用に近い横長台帳ビュー</p>
+            </div>
+            <div className="resultCount">該当 {visibleItems.length} 件</div>
+          </section>
+
+          <div className="ledgerTableFrame">
+            <table className="ledgerGrid">
+              <colgroup>
+                <col className="dateCol" />
+                <col className="skuCol" />
+                <col className="typeCol" />
+                <col className="catCol" />
+                <col className="nameCol" />
+                <col className="qtyCol" />
+                <col className="moneyCol" />
+                <col className="sourceCol" />
+                <col className="verifyCol" />
+                <col className="dateCol" />
+                <col className="typeCol" />
+                <col className="moneyCol" />
+                <col className="sourceCol" />
+                <col className="verifyCol" />
+                <col className="buyerCol" />
+                <col className="buyerCol" />
+                <col className="addressCol" />
+              </colgroup>
+              <thead>
+                <tr className="noteRow">
+                  <th>自動</th>
+                  <th>自動</th>
+                  <th>買受・委託</th>
+                  <th colSpan={4}>自動</th>
+                  <th>手動</th>
+                  <th>自動</th>
+                  <th colSpan={8}>払出し</th>
+                </tr>
+                <tr className="groupRow">
+                  <th colSpan={2}>受入れ</th>
+                  <th colSpan={5}>取引した古物</th>
+                  <th colSpan={2}>取引きの相手方</th>
+                  <th colSpan={4}>払出し</th>
+                  <th colSpan={4}>取引きの相手方</th>
+                </tr>
+                <tr className="headerRow">
+                  <th>仕入れ年月日</th>
+                  <th>SKU</th>
+                  <th>区別</th>
+                  <th>品目</th>
+                  <th>商品名</th>
+                  <th>数量</th>
+                  <th>代価</th>
+                  <th>区分</th>
+                  <th>確認方法 取引ID</th>
+                  <th>販売年月日</th>
+                  <th>区別</th>
+                  <th>代価</th>
+                  <th>販売先</th>
+                  <th>確認方法 取引ID</th>
+                  <th>国名</th>
+                  <th>buyer ID</th>
+                  <th>送付先住所</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleItems.map((item, index) => {
+                  const sold = item.status === "sold" || Boolean(item.soldAt);
+                  return (
+                    <tr key={item.id}>
+                      <td>{item.acquiredAt || (index % 5 === 0 ? "在庫" : "")}</td>
+                      <td className="selectedCell">{item.managementNo}</td>
+                      <td>{sold ? "買受" : "買受"}</td>
+                      <td>{item.category}</td>
+                      <td className="nameCell">{item.itemName}</td>
+                      <td className="numberCell">1</td>
+                      <td className="numberCell">{formatYen(item.purchasePrice)}</td>
+                      <td>{item.acquiredFrom}</td>
+                      <td>{item.sellerIdentification}</td>
+                      <td>{item.soldAt}</td>
+                      <td>{sold ? "売却" : statusLabel[item.status]}</td>
+                      <td className={sold ? "numberCell selectedCell" : "warningCell"}>
+                        {saleValue(item)}
+                      </td>
+                      <td>{item.soldTo || "ebay"}</td>
+                      <td>{sold ? item.managementNo.replaceAll("_", "") : ""}</td>
+                      <td>{sold ? "アメリカ" : ""}</td>
+                      <td>{sold ? "buyer_sample" : ""}</td>
+                      <td>{sold ? "Sample address, city, country" : ""}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
