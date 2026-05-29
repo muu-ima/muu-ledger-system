@@ -16,6 +16,12 @@ WordPress を台帳データと管理権限のバックエンド、Next.js を�
 
 詳細は `docs/ui-reference.md` を参照してください。
 
+## 参考プラグイン
+
+tools-hub の `Shipping REST Search` と `MUU Products` をREST API設計の参考にします。古物台帳はカスタムテーブル中心ですが、検索APIのページング、フィルター、レスポンス形式は tools-hub の `data/meta` 形式に寄せます。
+
+詳細は `docs/reference-plugins.md` を参照してください。
+
 ## データモデル初期案
 
 サンプルCSVをもとに、WordPress のカスタムテーブルとして次のテーブルを作ります。
