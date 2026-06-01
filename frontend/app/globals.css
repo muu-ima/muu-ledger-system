@@ -278,9 +278,38 @@ fieldset input:not([type="checkbox"]) {
   font-size: 14px;
 }
 
-.ledgerTableFrame {
+.ledgerSections {
   flex: 1;
-  min-height: 560px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.ledgerSection {
+  min-height: 0;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.sectionTitle h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.sectionTitle span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.ledgerTableFrame {
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.46);
   overflow: auto;
@@ -312,27 +341,16 @@ fieldset input:not([type="checkbox"]) {
   font-weight: 800;
 }
 
-.groupRow th {
-  top: 0;
-  height: 24px;
-  background: var(--orange);
-  text-align: center;
-}
-
-.groupRow th:nth-child(4),
-.groupRow th:nth-child(5) {
-  background: var(--purple);
-}
-
 .headerRow th {
-  top: 24px;
+  top: 0;
   height: 28px;
   background: #ffd6b3;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
 
-.headerRow th:nth-child(n + 14) {
+.payoutGrid .headerRow th,
+.partyGrid .headerRow th {
   background: #c2b4df;
 }
 
@@ -344,7 +362,8 @@ fieldset input:not([type="checkbox"]) {
   background: rgba(255, 245, 240, 0.72);
 }
 
-.ledgerGrid tbody td:nth-child(n + 14) {
+.payoutGrid tbody td,
+.partyGrid tbody td {
   background: rgba(255, 228, 199, 0.78);
 }
 
@@ -375,7 +394,7 @@ fieldset input:not([type="checkbox"]) {
 }
 
 .skuCol {
-  width: 210px;
+  width: 190px;
 }
 
 .typeCol {
@@ -387,7 +406,7 @@ fieldset input:not([type="checkbox"]) {
 }
 
 .nameCol {
-  width: 720px;
+  width: 420px;
 }
 
 .qtyCol {
@@ -399,7 +418,7 @@ fieldset input:not([type="checkbox"]) {
 }
 
 .sourceCol {
-  width: 150px;
+  width: 140px;
 }
 
 .verifyCol {
@@ -411,7 +430,7 @@ fieldset input:not([type="checkbox"]) {
 }
 
 .addressCol {
-  width: 420px;
+  width: 360px;
 }
 
 @media (max-width: 900px) {
