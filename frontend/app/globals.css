@@ -312,24 +312,8 @@ fieldset input:not([type="checkbox"]) {
   font-weight: 800;
 }
 
-.noteRow th {
-  top: 0;
-  height: 24px;
-  background: var(--green);
-}
-
-.noteRow th:nth-child(3),
-.noteRow th:nth-child(8),
-.noteRow th:nth-child(9) {
-  background: var(--orange);
-}
-
-.noteRow th:nth-child(10) {
-  background: var(--purple);
-}
-
 .groupRow th {
-  top: 24px;
+  top: 0;
   height: 24px;
   background: var(--orange);
   text-align: center;
@@ -341,7 +325,7 @@ fieldset input:not([type="checkbox"]) {
 }
 
 .headerRow th {
-  top: 48px;
+  top: 24px;
   height: 28px;
   background: #ffd6b3;
   border-top: 1px solid var(--line);

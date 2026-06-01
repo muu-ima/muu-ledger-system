@@ -202,15 +202,6 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
                 <col className="addressCol" />
               </colgroup>
               <thead>
-                <tr className="noteRow">
-                  <th>自動</th>
-                  <th>自動</th>
-                  <th>買受・委託</th>
-                  <th colSpan={4}>自動</th>
-                  <th>手動</th>
-                  <th>自動</th>
-                  <th colSpan={8}>払出し</th>
-                </tr>
                 <tr className="groupRow">
                   <th colSpan={2}>受入れ</th>
                   <th colSpan={5}>取引した古物</th>
