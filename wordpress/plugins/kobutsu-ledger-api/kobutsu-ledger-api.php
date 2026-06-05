@@ -10,7 +10,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const KOBUTSU_LEDGER_DB_VERSION = '0.2.0';
+require_once __DIR__ . '/admin-supplier-sources.php';
+
+const KOBUTSU_LEDGER_DB_VERSION = '0.3.0';
 
 register_activation_hook(__FILE__, 'kobutsu_ledger_activate');
 add_action('plugins_loaded', 'kobutsu_ledger_maybe_upgrade');
@@ -70,6 +72,7 @@ function kobutsu_ledger_create_tables(): void
 
     $charset_collate = $wpdb->get_charset_collate();
     $suppliers = kobutsu_ledger_table('suppliers');
+    $supplier_sources = kobutsu_ledger_table('supplier_sources');
     $items = kobutsu_ledger_table('items');
     $purchases = kobutsu_ledger_table('purchases');
     $sales = kobutsu_ledger_table('sales');
@@ -93,6 +96,46 @@ function kobutsu_ledger_create_tables(): void
         UNIQUE KEY supplier_name (supplier_name),
         KEY supplier_code (supplier_code),
         KEY channel (channel)
+    ) $charset_collate;");
+
+    dbDelta("CREATE TABLE $supplier_sources (
+        id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+        item_id bigint(20) unsigned NULL,
+        source_row_no int unsigned NOT NULL DEFAULT 0,
+        sku varchar(120) NOT NULL,
+        order_no varchar(120) NOT NULL DEFAULT '',
+        account_name varchar(120) NOT NULL DEFAULT '',
+        sold_at date NULL,
+        sold_at_raw varchar(40) NOT NULL DEFAULT '',
+        acquired_at date NULL,
+        acquired_at_raw varchar(40) NOT NULL DEFAULT '',
+        buyer_country varchar(120) NOT NULL DEFAULT '',
+        mag varchar(80) NOT NULL DEFAULT '',
+        sale_amount decimal(14,2) NOT NULL DEFAULT 0,
+        sale_currency char(3) NOT NULL DEFAULT 'USD',
+        purchase_price_jpy int NOT NULL DEFAULT 0,
+        shipping_cost_jpy int NOT NULL DEFAULT 0,
+        points varchar(80) NOT NULL DEFAULT '',
+        notes text NULL,
+        packer varchar(120) NOT NULL DEFAULT '',
+        shipping_site varchar(120) NOT NULL DEFAULT '',
+        actual_weight_g int NOT NULL DEFAULT 0,
+        dimensional_weight_g int NOT NULL DEFAULT 0,
+        package_length_cm decimal(8,2) NOT NULL DEFAULT 0,
+        package_width_cm decimal(8,2) NOT NULL DEFAULT 0,
+        package_height_cm decimal(8,2) NOT NULL DEFAULT 0,
+        item_name text NOT NULL,
+        supplier_name_raw varchar(191) NOT NULL DEFAULT '',
+        first_mail_at_raw varchar(40) NOT NULL DEFAULT '',
+        receipt_printed_at_raw varchar(40) NOT NULL DEFAULT '',
+        created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY  (id),
+        UNIQUE KEY sku (sku),
+        KEY item_id (item_id),
+        KEY order_no (order_no),
+        KEY acquired_at (acquired_at),
+        KEY supplier_name_raw (supplier_name_raw)
     ) $charset_collate;");
 
     dbDelta("CREATE TABLE $items (
@@ -268,6 +311,20 @@ function kobutsu_ledger_create_tables(): void
 
 function kobutsu_ledger_register_routes(): void
 {
+    register_rest_route('kobutsu/v1', '/supplier-sources', [
+        [
+            'methods' => WP_REST_Server::READABLE,
+            'callback' => 'kobutsu_ledger_get_supplier_sources',
+            'permission_callback' => 'kobutsu_ledger_can_read',
+        ],
+        [
+            'methods' => WP_REST_Server::CREATABLE,
+            'callback' => 'kobutsu_ledger_create_supplier_source',
+            'permission_callback' => 'kobutsu_ledger_can_write',
+            'args' => kobutsu_ledger_rest_args(),
+        ],
+    ]);
+
     register_rest_route('kobutsu/v1', '/items', [
         [
             'methods' => WP_REST_Server::READABLE,
@@ -312,6 +369,7 @@ function kobutsu_ledger_can_write(): bool
 function kobutsu_ledger_rest_args(): array
 {
     return [
+        'source_row_no' => ['required' => false, 'sanitize_callback' => 'absint'],
         'sku' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'management_no' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'category' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
@@ -329,6 +387,7 @@ function kobutsu_ledger_rest_args(): array
         'sale_amount' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'sale_price' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'shipping_cost' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'points' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'shipping_note' => ['required' => false, 'sanitize_callback' => 'sanitize_textarea_field'],
         'packer' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'shipping_site' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
@@ -337,6 +396,9 @@ function kobutsu_ledger_rest_args(): array
         'package_length_cm' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'package_width_cm' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'package_height_cm' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'mag' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'first_mail_at' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'receipt_printed_at' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'status' => ['required' => false, 'sanitize_callback' => 'sanitize_key'],
     ];
 }
@@ -517,6 +579,62 @@ function kobutsu_ledger_create_item(WP_REST_Request $request): WP_REST_Response|
     return new WP_REST_Response($item_response->get_data(), 201);
 }
 
+function kobutsu_ledger_save_supplier_source(
+    ?int $item_id,
+    WP_REST_Request $request,
+    array $purchase_price,
+    array $sale_money,
+    array $shipping_cost
+): bool {
+    global $wpdb;
+
+    $sku = $request['sku'] ?: $request['management_no'];
+    $now = current_time('mysql');
+
+    $data = [
+        'source_row_no' => (int) ($request['source_row_no'] ?: 0),
+        'sku' => $sku,
+        'order_no' => $request['order_no'] ?: '',
+        'account_name' => $request['account_name'] ?: '',
+        'sold_at' => $request['sold_at'] ?: null,
+        'sold_at_raw' => $request['sold_at'] ?: '',
+        'acquired_at' => $request['acquired_at'] ?: null,
+        'acquired_at_raw' => $request['acquired_at'] ?: '',
+        'buyer_country' => $request['buyer_country'] ?: '',
+        'mag' => $request['mag'] ?: '',
+        'sale_amount' => $sale_money['amount'],
+        'sale_currency' => $sale_money['currency'],
+        'purchase_price_jpy' => $purchase_price['amount_jpy'],
+        'shipping_cost_jpy' => $shipping_cost['amount_jpy'],
+        'points' => $request['points'] ?: '',
+        'notes' => $request['shipping_note'] ?: '',
+        'packer' => $request['packer'] ?: '',
+        'shipping_site' => $request['shipping_site'] ?: '',
+        'actual_weight_g' => (int) ($request['actual_weight_g'] ?: 0),
+        'dimensional_weight_g' => (int) ($request['dimensional_weight_g'] ?: 0),
+        'package_length_cm' => (float) ($request['package_length_cm'] ?: 0),
+        'package_width_cm' => (float) ($request['package_width_cm'] ?: 0),
+        'package_height_cm' => (float) ($request['package_height_cm'] ?: 0),
+        'item_name' => $request['item_name'],
+        'supplier_name_raw' => $request['acquired_from'] ?: '',
+        'first_mail_at_raw' => $request['first_mail_at'] ?: '',
+        'receipt_printed_at_raw' => $request['receipt_printed_at'] ?: '',
+        'updated_at' => $now,
+    ];
+    $formats = [
+        '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s',
+        '%f', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%f',
+        '%f', '%f', '%s', '%s', '%s', '%s', '%s',
+    ];
+
+    if ($item_id !== null) {
+        $data = ['item_id' => $item_id] + $data;
+        array_unshift($formats, '%d');
+    }
+
+    return (bool) $wpdb->replace(kobutsu_ledger_table('supplier_sources'), $data, $formats);
+}
+
 function kobutsu_ledger_ensure_supplier(string $supplier_name): ?int
 {
     global $wpdb;
@@ -573,6 +691,10 @@ function kobutsu_ledger_get_schema(): WP_REST_Response
                 'source' => 'supplier_master_sample.csv',
                 'purpose' => '仕入先マスタ、本人確認、住所、連絡先',
             ],
+            'supplier_sources' => [
+                'source' => 'supplier_master_sample.csv',
+                'purpose' => '仕入れ管理の原票。仕入元データの列を保持し、古物台帳へ反映する前後の確認に使う',
+            ],
             'items' => [
                 'source' => 'purchases_sample.csv / ledger_sample.csv',
                 'purpose' => 'SKU単位の商品、品目、商品名、状態、写真',
@@ -615,6 +737,16 @@ function kobutsu_ledger_register_admin_menu(): void
         'kobutsu_ledger_render_admin_page',
         'dashicons-clipboard',
         26
+    );
+
+    add_menu_page(
+        '仕入れ管理',
+        '仕入れ管理',
+        'edit_posts',
+        'kobutsu-supplier-sources',
+        'kobutsu_ledger_render_supplier_sources_admin_page',
+        'dashicons-cart',
+        27
     );
 }
 

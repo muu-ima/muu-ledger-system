@@ -158,15 +158,18 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
 
     const baseUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
     const payload = {
+      source_row_no: Number(supplierForm.rowNo) || 0,
       sku: supplierForm.sku,
       order_no: supplierForm.orderNo,
       account_name: supplierForm.account,
       sold_at: normalizeSampleDate(supplierForm.soldAt),
       acquired_at: normalizeSampleDate(supplierForm.acquiredAt),
       buyer_country: supplierForm.country,
+      mag: supplierForm.mag,
       sale_amount: supplierForm.saleAmount,
       purchase_price: supplierForm.purchasePrice,
       shipping_cost: supplierForm.shippingCost,
+      points: supplierForm.points,
       shipping_note: supplierForm.note,
       packer: supplierForm.packer,
       shipping_site: supplierForm.shippingSite,
@@ -177,13 +180,15 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
       package_height_cm: supplierForm.height,
       item_name: supplierForm.itemName,
       acquired_from: supplierForm.supplier,
+      first_mail_at: supplierForm.firstMailAt,
+      receipt_printed_at: supplierForm.receiptPrintedAt,
       sold_to: "ebay",
       status: supplierForm.soldAt ? "sold" : "in_stock",
     };
 
     try {
       const response = await fetch(
-        wordpressRestUrl(baseUrl, "/kobutsu/v1/items"),
+        wordpressRestUrl(baseUrl, "/kobutsu/v1/supplier-sources"),
         {
           method: "POST",
           credentials: "include",
