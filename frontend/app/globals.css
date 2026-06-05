@@ -353,6 +353,7 @@ fieldset input:not([type="checkbox"]) {
 .formActions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
@@ -364,6 +365,10 @@ fieldset input:not([type="checkbox"]) {
   background: #000;
   color: white;
   font-weight: 800;
+}
+
+.formActions button[type="button"] {
+  background: #2f66d2;
 }
 
 .formActions span {

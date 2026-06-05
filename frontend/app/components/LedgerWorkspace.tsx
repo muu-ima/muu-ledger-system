@@ -96,11 +96,17 @@ function normalizeSampleDate(value: string) {
   return `2025-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
 
+function wordpressRestUrl(baseUrl: string, route: string) {
+  return `${baseUrl.replace(/\/$/, "")}/index.php?rest_route=${route}`;
+}
+
 export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState("古物台帳");
   const [supplierForm, setSupplierForm] = useState(supplierSourceSample);
+  const [reflectedSupplierSource, setReflectedSupplierSource] =
+    useState(supplierSourceSample);
   const [supplierSubmitStatus, setSupplierSubmitStatus] = useState("");
 
   useEffect(() => {
@@ -137,10 +143,17 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
     value: string,
   ) {
     setSupplierForm((current) => ({ ...current, [field]: value }));
+    setSupplierSubmitStatus("");
+  }
+
+  function reflectSupplierSource() {
+    setReflectedSupplierSource(supplierForm);
+    setSupplierSubmitStatus("仕入元データへ反映しました");
   }
 
   async function submitSupplierSource(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setReflectedSupplierSource(supplierForm);
     setSupplierSubmitStatus("保存中");
 
     const baseUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
@@ -169,14 +182,17 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
     };
 
     try {
-      const response = await fetch(`${baseUrl}/wp-json/kobutsu/v1/items`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        wordpressRestUrl(baseUrl, "/kobutsu/v1/items"),
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      });
+      );
 
       if (!response.ok) {
         const data = (await response.json().catch(() => null)) as
@@ -464,6 +480,9 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
                     />
                   </label>
                   <div className="formActions">
+                    <button type="button" onClick={reflectSupplierSource}>
+                      仕入元データへ反映
+                    </button>
                     <button type="submit">保存</button>
                     <span>{supplierSubmitStatus}</span>
                   </div>
@@ -473,7 +492,7 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
               <section className="ledgerSection">
                 <div className="sectionTitle">
                   <h2>仕入れ元データ</h2>
-                  <span>supplier_master_sample.csv 6行目</span>
+                  <span>入力フォームから反映された内容</span>
                 </div>
                 <div className="ledgerTableFrame">
                   <table className="ledgerGrid supplierSourceGrid">
@@ -529,28 +548,36 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
                     </thead>
                     <tbody>
                       <tr>
-                        <td>{supplierForm.rowNo}</td>
-                        <td className="selectedCell">{supplierForm.sku}</td>
-                        <td>{supplierForm.orderNo}</td>
-                        <td>{supplierForm.account}</td>
-                        <td>{supplierForm.soldAt}</td>
-                        <td>{supplierForm.acquiredAt}</td>
-                        <td>{supplierForm.country}</td>
-                        <td>{supplierForm.mag}</td>
-                        <td className="numberCell">{supplierForm.saleAmount}</td>
-                        <td className="numberCell">{supplierForm.purchasePrice}</td>
-                        <td className="numberCell">{supplierForm.shippingCost}</td>
-                        <td>{supplierForm.note}</td>
-                        <td>{supplierForm.packer}</td>
-                        <td>{supplierForm.shippingSite}</td>
-                        <td className="numberCell">{supplierForm.actualWeight}</td>
-                        <td className="numberCell">{supplierForm.dimensionalWeight}</td>
-                        <td className="numberCell">{supplierForm.length}</td>
-                        <td className="numberCell">{supplierForm.width}</td>
-                        <td className="numberCell">{supplierForm.height}</td>
-                        <td className="nameCell">{supplierForm.itemName}</td>
-                        <td>{supplierForm.supplier}</td>
-                        <td>{supplierForm.firstMailAt}</td>
+                        <td>{reflectedSupplierSource.rowNo}</td>
+                        <td className="selectedCell">{reflectedSupplierSource.sku}</td>
+                        <td>{reflectedSupplierSource.orderNo}</td>
+                        <td>{reflectedSupplierSource.account}</td>
+                        <td>{reflectedSupplierSource.soldAt}</td>
+                        <td>{reflectedSupplierSource.acquiredAt}</td>
+                        <td>{reflectedSupplierSource.country}</td>
+                        <td>{reflectedSupplierSource.mag}</td>
+                        <td className="numberCell">{reflectedSupplierSource.saleAmount}</td>
+                        <td className="numberCell">
+                          {reflectedSupplierSource.purchasePrice}
+                        </td>
+                        <td className="numberCell">
+                          {reflectedSupplierSource.shippingCost}
+                        </td>
+                        <td>{reflectedSupplierSource.note}</td>
+                        <td>{reflectedSupplierSource.packer}</td>
+                        <td>{reflectedSupplierSource.shippingSite}</td>
+                        <td className="numberCell">
+                          {reflectedSupplierSource.actualWeight}
+                        </td>
+                        <td className="numberCell">
+                          {reflectedSupplierSource.dimensionalWeight}
+                        </td>
+                        <td className="numberCell">{reflectedSupplierSource.length}</td>
+                        <td className="numberCell">{reflectedSupplierSource.width}</td>
+                        <td className="numberCell">{reflectedSupplierSource.height}</td>
+                        <td className="nameCell">{reflectedSupplierSource.itemName}</td>
+                        <td>{reflectedSupplierSource.supplier}</td>
+                        <td>{reflectedSupplierSource.firstMailAt}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -592,16 +619,18 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
                     </thead>
                     <tbody>
                       <tr>
-                        <td className="selectedCell">{supplierForm.sku}</td>
-                        <td>{supplierForm.orderNo}</td>
-                        <td>{supplierForm.acquiredAt}</td>
-                        <td>{supplierForm.supplier}</td>
-                        <td className="numberCell">{supplierForm.purchasePrice}</td>
+                        <td className="selectedCell">{reflectedSupplierSource.sku}</td>
+                        <td>{reflectedSupplierSource.orderNo}</td>
+                        <td>{reflectedSupplierSource.acquiredAt}</td>
+                        <td>{reflectedSupplierSource.supplier}</td>
+                        <td className="numberCell">
+                          {reflectedSupplierSource.purchasePrice}
+                        </td>
                         <td className="warningCell">未分類</td>
-                        <td className="nameCell">{supplierForm.itemName}</td>
-                        <td>{supplierForm.soldAt}</td>
+                        <td className="nameCell">{reflectedSupplierSource.itemName}</td>
+                        <td>{reflectedSupplierSource.soldAt}</td>
                         <td>ebay</td>
-                        <td className="numberCell">{supplierForm.saleAmount}</td>
+                        <td className="numberCell">{reflectedSupplierSource.saleAmount}</td>
                       </tr>
                     </tbody>
                   </table>

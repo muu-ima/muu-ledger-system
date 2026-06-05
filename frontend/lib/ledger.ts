@@ -38,6 +38,10 @@ function normalizeItem(item: Record<string, unknown>): LedgerItem {
   };
 }
 
+function wordpressRestUrl(baseUrl: string, route: string) {
+  return `${baseUrl.replace(/\/$/, "")}/index.php?rest_route=${route}`;
+}
+
 export async function getLedgerItems(): Promise<LedgerItem[]> {
   const baseUrl =
     process.env.WORDPRESS_INTERNAL_URL ||
@@ -45,9 +49,12 @@ export async function getLedgerItems(): Promise<LedgerItem[]> {
     "http://localhost:8080";
 
   try {
-    const response = await fetch(`${baseUrl}/wp-json/kobutsu/v1/items`, {
-      next: { revalidate: 10 },
-    });
+    const response = await fetch(
+      wordpressRestUrl(baseUrl, "/kobutsu/v1/items"),
+      {
+        next: { revalidate: 10 },
+      },
+    );
 
     if (!response.ok) {
       return fallbackItems;
