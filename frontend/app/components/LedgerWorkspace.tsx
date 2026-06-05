@@ -47,6 +47,33 @@ const statusLabel = {
   disposed: "処分",
 };
 
+const supplierSourceSample = {
+  rowNo: "1",
+  sku: "20251125_mizushima_02",
+  orderNo: "25-13888-57021",
+  account: "signpost",
+  soldAt: "12/2",
+  acquiredAt: "12/3",
+  country: "アメリカ",
+  mag: "",
+  saleAmount: "$300.00",
+  purchasePrice: "¥24,980",
+  shippingCost: "¥10,735",
+  points: "",
+  note: "関税・手数料合算",
+  packer: "小栁12/9",
+  shippingSite: "elogi",
+  actualWeight: "307",
+  dimensionalWeight: "728",
+  length: "32.5",
+  width: "28",
+  height: "4",
+  itemName: "Canon PowerShot SX620 HS Black 20.2MP 25x Zoom Compact digital camera Tested",
+  supplier: "メルカリショップ",
+  firstMailAt: "12/2",
+  receiptPrintedAt: "",
+};
+
 function formatYen(value: number) {
   if (!value) return "";
   return `¥${value.toLocaleString("ja-JP")}`;
@@ -89,6 +116,8 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
         .includes(needle),
     );
   }, [items, query]);
+
+  const resultCount = activeTab === "仕入れ管理" ? 1 : visibleItems.length;
 
   return (
     <div className="workspace">
@@ -184,144 +213,286 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
               <h1>{activeTab}</h1>
               <p>{tabDescriptions[activeTab]}</p>
             </div>
-            <div className="resultCount">該当 {visibleItems.length} 件</div>
+            <div className="resultCount">該当 {resultCount} 件</div>
           </section>
 
-          <div className="ledgerSections">
-            <section className="ledgerSection">
-              <div className="sectionTitle">
-                <h2>受入れ</h2>
-                <span>仕入れ・古物情報</span>
-              </div>
-              <div className="ledgerTableFrame">
-                <table className="ledgerGrid intakeGrid">
-                  <colgroup>
-                    <col className="dateCol" />
-                    <col className="skuCol" />
-                    <col className="typeCol" />
-                    <col className="catCol" />
-                    <col className="nameCol" />
-                    <col className="qtyCol" />
-                    <col className="moneyCol" />
-                    <col className="sourceCol" />
-                  </colgroup>
-                  <thead>
-                    <tr className="headerRow">
-                      <th>仕入れ年月日</th>
-                      <th>SKU</th>
-                      <th>区別</th>
-                      <th>品目</th>
-                      <th>商品名</th>
-                      <th>数量</th>
-                      <th>代価</th>
-                      <th>仕入れ先</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleItems.map((item, index) => (
-                      <tr key={item.id}>
-                        <td>{item.acquiredAt || (index % 5 === 0 ? "在庫" : "")}</td>
-                        <td className="selectedCell">{item.managementNo}</td>
-                        <td>買受</td>
-                        <td>{item.category}</td>
-                        <td className="nameCell">{item.itemName}</td>
-                        <td className="numberCell">1</td>
-                        <td className="numberCell">{formatYen(item.purchasePrice)}</td>
-                        <td>{item.acquiredFrom}</td>
+          {activeTab === "仕入れ管理" ? (
+            <div className="ledgerSections">
+              <section className="ledgerSection">
+                <div className="sectionTitle">
+                  <h2>仕入れ元データ</h2>
+                  <span>supplier_master_sample.csv 6行目</span>
+                </div>
+                <div className="ledgerTableFrame">
+                  <table className="ledgerGrid supplierSourceGrid">
+                    <colgroup>
+                      <col className="rowNoCol" />
+                      <col className="skuCol" />
+                      <col className="verifyCol" />
+                      <col className="sourceCol" />
+                      <col className="dateCol" />
+                      <col className="dateCol" />
+                      <col className="buyerCol" />
+                      <col className="typeCol" />
+                      <col className="moneyCol" />
+                      <col className="moneyCol" />
+                      <col className="moneyCol" />
+                      <col className="noteCol" />
+                      <col className="sourceCol" />
+                      <col className="sourceCol" />
+                      <col className="weightCol" />
+                      <col className="weightCol" />
+                      <col className="sizeCol" />
+                      <col className="sizeCol" />
+                      <col className="sizeCol" />
+                      <col className="nameCol" />
+                      <col className="sourceCol" />
+                      <col className="dateCol" />
+                    </colgroup>
+                    <thead>
+                      <tr className="headerRow">
+                        <th>No</th>
+                        <th>SKU</th>
+                        <th>Order no.</th>
+                        <th>アカウント</th>
+                        <th>販売日</th>
+                        <th>仕入日</th>
+                        <th>国</th>
+                        <th>MAG</th>
+                        <th>販売額</th>
+                        <th>仕入れ</th>
+                        <th>送料</th>
+                        <th>備考</th>
+                        <th>梱包者</th>
+                        <th>発送サイト</th>
+                        <th>実重g</th>
+                        <th>体積重g</th>
+                        <th>cm</th>
+                        <th>cm</th>
+                        <th>cm</th>
+                        <th>商品名</th>
+                        <th>仕入れ先</th>
+                        <th>初回メール</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>{supplierSourceSample.rowNo}</td>
+                        <td className="selectedCell">{supplierSourceSample.sku}</td>
+                        <td>{supplierSourceSample.orderNo}</td>
+                        <td>{supplierSourceSample.account}</td>
+                        <td>{supplierSourceSample.soldAt}</td>
+                        <td>{supplierSourceSample.acquiredAt}</td>
+                        <td>{supplierSourceSample.country}</td>
+                        <td>{supplierSourceSample.mag}</td>
+                        <td className="numberCell">{supplierSourceSample.saleAmount}</td>
+                        <td className="numberCell">{supplierSourceSample.purchasePrice}</td>
+                        <td className="numberCell">{supplierSourceSample.shippingCost}</td>
+                        <td>{supplierSourceSample.note}</td>
+                        <td>{supplierSourceSample.packer}</td>
+                        <td>{supplierSourceSample.shippingSite}</td>
+                        <td className="numberCell">{supplierSourceSample.actualWeight}</td>
+                        <td className="numberCell">{supplierSourceSample.dimensionalWeight}</td>
+                        <td className="numberCell">{supplierSourceSample.length}</td>
+                        <td className="numberCell">{supplierSourceSample.width}</td>
+                        <td className="numberCell">{supplierSourceSample.height}</td>
+                        <td className="nameCell">{supplierSourceSample.itemName}</td>
+                        <td>{supplierSourceSample.supplier}</td>
+                        <td>{supplierSourceSample.firstMailAt}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
 
-            <section className="ledgerSection">
-              <div className="sectionTitle">
-                <h2>払出し</h2>
-                <span>販売・ステータス</span>
-              </div>
-              <div className="ledgerTableFrame">
-                <table className="ledgerGrid payoutGrid">
-                  <colgroup>
-                    <col className="skuCol" />
-                    <col className="dateCol" />
-                    <col className="typeCol" />
-                    <col className="moneyCol" />
-                    <col className="sourceCol" />
-                    <col className="verifyCol" />
-                  </colgroup>
-                  <thead>
-                    <tr className="headerRow">
-                      <th>SKU</th>
-                      <th>販売年月日</th>
-                      <th>区別</th>
-                      <th>代価</th>
-                      <th>販売先</th>
-                      <th>確認方法 取引ID</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleItems.map((item) => {
-                      const sold = item.status === "sold" || Boolean(item.soldAt);
-                      return (
+              <section className="ledgerSection">
+                <div className="sectionTitle">
+                  <h2>仕入れ表への反映</h2>
+                  <span>purchases_sample.csv に入る主要項目</span>
+                </div>
+                <div className="ledgerTableFrame">
+                  <table className="ledgerGrid purchaseProjectionGrid">
+                    <colgroup>
+                      <col className="skuCol" />
+                      <col className="verifyCol" />
+                      <col className="dateCol" />
+                      <col className="sourceCol" />
+                      <col className="moneyCol" />
+                      <col className="catCol" />
+                      <col className="nameCol" />
+                      <col className="dateCol" />
+                      <col className="sourceCol" />
+                      <col className="moneyCol" />
+                    </colgroup>
+                    <thead>
+                      <tr className="headerRow">
+                        <th>SKU</th>
+                        <th>Order no.</th>
+                        <th>仕入れ日</th>
+                        <th>仕入れ先</th>
+                        <th>仕入れ金額</th>
+                        <th>品目</th>
+                        <th>商品名</th>
+                        <th>販売日</th>
+                        <th>販売先</th>
+                        <th>販売金額</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="selectedCell">{supplierSourceSample.sku}</td>
+                        <td>{supplierSourceSample.orderNo}</td>
+                        <td>{supplierSourceSample.acquiredAt}</td>
+                        <td>{supplierSourceSample.supplier}</td>
+                        <td className="numberCell">{supplierSourceSample.purchasePrice}</td>
+                        <td className="warningCell">未分類</td>
+                        <td className="nameCell">{supplierSourceSample.itemName}</td>
+                        <td>{supplierSourceSample.soldAt}</td>
+                        <td>ebay</td>
+                        <td className="numberCell">{supplierSourceSample.saleAmount}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          ) : (
+            <div className="ledgerSections">
+              <section className="ledgerSection">
+                <div className="sectionTitle">
+                  <h2>受入れ</h2>
+                  <span>仕入れ・古物情報</span>
+                </div>
+                <div className="ledgerTableFrame">
+                  <table className="ledgerGrid intakeGrid">
+                    <colgroup>
+                      <col className="dateCol" />
+                      <col className="skuCol" />
+                      <col className="typeCol" />
+                      <col className="catCol" />
+                      <col className="nameCol" />
+                      <col className="qtyCol" />
+                      <col className="moneyCol" />
+                      <col className="sourceCol" />
+                    </colgroup>
+                    <thead>
+                      <tr className="headerRow">
+                        <th>仕入れ年月日</th>
+                        <th>SKU</th>
+                        <th>区別</th>
+                        <th>品目</th>
+                        <th>商品名</th>
+                        <th>数量</th>
+                        <th>代価</th>
+                        <th>仕入れ先</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleItems.map((item, index) => (
                         <tr key={item.id}>
+                          <td>{item.acquiredAt || (index % 5 === 0 ? "在庫" : "")}</td>
                           <td className="selectedCell">{item.managementNo}</td>
-                          <td>{item.soldAt}</td>
-                          <td>{sold ? "売却" : statusLabel[item.status]}</td>
-                          <td className={sold ? "numberCell selectedCell" : "warningCell"}>
-                            {saleValue(item)}
-                          </td>
-                          <td>{item.soldTo || "ebay"}</td>
-                          <td>{sold ? item.managementNo.replaceAll("_", "") : ""}</td>
+                          <td>買受</td>
+                          <td>{item.category}</td>
+                          <td className="nameCell">{item.itemName}</td>
+                          <td className="numberCell">1</td>
+                          <td className="numberCell">{formatYen(item.purchasePrice)}</td>
+                          <td>{item.acquiredFrom}</td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
 
-            <section className="ledgerSection">
-              <div className="sectionTitle">
-                <h2>相手方・確認</h2>
-                <span>本人確認・買主情報</span>
-              </div>
-              <div className="ledgerTableFrame">
-                <table className="ledgerGrid partyGrid">
-                  <colgroup>
-                    <col className="skuCol" />
-                    <col className="verifyCol" />
-                    <col className="buyerCol" />
-                    <col className="buyerCol" />
-                    <col className="addressCol" />
-                  </colgroup>
-                  <thead>
-                    <tr className="headerRow">
-                      <th>SKU</th>
-                      <th>仕入れ確認</th>
-                      <th>国名</th>
-                      <th>buyer ID</th>
-                      <th>送付先住所</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleItems.map((item) => {
-                      const sold = item.status === "sold" || Boolean(item.soldAt);
-                      return (
-                        <tr key={item.id}>
-                          <td className="selectedCell">{item.managementNo}</td>
-                          <td>{item.sellerIdentification}</td>
-                          <td>{sold ? "アメリカ" : ""}</td>
-                          <td>{sold ? "buyer_sample" : ""}</td>
-                          <td>{sold ? "Sample address, city, country" : ""}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          </div>
+              <section className="ledgerSection">
+                <div className="sectionTitle">
+                  <h2>払出し</h2>
+                  <span>販売・ステータス</span>
+                </div>
+                <div className="ledgerTableFrame">
+                  <table className="ledgerGrid payoutGrid">
+                    <colgroup>
+                      <col className="skuCol" />
+                      <col className="dateCol" />
+                      <col className="typeCol" />
+                      <col className="moneyCol" />
+                      <col className="sourceCol" />
+                      <col className="verifyCol" />
+                    </colgroup>
+                    <thead>
+                      <tr className="headerRow">
+                        <th>SKU</th>
+                        <th>販売年月日</th>
+                        <th>区別</th>
+                        <th>代価</th>
+                        <th>販売先</th>
+                        <th>確認方法 取引ID</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleItems.map((item) => {
+                        const sold = item.status === "sold" || Boolean(item.soldAt);
+                        return (
+                          <tr key={item.id}>
+                            <td className="selectedCell">{item.managementNo}</td>
+                            <td>{item.soldAt}</td>
+                            <td>{sold ? "売却" : statusLabel[item.status]}</td>
+                            <td className={sold ? "numberCell selectedCell" : "warningCell"}>
+                              {saleValue(item)}
+                            </td>
+                            <td>{item.soldTo || "ebay"}</td>
+                            <td>{sold ? item.managementNo.replaceAll("_", "") : ""}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section className="ledgerSection">
+                <div className="sectionTitle">
+                  <h2>相手方・確認</h2>
+                  <span>本人確認・買主情報</span>
+                </div>
+                <div className="ledgerTableFrame">
+                  <table className="ledgerGrid partyGrid">
+                    <colgroup>
+                      <col className="skuCol" />
+                      <col className="verifyCol" />
+                      <col className="buyerCol" />
+                      <col className="buyerCol" />
+                      <col className="addressCol" />
+                    </colgroup>
+                    <thead>
+                      <tr className="headerRow">
+                        <th>SKU</th>
+                        <th>仕入れ確認</th>
+                        <th>国名</th>
+                        <th>buyer ID</th>
+                        <th>送付先住所</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleItems.map((item) => {
+                        const sold = item.status === "sold" || Boolean(item.soldAt);
+                        return (
+                          <tr key={item.id}>
+                            <td className="selectedCell">{item.managementNo}</td>
+                            <td>{item.sellerIdentification}</td>
+                            <td>{sold ? "アメリカ" : ""}</td>
+                            <td>{sold ? "buyer_sample" : ""}</td>
+                            <td>{sold ? "Sample address, city, country" : ""}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          )}
         </main>
       </div>
     </div>

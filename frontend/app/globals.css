@@ -350,7 +350,9 @@ fieldset input:not([type="checkbox"]) {
 }
 
 .payoutGrid .headerRow th,
-.partyGrid .headerRow th {
+.partyGrid .headerRow th,
+.supplierSourceGrid .headerRow th,
+.purchaseProjectionGrid .headerRow th {
   background: #c2b4df;
 }
 
@@ -363,7 +365,9 @@ fieldset input:not([type="checkbox"]) {
 }
 
 .payoutGrid tbody td,
-.partyGrid tbody td {
+.partyGrid tbody td,
+.supplierSourceGrid tbody td,
+.purchaseProjectionGrid tbody td {
   background: rgba(255, 228, 199, 0.78);
 }
 
@@ -391,6 +395,10 @@ fieldset input:not([type="checkbox"]) {
 
 .dateCol {
   width: 112px;
+}
+
+.rowNoCol {
+  width: 56px;
 }
 
 .skuCol {
@@ -431,6 +439,18 @@ fieldset input:not([type="checkbox"]) {
 
 .addressCol {
   width: 360px;
+}
+
+.noteCol {
+  width: 190px;
+}
+
+.weightCol {
+  width: 90px;
+}
+
+.sizeCol {
+  width: 70px;
 }
 
 @media (max-width: 900px) {
