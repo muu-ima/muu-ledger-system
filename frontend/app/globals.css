@@ -309,6 +309,69 @@ fieldset input:not([type="checkbox"]) {
   font-size: 12px;
 }
 
+.supplierForm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.52);
+  padding: 12px;
+}
+
+.supplierForm label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.supplierForm label span {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.supplierForm input,
+.supplierForm textarea {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid rgba(31, 27, 24, 0.46);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.74);
+  padding: 6px 8px;
+  color: #1d1a18;
+}
+
+.supplierForm textarea {
+  min-height: 64px;
+  resize: vertical;
+}
+
+.wideField {
+  grid-column: 1 / -1;
+}
+
+.formActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.formActions button {
+  min-width: 92px;
+  min-height: 34px;
+  border: 0;
+  border-radius: 6px;
+  background: #000;
+  color: white;
+  font-weight: 800;
+}
+
+.formActions span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .ledgerTableFrame {
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.46);

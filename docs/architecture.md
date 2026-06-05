@@ -7,7 +7,7 @@ WordPress を台帳データと管理権限のバックエンド、Next.js を�
 ## サービス
 
 - MySQL: WordPress データベース
-- WordPress: REST API と管理画面
+- WordPress: REST API、管理画面、Vercelフロントを埋め込むシェルテーマ
 - Next.js: 古物台帳 UI
 
 ## UI方針
@@ -22,6 +22,12 @@ WordPress を台帳データと管理権限のバックエンド、Next.js を�
 tools-hub の `Shipping REST Search` と `MUU Products` をREST API設計の参考にします。古物台帳はカスタムテーブル中心ですが、検索APIのページング、フィルター、レスポンス形式は tools-hub の `data/meta` 形式に寄せます。
 
 詳細は `docs/reference-plugins.md` を参照してください。
+
+## WordPressテーマ
+
+WordPressテーマは `wordpress/themes/kobutsu-ledger-shell` に置きます。テーマはVercel/Next.jsフロントをiframeで表示するシェルに留め、業務ロジック、REST API、カスタムテーブル作成、保存処理は `kobutsu-ledger-api` プラグインに置きます。
+
+開発環境ではテーマのiframe URLは `http://localhost:3000` を初期値にします。本番ではカスタマイザーまたは `KOBUTSU_LEDGER_FRONTEND_URL` 定数でVercel URLへ差し替えます。
 
 ## データモデル初期案
 

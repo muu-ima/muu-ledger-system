@@ -284,16 +284,29 @@ function kobutsu_ledger_rest_args(): array
     return [
         'sku' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'management_no' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
-        'category' => ['required' => true, 'sanitize_callback' => 'sanitize_text_field'],
+        'category' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'item_name' => ['required' => true, 'sanitize_callback' => 'sanitize_text_field'],
         'description' => ['required' => false, 'sanitize_callback' => 'sanitize_textarea_field'],
         'acquired_at' => ['required' => true, 'sanitize_callback' => 'sanitize_text_field'],
         'acquired_from' => ['required' => true, 'sanitize_callback' => 'sanitize_text_field'],
-        'seller_identification' => ['required' => true, 'sanitize_callback' => 'sanitize_text_field'],
-        'purchase_price' => ['required' => false, 'sanitize_callback' => 'absint'],
+        'seller_identification' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'purchase_price' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'order_no' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'account_name' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'buyer_country' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'sold_at' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'sold_to' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
-        'sale_price' => ['required' => false, 'sanitize_callback' => 'absint'],
+        'sale_amount' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'sale_price' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'shipping_cost' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'shipping_note' => ['required' => false, 'sanitize_callback' => 'sanitize_textarea_field'],
+        'packer' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'shipping_site' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'actual_weight_g' => ['required' => false, 'sanitize_callback' => 'absint'],
+        'dimensional_weight_g' => ['required' => false, 'sanitize_callback' => 'absint'],
+        'package_length_cm' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'package_width_cm' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'package_height_cm' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'status' => ['required' => false, 'sanitize_callback' => 'sanitize_key'],
     ];
 }
@@ -342,6 +355,39 @@ function kobutsu_ledger_get_item(WP_REST_Request $request): WP_REST_Response|WP_
     return rest_ensure_response(kobutsu_ledger_format_row($row));
 }
 
+function kobutsu_ledger_parse_money($value): array
+{
+    $raw = trim((string) $value);
+    if ($raw === '') {
+        return [
+            'amount' => 0.0,
+            'amount_jpy' => 0,
+            'currency' => 'USD',
+        ];
+    }
+
+    $currency = 'USD';
+    if (str_contains($raw, '¥')) {
+        $currency = 'JPY';
+    } elseif (str_contains($raw, 'AUD') || str_contains($raw, 'AU$')) {
+        $currency = 'AUD';
+    } elseif (str_contains($raw, '€')) {
+        $currency = 'EUR';
+    } elseif (str_contains($raw, '£') || str_contains($raw, '￡')) {
+        $currency = 'GBP';
+    } elseif (str_contains($raw, 'c$')) {
+        $currency = 'CAD';
+    }
+
+    $amount = (float) preg_replace('/[^0-9.\-]/', '', $raw);
+
+    return [
+        'amount' => $amount,
+        'amount_jpy' => $currency === 'JPY' ? (int) round($amount) : 0,
+        'currency' => $currency,
+    ];
+}
+
 function kobutsu_ledger_create_item(WP_REST_Request $request): WP_REST_Response|WP_Error
 {
     global $wpdb;
@@ -353,9 +399,13 @@ function kobutsu_ledger_create_item(WP_REST_Request $request): WP_REST_Response|
 
     $wpdb->query('START TRANSACTION');
 
+    $purchase_price = kobutsu_ledger_parse_money($request['purchase_price']);
+    $sale_money = kobutsu_ledger_parse_money($request['sale_amount'] ?: $request['sale_price']);
+    $shipping_cost = kobutsu_ledger_parse_money($request['shipping_cost']);
+
     $inserted = $wpdb->insert(kobutsu_ledger_table('items'), [
         'sku' => $sku,
-        'category' => $request['category'],
+        'category' => $request['category'] ?: '',
         'item_name' => $request['item_name'],
         'description' => $request['description'] ?? '',
         'status' => $request['status'] ?: 'in_stock',
@@ -378,22 +428,45 @@ function kobutsu_ledger_create_item(WP_REST_Request $request): WP_REST_Response|
         'supplier_id' => $supplier_id,
         'purchase_date' => $request['acquired_at'] ?: null,
         'supplier_name_raw' => $request['acquired_from'] ?: '',
-        'purchase_price_jpy' => (int) ($request['purchase_price'] ?: 0),
+        'purchase_price_jpy' => $purchase_price['amount_jpy'],
         'seller_identification' => $request['seller_identification'] ?: '',
-    ], ['%d', '%d', '%s', '%s', '%d', '%s']);
+        'source_order_no' => $request['order_no'] ?: '',
+    ], ['%d', '%d', '%s', '%s', '%d', '%s', '%s']);
 
     if (!$purchase_inserted) {
         $wpdb->query('ROLLBACK');
         return new WP_Error('kobutsu_insert_failed', '仕入データを登録できませんでした。', ['status' => 500]);
     }
 
-    if ($request['sold_at'] || $request['sold_to'] || $request['sale_price']) {
+    if (
+        $request['sold_at'] ||
+        $request['sold_to'] ||
+        $request['sale_amount'] ||
+        $request['sale_price'] ||
+        $request['order_no']
+    ) {
         $sale_inserted = $wpdb->insert(kobutsu_ledger_table('sales'), [
             'item_id' => $item_id,
-            'marketplace' => $request['sold_to'] ?: '',
+            'marketplace' => $request['sold_to'] ?: 'ebay',
+            'account_name' => $request['account_name'] ?: '',
+            'order_no' => $request['order_no'] ?: '',
             'sale_date' => $request['sold_at'] ?: null,
-            'sale_amount_jpy' => (int) ($request['sale_price'] ?: 0),
-        ], ['%d', '%s', '%s', '%d']);
+            'sale_amount' => $sale_money['amount'],
+            'sale_currency' => $sale_money['currency'],
+            'sale_amount_jpy' => $sale_money['amount_jpy'],
+            'buyer_country' => $request['buyer_country'] ?: '',
+            'shipping_site' => $request['shipping_site'] ?: '',
+            'actual_weight_g' => (int) ($request['actual_weight_g'] ?: 0),
+            'dimensional_weight_g' => (int) ($request['dimensional_weight_g'] ?: 0),
+            'package_length_cm' => (float) ($request['package_length_cm'] ?: 0),
+            'package_width_cm' => (float) ($request['package_width_cm'] ?: 0),
+            'package_height_cm' => (float) ($request['package_height_cm'] ?: 0),
+            'notes' => trim(implode("\n", array_filter([
+                $request['shipping_note'] ? '備考: ' . $request['shipping_note'] : '',
+                $request['packer'] ? '梱包者: ' . $request['packer'] : '',
+                $shipping_cost['amount_jpy'] ? '送料: ' . $request['shipping_cost'] : '',
+            ]))),
+        ], ['%d', '%s', '%s', '%s', '%s', '%f', '%s', '%d', '%s', '%s', '%d', '%d', '%f', '%f', '%f', '%s']);
 
         if (!$sale_inserted) {
             $wpdb->query('ROLLBACK');

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import type { LedgerItem } from "@/types/ledger";
 
 const tabs = [
@@ -85,10 +85,23 @@ function saleValue(item: LedgerItem) {
   return "";
 }
 
+function normalizeSampleDate(value: string) {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+
+  const match = value.match(/^(\d{1,2})[/.](\d{1,2})$/);
+  if (!match) return value;
+
+  const [, month, day] = match;
+  return `2025-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+}
+
 export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState("古物台帳");
+  const [supplierForm, setSupplierForm] = useState(supplierSourceSample);
+  const [supplierSubmitStatus, setSupplierSubmitStatus] = useState("");
 
   useEffect(() => {
     const saved = window.localStorage.getItem("kobutsu:sidebar-open");
@@ -118,6 +131,66 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
   }, [items, query]);
 
   const resultCount = activeTab === "仕入れ管理" ? 1 : visibleItems.length;
+
+  function updateSupplierForm(
+    field: keyof typeof supplierSourceSample,
+    value: string,
+  ) {
+    setSupplierForm((current) => ({ ...current, [field]: value }));
+  }
+
+  async function submitSupplierSource(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSupplierSubmitStatus("保存中");
+
+    const baseUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
+    const payload = {
+      sku: supplierForm.sku,
+      order_no: supplierForm.orderNo,
+      account_name: supplierForm.account,
+      sold_at: normalizeSampleDate(supplierForm.soldAt),
+      acquired_at: normalizeSampleDate(supplierForm.acquiredAt),
+      buyer_country: supplierForm.country,
+      sale_amount: supplierForm.saleAmount,
+      purchase_price: supplierForm.purchasePrice,
+      shipping_cost: supplierForm.shippingCost,
+      shipping_note: supplierForm.note,
+      packer: supplierForm.packer,
+      shipping_site: supplierForm.shippingSite,
+      actual_weight_g: Number(supplierForm.actualWeight) || 0,
+      dimensional_weight_g: Number(supplierForm.dimensionalWeight) || 0,
+      package_length_cm: supplierForm.length,
+      package_width_cm: supplierForm.width,
+      package_height_cm: supplierForm.height,
+      item_name: supplierForm.itemName,
+      acquired_from: supplierForm.supplier,
+      sold_to: "ebay",
+      status: supplierForm.soldAt ? "sold" : "in_stock",
+    };
+
+    try {
+      const response = await fetch(`${baseUrl}/wp-json/kobutsu/v1/items`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as
+          | { message?: string }
+          | null;
+        setSupplierSubmitStatus(data?.message || "保存できませんでした");
+        return;
+      }
+
+      setSupplierSubmitStatus("保存しました");
+    } catch {
+      setSupplierSubmitStatus("WordPressに接続できませんでした");
+    }
+  }
 
   return (
     <div className="workspace">
@@ -220,6 +293,185 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
             <div className="ledgerSections">
               <section className="ledgerSection">
                 <div className="sectionTitle">
+                  <h2>入力</h2>
+                  <span>WordPress REST API に保存</span>
+                </div>
+                <form className="supplierForm" onSubmit={submitSupplierSource}>
+                  <label>
+                    <span>SKU</span>
+                    <input
+                      value={supplierForm.sku}
+                      onChange={(event) => updateSupplierForm("sku", event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span>Order no.</span>
+                    <input
+                      value={supplierForm.orderNo}
+                      onChange={(event) =>
+                        updateSupplierForm("orderNo", event.target.value)
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>アカウント</span>
+                    <input
+                      value={supplierForm.account}
+                      onChange={(event) =>
+                        updateSupplierForm("account", event.target.value)
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>販売日</span>
+                    <input
+                      value={supplierForm.soldAt}
+                      onChange={(event) => updateSupplierForm("soldAt", event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span>仕入日</span>
+                    <input
+                      value={supplierForm.acquiredAt}
+                      onChange={(event) =>
+                        updateSupplierForm("acquiredAt", event.target.value)
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>国</span>
+                    <input
+                      value={supplierForm.country}
+                      onChange={(event) =>
+                        updateSupplierForm("country", event.target.value)
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>販売額</span>
+                    <input
+                      value={supplierForm.saleAmount}
+                      onChange={(event) =>
+                        updateSupplierForm("saleAmount", event.target.value)
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>仕入れ</span>
+                    <input
+                      value={supplierForm.purchasePrice}
+                      onChange={(event) =>
+                        updateSupplierForm("purchasePrice", event.target.value)
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>送料</span>
+                    <input
+                      value={supplierForm.shippingCost}
+                      onChange={(event) =>
+                        updateSupplierForm("shippingCost", event.target.value)
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>梱包者</span>
+                    <input
+                      value={supplierForm.packer}
+                      onChange={(event) => updateSupplierForm("packer", event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span>発送サイト</span>
+                    <input
+                      value={supplierForm.shippingSite}
+                      onChange={(event) =>
+                        updateSupplierForm("shippingSite", event.target.value)
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>実重g</span>
+                    <input
+                      value={supplierForm.actualWeight}
+                      onChange={(event) =>
+                        updateSupplierForm("actualWeight", event.target.value)
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>体積重g</span>
+                    <input
+                      value={supplierForm.dimensionalWeight}
+                      onChange={(event) =>
+                        updateSupplierForm("dimensionalWeight", event.target.value)
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>縦cm</span>
+                    <input
+                      value={supplierForm.length}
+                      onChange={(event) => updateSupplierForm("length", event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span>横cm</span>
+                    <input
+                      value={supplierForm.width}
+                      onChange={(event) => updateSupplierForm("width", event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span>高さcm</span>
+                    <input
+                      value={supplierForm.height}
+                      onChange={(event) => updateSupplierForm("height", event.target.value)}
+                    />
+                  </label>
+                  <label className="wideField">
+                    <span>商品名</span>
+                    <input
+                      value={supplierForm.itemName}
+                      onChange={(event) =>
+                        updateSupplierForm("itemName", event.target.value)
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>仕入れ先</span>
+                    <input
+                      value={supplierForm.supplier}
+                      onChange={(event) =>
+                        updateSupplierForm("supplier", event.target.value)
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>初回メール</span>
+                    <input
+                      value={supplierForm.firstMailAt}
+                      onChange={(event) =>
+                        updateSupplierForm("firstMailAt", event.target.value)
+                      }
+                    />
+                  </label>
+                  <label className="wideField">
+                    <span>備考</span>
+                    <textarea
+                      value={supplierForm.note}
+                      onChange={(event) => updateSupplierForm("note", event.target.value)}
+                    />
+                  </label>
+                  <div className="formActions">
+                    <button type="submit">保存</button>
+                    <span>{supplierSubmitStatus}</span>
+                  </div>
+                </form>
+              </section>
+
+              <section className="ledgerSection">
+                <div className="sectionTitle">
                   <h2>仕入れ元データ</h2>
                   <span>supplier_master_sample.csv 6行目</span>
                 </div>
@@ -277,28 +529,28 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
                     </thead>
                     <tbody>
                       <tr>
-                        <td>{supplierSourceSample.rowNo}</td>
-                        <td className="selectedCell">{supplierSourceSample.sku}</td>
-                        <td>{supplierSourceSample.orderNo}</td>
-                        <td>{supplierSourceSample.account}</td>
-                        <td>{supplierSourceSample.soldAt}</td>
-                        <td>{supplierSourceSample.acquiredAt}</td>
-                        <td>{supplierSourceSample.country}</td>
-                        <td>{supplierSourceSample.mag}</td>
-                        <td className="numberCell">{supplierSourceSample.saleAmount}</td>
-                        <td className="numberCell">{supplierSourceSample.purchasePrice}</td>
-                        <td className="numberCell">{supplierSourceSample.shippingCost}</td>
-                        <td>{supplierSourceSample.note}</td>
-                        <td>{supplierSourceSample.packer}</td>
-                        <td>{supplierSourceSample.shippingSite}</td>
-                        <td className="numberCell">{supplierSourceSample.actualWeight}</td>
-                        <td className="numberCell">{supplierSourceSample.dimensionalWeight}</td>
-                        <td className="numberCell">{supplierSourceSample.length}</td>
-                        <td className="numberCell">{supplierSourceSample.width}</td>
-                        <td className="numberCell">{supplierSourceSample.height}</td>
-                        <td className="nameCell">{supplierSourceSample.itemName}</td>
-                        <td>{supplierSourceSample.supplier}</td>
-                        <td>{supplierSourceSample.firstMailAt}</td>
+                        <td>{supplierForm.rowNo}</td>
+                        <td className="selectedCell">{supplierForm.sku}</td>
+                        <td>{supplierForm.orderNo}</td>
+                        <td>{supplierForm.account}</td>
+                        <td>{supplierForm.soldAt}</td>
+                        <td>{supplierForm.acquiredAt}</td>
+                        <td>{supplierForm.country}</td>
+                        <td>{supplierForm.mag}</td>
+                        <td className="numberCell">{supplierForm.saleAmount}</td>
+                        <td className="numberCell">{supplierForm.purchasePrice}</td>
+                        <td className="numberCell">{supplierForm.shippingCost}</td>
+                        <td>{supplierForm.note}</td>
+                        <td>{supplierForm.packer}</td>
+                        <td>{supplierForm.shippingSite}</td>
+                        <td className="numberCell">{supplierForm.actualWeight}</td>
+                        <td className="numberCell">{supplierForm.dimensionalWeight}</td>
+                        <td className="numberCell">{supplierForm.length}</td>
+                        <td className="numberCell">{supplierForm.width}</td>
+                        <td className="numberCell">{supplierForm.height}</td>
+                        <td className="nameCell">{supplierForm.itemName}</td>
+                        <td>{supplierForm.supplier}</td>
+                        <td>{supplierForm.firstMailAt}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -340,16 +592,16 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
                     </thead>
                     <tbody>
                       <tr>
-                        <td className="selectedCell">{supplierSourceSample.sku}</td>
-                        <td>{supplierSourceSample.orderNo}</td>
-                        <td>{supplierSourceSample.acquiredAt}</td>
-                        <td>{supplierSourceSample.supplier}</td>
-                        <td className="numberCell">{supplierSourceSample.purchasePrice}</td>
+                        <td className="selectedCell">{supplierForm.sku}</td>
+                        <td>{supplierForm.orderNo}</td>
+                        <td>{supplierForm.acquiredAt}</td>
+                        <td>{supplierForm.supplier}</td>
+                        <td className="numberCell">{supplierForm.purchasePrice}</td>
                         <td className="warningCell">未分類</td>
-                        <td className="nameCell">{supplierSourceSample.itemName}</td>
-                        <td>{supplierSourceSample.soldAt}</td>
+                        <td className="nameCell">{supplierForm.itemName}</td>
+                        <td>{supplierForm.soldAt}</td>
                         <td>ebay</td>
-                        <td className="numberCell">{supplierSourceSample.saleAmount}</td>
+                        <td className="numberCell">{supplierForm.saleAmount}</td>
                       </tr>
                     </tbody>
                   </table>
