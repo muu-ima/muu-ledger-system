@@ -12,6 +12,7 @@ const tabs = [
 ];
 
 const supplierSourceViews = ["要約", "発送・梱包", "詳細・原票"] as const;
+const supplierDataViews = ["仕入れ元データ", "仕入れ表への反映"] as const;
 
 const tabDescriptions: Record<string, string> = {
   古物台帳: "受入れ、払出し、相手方・確認に分けた台帳ビュー",
@@ -169,6 +170,8 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
   ]);
   const [supplierSourceView, setSupplierSourceView] =
     useState<(typeof supplierSourceViews)[number]>("要約");
+  const [supplierDataView, setSupplierDataView] =
+    useState<(typeof supplierDataViews)[number]>("仕入れ元データ");
   const [supplierModalOpen, setSupplierModalOpen] = useState(false);
   const [supplierSubmitStatus, setSupplierSubmitStatus] = useState("");
 
@@ -676,25 +679,42 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
 
               <section className="ledgerSection">
                 <div className="sectionTitle">
-                  <h2>仕入れ元データ</h2>
-                  <span>入力フォームから反映された内容</span>
+                  <h2>仕入れ管理データ</h2>
+                  <span>保存済みデータと仕入れ表への反映内容</span>
                 </div>
-                <div className="tableTabs" role="tablist" aria-label="仕入れ元データ表示">
-                  {supplierSourceViews.map((view) => (
+                <div className="tableTabs primaryTabs" role="tablist" aria-label="仕入れ管理データ">
+                  {supplierDataViews.map((view) => (
                     <button
                       key={view}
                       type="button"
                       role="tab"
-                      aria-selected={supplierSourceView === view}
-                      className={supplierSourceView === view ? "active" : ""}
-                      onClick={() => setSupplierSourceView(view)}
+                      aria-selected={supplierDataView === view}
+                      className={supplierDataView === view ? "active" : ""}
+                      onClick={() => setSupplierDataView(view)}
                     >
                       {view}
                     </button>
                   ))}
                 </div>
+                {supplierDataView === "仕入れ元データ" ? (
+                  <div className="tableTabs" role="tablist" aria-label="仕入れ元データ表示">
+                    {supplierSourceViews.map((view) => (
+                      <button
+                        key={view}
+                        type="button"
+                        role="tab"
+                        aria-selected={supplierSourceView === view}
+                        className={supplierSourceView === view ? "active" : ""}
+                        onClick={() => setSupplierSourceView(view)}
+                      >
+                        {view}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
                 <div className="ledgerTableFrame">
-                  {supplierSourceView === "要約" ? (
+                  {supplierDataView === "仕入れ元データ" &&
+                  supplierSourceView === "要約" ? (
                     <table className="ledgerGrid supplierSourceGrid">
                       <colgroup>
                         <col className="rowNoCol" />
@@ -741,7 +761,8 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
                     </table>
                   ) : null}
 
-                  {supplierSourceView === "発送・梱包" ? (
+                  {supplierDataView === "仕入れ元データ" &&
+                  supplierSourceView === "発送・梱包" ? (
                     <table className="ledgerGrid supplierSourceGrid">
                       <colgroup>
                         <col className="skuCol" />
@@ -788,7 +809,8 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
                     </table>
                   ) : null}
 
-                  {supplierSourceView === "詳細・原票" ? (
+                  {supplierDataView === "仕入れ元データ" &&
+                  supplierSourceView === "詳細・原票" ? (
                     <table className="ledgerGrid supplierSourceGrid">
                       <colgroup>
                         <col className="rowNoCol" />
@@ -828,59 +850,53 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
                       </tbody>
                     </table>
                   ) : null}
-                </div>
-              </section>
 
-              <section className="ledgerSection">
-                <div className="sectionTitle">
-                  <h2>仕入れ表への反映</h2>
-                  <span>purchases_sample.csv に入る主要項目</span>
-                </div>
-                <div className="ledgerTableFrame">
-                  <table className="ledgerGrid purchaseProjectionGrid">
-                    <colgroup>
-                      <col className="skuCol" />
-                      <col className="verifyCol" />
-                      <col className="dateCol" />
-                      <col className="sourceCol" />
-                      <col className="moneyCol" />
-                      <col className="catCol" />
-                      <col className="nameCol" />
-                      <col className="dateCol" />
-                      <col className="sourceCol" />
-                      <col className="moneyCol" />
-                    </colgroup>
-                    <thead>
-                      <tr className="headerRow">
-                        <th>SKU</th>
-                        <th>Order no.</th>
-                        <th>仕入れ日</th>
-                        <th>仕入れ先</th>
-                        <th>仕入れ金額</th>
-                        <th>品目</th>
-                        <th>商品名</th>
-                        <th>販売日</th>
-                        <th>販売先</th>
-                        <th>販売金額</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {supplierSources.map((source) => (
-                        <tr key={source.sku}>
-                          <td className="selectedCell">{source.sku}</td>
-                          <td>{source.orderNo}</td>
-                          <td>{source.acquiredAt}</td>
-                          <td>{source.supplier}</td>
-                          <td className="numberCell">{source.purchasePrice}</td>
-                          <td className="warningCell">未分類</td>
-                          <td className="nameCell">{source.itemName}</td>
-                          <td>{source.soldAt}</td>
-                          <td>ebay</td>
-                          <td className="numberCell">{source.saleAmount}</td>
+                  {supplierDataView === "仕入れ表への反映" ? (
+                    <table className="ledgerGrid purchaseProjectionGrid">
+                      <colgroup>
+                        <col className="skuCol" />
+                        <col className="verifyCol" />
+                        <col className="dateCol" />
+                        <col className="sourceCol" />
+                        <col className="moneyCol" />
+                        <col className="catCol" />
+                        <col className="nameCol" />
+                        <col className="dateCol" />
+                        <col className="sourceCol" />
+                        <col className="moneyCol" />
+                      </colgroup>
+                      <thead>
+                        <tr className="headerRow">
+                          <th>SKU</th>
+                          <th>Order no.</th>
+                          <th>仕入れ日</th>
+                          <th>仕入れ先</th>
+                          <th>仕入れ金額</th>
+                          <th>品目</th>
+                          <th>商品名</th>
+                          <th>販売日</th>
+                          <th>販売先</th>
+                          <th>販売金額</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {supplierSources.map((source) => (
+                          <tr key={source.sku}>
+                            <td className="selectedCell">{source.sku}</td>
+                            <td>{source.orderNo}</td>
+                            <td>{source.acquiredAt}</td>
+                            <td>{source.supplier}</td>
+                            <td className="numberCell">{source.purchasePrice}</td>
+                            <td className="warningCell">未分類</td>
+                            <td className="nameCell">{source.itemName}</td>
+                            <td>{source.soldAt}</td>
+                            <td>ebay</td>
+                            <td className="numberCell">{source.saleAmount}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : null}
                 </div>
               </section>
             </div>

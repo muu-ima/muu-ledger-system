@@ -492,6 +492,17 @@ fieldset input:not([type="checkbox"]) {
   color: white;
 }
 
+.primaryTabs {
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(31, 27, 24, 0.24);
+  padding-bottom: 8px;
+}
+
+.primaryTabs button {
+  min-height: 36px;
+  padding-inline: 16px;
+}
+
 .ledgerTableFrame {
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.46);
