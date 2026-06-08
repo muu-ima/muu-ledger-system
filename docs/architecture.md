@@ -14,6 +14,7 @@ WordPress を台帳データと管理権限のバックエンド、Next.js を�
 
 既存運用はGoogleスプレッドシートの横長台帳です。Next.jsの主画面も、カード型ダッシュボードではなく、固定ヘッダー付きの表形式UIを中心にします。
 元シートの `仕入れ表` と `仕入れ元データ` は重複と参照関係が強いため、アプリUIでは `仕入れ管理` として統一します。
+仕入れ管理フォームは、保存先テーブルを分けずに `wp_kobutsu_supplier_sources` を使い、UIだけを `必須入力`, `よく使う入力`, `詳細入力` の3区分に分けます。
 
 詳細は `docs/ui-reference.md` を参照してください。
 
@@ -35,6 +36,7 @@ WordPressテーマは `wordpress/themes/kobutsu-ledger-shell` に置きます。
 列ごとの解読メモは `docs/column-dictionary.md` を参照してください。
 
 - `wp_kobutsu_suppliers`: 仕入先マスタ
+- `wp_kobutsu_supplier_sources`: 仕入れ管理の原票。仕入元データを独立して保存する
 - `wp_kobutsu_items`: SKU単位の商品
 - `wp_kobutsu_purchases`: 受入れ、仕入、取引相手方
 - `wp_kobutsu_sales`: 払出し、販売、買主、配送
@@ -47,7 +49,7 @@ WordPressテーマは `wordpress/themes/kobutsu-ledger-shell` に置きます。
 
 | CSV | 主な取込先 | 用途 |
 | --- | --- | --- |
-| `supplier_master_sample.csv` | `suppliers`, `sales` | 仕入れ元データ。SKU、注文番号、販売日、送料、梱包、発送サイト、仕入先 |
+| `supplier_master_sample.csv` | `supplier_sources`, `suppliers` | 仕入れ元データ。SKU、注文番号、販売日、送料、梱包、発送サイト、仕入先 |
 | `purchases_sample.csv` | `items`, `purchases`, `sales` | 仕入日、仕入先、品目、商品名、付属品、状態、出品日、販売日 |
 | `ledger_sample.csv` | `items`, `purchases`, `sales` | 古物台帳。受入れ・払出し、本人確認、相手方、買主住所 |
 | `ec_sales_sample.csv` | `sales_settlements` | 販売額、手数料、為替、受取額、送料、還付、損益 |
