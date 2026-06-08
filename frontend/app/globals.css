@@ -278,9 +278,232 @@ fieldset input:not([type="checkbox"]) {
   font-size: 14px;
 }
 
-.ledgerTableFrame {
+.ledgerTopActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.ledgerTopActions button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 6px;
+  background: #000;
+  padding: 6px 14px;
+  color: white;
+  font-weight: 800;
+}
+
+.ledgerSections {
   flex: 1;
-  min-height: 560px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.ledgerSection {
+  min-height: 0;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.sectionTitle h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.sectionTitle span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: rgba(31, 27, 24, 0.36);
+  padding: 72px 24px 24px;
+  overflow: auto;
+}
+
+.supplierModal {
+  width: min(1180px, 100%);
+  max-height: calc(100vh - 96px);
+  border: 1px solid var(--line);
+  background: #f6ece7;
+  box-shadow: 0 18px 48px rgba(31, 27, 24, 0.28);
+  overflow: auto;
+}
+
+.modalHeader {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(246, 236, 231, 0.96);
+  padding: 14px 16px;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.modalHeader span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.modalCloseButton {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(31, 27, 24, 0.28);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.72);
+  color: #1d1a18;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.supplierForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.52);
+  padding: 12px;
+}
+
+.formSection {
+  margin: 0;
+  border: 1px solid rgba(31, 27, 24, 0.22);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.formSection legend {
+  padding: 0 6px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.formSectionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.supplierForm label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.supplierForm label span {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.supplierForm input,
+.supplierForm textarea {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid rgba(31, 27, 24, 0.46);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.74);
+  padding: 6px 8px;
+  color: #1d1a18;
+}
+
+.supplierForm textarea {
+  min-height: 64px;
+  resize: vertical;
+}
+
+.wideField {
+  grid-column: 1 / -1;
+}
+
+.formActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.formActions button {
+  min-width: 92px;
+  min-height: 34px;
+  border: 0;
+  border-radius: 6px;
+  background: #000;
+  color: white;
+  font-weight: 800;
+}
+
+.formActions button[type="button"] {
+  background: #2f66d2;
+}
+
+.formActions span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tableTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.tableTabs button {
+  min-height: 32px;
+  border: 1px solid rgba(31, 27, 24, 0.34);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.54);
+  padding: 5px 12px;
+  color: #2a2420;
+  font-weight: 800;
+}
+
+.tableTabs button.active {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: white;
+}
+
+.primaryTabs {
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(31, 27, 24, 0.24);
+  padding-bottom: 8px;
+}
+
+.primaryTabs button {
+  min-height: 36px;
+  padding-inline: 16px;
+}
+
+.ledgerTableFrame {
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.46);
   overflow: auto;
@@ -312,27 +535,18 @@ fieldset input:not([type="checkbox"]) {
   font-weight: 800;
 }
 
-.groupRow th {
-  top: 0;
-  height: 24px;
-  background: var(--orange);
-  text-align: center;
-}
-
-.groupRow th:nth-child(4),
-.groupRow th:nth-child(5) {
-  background: var(--purple);
-}
-
 .headerRow th {
-  top: 24px;
+  top: 0;
   height: 28px;
   background: #ffd6b3;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
 
-.headerRow th:nth-child(n + 14) {
+.payoutGrid .headerRow th,
+.partyGrid .headerRow th,
+.supplierSourceGrid .headerRow th,
+.purchaseProjectionGrid .headerRow th {
   background: #c2b4df;
 }
 
@@ -344,7 +558,10 @@ fieldset input:not([type="checkbox"]) {
   background: rgba(255, 245, 240, 0.72);
 }
 
-.ledgerGrid tbody td:nth-child(n + 14) {
+.payoutGrid tbody td,
+.partyGrid tbody td,
+.supplierSourceGrid tbody td,
+.purchaseProjectionGrid tbody td {
   background: rgba(255, 228, 199, 0.78);
 }
 
@@ -374,8 +591,12 @@ fieldset input:not([type="checkbox"]) {
   width: 112px;
 }
 
+.rowNoCol {
+  width: 56px;
+}
+
 .skuCol {
-  width: 210px;
+  width: 190px;
 }
 
 .typeCol {
@@ -387,7 +608,7 @@ fieldset input:not([type="checkbox"]) {
 }
 
 .nameCol {
-  width: 720px;
+  width: 420px;
 }
 
 .qtyCol {
@@ -399,7 +620,7 @@ fieldset input:not([type="checkbox"]) {
 }
 
 .sourceCol {
-  width: 150px;
+  width: 140px;
 }
 
 .verifyCol {
@@ -411,7 +632,19 @@ fieldset input:not([type="checkbox"]) {
 }
 
 .addressCol {
-  width: 420px;
+  width: 360px;
+}
+
+.noteCol {
+  width: 190px;
+}
+
+.weightCol {
+  width: 90px;
+}
+
+.sizeCol {
+  width: 70px;
 }
 
 @media (max-width: 900px) {
