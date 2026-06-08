@@ -111,6 +111,7 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
     useState(supplierSourceSample);
   const [supplierSourceView, setSupplierSourceView] =
     useState<(typeof supplierSourceViews)[number]>("要約");
+  const [supplierModalOpen, setSupplierModalOpen] = useState(false);
   const [supplierSubmitStatus, setSupplierSubmitStatus] = useState("");
 
   useEffect(() => {
@@ -212,6 +213,7 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
       }
 
       setSupplierSubmitStatus("保存しました");
+      setSupplierModalOpen(false);
     } catch {
       setSupplierSubmitStatus("WordPressに接続できませんでした");
     }
@@ -311,16 +313,40 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
               <h1>{activeTab}</h1>
               <p>{tabDescriptions[activeTab]}</p>
             </div>
-            <div className="resultCount">該当 {resultCount} 件</div>
+            <div className="ledgerTopActions">
+              {activeTab === "仕入れ管理" ? (
+                <button type="button" onClick={() => setSupplierModalOpen(true)}>
+                  新規仕入れ
+                </button>
+              ) : null}
+              <div className="resultCount">該当 {resultCount} 件</div>
+            </div>
           </section>
 
           {activeTab === "仕入れ管理" ? (
             <div className="ledgerSections">
-              <section className="ledgerSection">
-                <div className="sectionTitle">
-                  <h2>入力</h2>
-                  <span>WordPress REST API に保存</span>
-                </div>
+              {supplierModalOpen ? (
+                <div className="modalOverlay" role="presentation">
+                  <section
+                    className="supplierModal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="supplier-modal-title"
+                  >
+                    <div className="modalHeader">
+                      <div>
+                        <h2 id="supplier-modal-title">新規仕入れ</h2>
+                        <span>仕入れ管理テーブルへ保存</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="modalCloseButton"
+                        onClick={() => setSupplierModalOpen(false)}
+                        aria-label="閉じる"
+                      >
+                        ×
+                      </button>
+                    </div>
                 <form className="supplierForm" onSubmit={submitSupplierSource}>
                   <fieldset className="formSection">
                     <legend>必須入力</legend>
@@ -554,7 +580,9 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
                     <span>{supplierSubmitStatus}</span>
                   </div>
                 </form>
-              </section>
+                  </section>
+                </div>
+              ) : null}
 
               <section className="ledgerSection">
                 <div className="sectionTitle">

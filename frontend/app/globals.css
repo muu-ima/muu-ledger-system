@@ -278,6 +278,24 @@ fieldset input:not([type="checkbox"]) {
   font-size: 14px;
 }
 
+.ledgerTopActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.ledgerTopActions button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 6px;
+  background: #000;
+  padding: 6px 14px;
+  color: white;
+  font-weight: 800;
+}
+
 .ledgerSections {
   flex: 1;
   min-height: 0;
@@ -307,6 +325,61 @@ fieldset input:not([type="checkbox"]) {
 .sectionTitle span {
   color: var(--muted);
   font-size: 12px;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: rgba(31, 27, 24, 0.36);
+  padding: 72px 24px 24px;
+  overflow: auto;
+}
+
+.supplierModal {
+  width: min(1180px, 100%);
+  max-height: calc(100vh - 96px);
+  border: 1px solid var(--line);
+  background: #f6ece7;
+  box-shadow: 0 18px 48px rgba(31, 27, 24, 0.28);
+  overflow: auto;
+}
+
+.modalHeader {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(246, 236, 231, 0.96);
+  padding: 14px 16px;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.modalHeader span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.modalCloseButton {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(31, 27, 24, 0.28);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.72);
+  color: #1d1a18;
+  font-size: 20px;
+  line-height: 1;
 }
 
 .supplierForm {
