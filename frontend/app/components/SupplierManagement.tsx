@@ -1,113 +1,22 @@
 "use client";
 
 import { type FormEvent, useEffect, useState } from "react";
-
-const supplierSourceViews = ["要約", "発送・梱包", "詳細・原票"] as const;
-const supplierDataViews = ["仕入れ元データ", "仕入れ表への反映"] as const;
-
-const supplierSourceSample = {
-  rowNo: "1",
-  sku: "20251125_mizushima_02",
-  orderNo: "25-13888-57021",
-  account: "signpost",
-  soldAt: "12/2",
-  acquiredAt: "12/3",
-  country: "アメリカ",
-  mag: "",
-  saleAmount: "$300.00",
-  purchasePrice: "¥24,980",
-  shippingCost: "¥10,735",
-  points: "",
-  note: "関税・手数料合算",
-  packer: "小栁12/9",
-  shippingSite: "elogi",
-  actualWeight: "307",
-  dimensionalWeight: "728",
-  length: "32.5",
-  width: "28",
-  height: "4",
-  itemName: "Canon PowerShot SX620 HS Black 20.2MP 25x Zoom Compact digital camera Tested",
-  supplier: "メルカリショップ",
-  firstMailAt: "12/2",
-  receiptPrintedAt: "",
-};
-
-type SupplierSource = typeof supplierSourceSample;
-
-function formatYen(value: number) {
-  if (!value) return "";
-  return `¥${value.toLocaleString("ja-JP")}`;
-}
-
-function formatMoneyAmount(value: unknown, currency: unknown) {
-  const amount = Number(value || 0);
-  if (!amount) return "";
-
-  const currencyLabel = String(currency || "USD");
-  if (currencyLabel === "JPY") return formatYen(amount);
-
-  return `${currencyLabel} ${amount.toLocaleString("ja-JP", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
-function normalizeSampleDate(value: string) {
-  if (!value) return "";
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-
-  const match = value.match(/^(\d{1,2})[/.](\d{1,2})$/);
-  if (!match) return value;
-
-  const [, month, day] = match;
-  return `2025-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-}
-
-function wordpressRestUrl(baseUrl: string, route: string) {
-  return `${baseUrl.replace(/\/$/, "")}/index.php?rest_route=${route}`;
-}
-
-function supplierSourceFromApi(row: Record<string, unknown>): SupplierSource {
-  return {
-    rowNo: String(row.source_row_no || row.id || ""),
-    sku: String(row.sku || ""),
-    orderNo: String(row.order_no || ""),
-    account: String(row.account_name || ""),
-    soldAt: String(row.sold_at_raw || row.sold_at || ""),
-    acquiredAt: String(row.acquired_at_raw || row.acquired_at || ""),
-    country: String(row.buyer_country || ""),
-    mag: String(row.mag || ""),
-    saleAmount: formatMoneyAmount(row.sale_amount, row.sale_currency),
-    purchasePrice: formatYen(Number(row.purchase_price_jpy || 0)),
-    shippingCost: formatYen(Number(row.shipping_cost_jpy || 0)),
-    points: String(row.points || ""),
-    note: String(row.notes || ""),
-    packer: String(row.packer || ""),
-    shippingSite: String(row.shipping_site || ""),
-    actualWeight: String(row.actual_weight_g || ""),
-    dimensionalWeight: String(row.dimensional_weight_g || ""),
-    length: String(row.package_length_cm || ""),
-    width: String(row.package_width_cm || ""),
-    height: String(row.package_height_cm || ""),
-    itemName: String(row.item_name || ""),
-    supplier: String(row.supplier_name_raw || ""),
-    firstMailAt: String(row.first_mail_at_raw || ""),
-    receiptPrintedAt: String(row.receipt_printed_at_raw || ""),
-  };
-}
-
-function upsertSupplierSource(
-  rows: SupplierSource[],
-  nextRow: SupplierSource,
-): SupplierSource[] {
-  const key = nextRow.sku.trim();
-  if (!key) return rows;
-
-  const existingIndex = rows.findIndex((row) => row.sku.trim() === key);
-  if (existingIndex === -1) return [nextRow, ...rows];
-
-  return rows.map((row, index) => (index === existingIndex ? nextRow : row));
-}
+import {
+  normalizeSampleDate,
+  supplierSourceFromApi,
+  supplierSourceSample,
+  upsertSupplierSource,
+  wordpressRestUrl,
+} from "@/lib/supplierSources";
+import {
+  supplierDataViews,
+  supplierSourceViews,
+  type SupplierDataView,
+  type SupplierSource,
+  type SupplierSourceApiRow,
+  type SupplierSourceSubmitPayload,
+  type SupplierSourceView,
+} from "@/types/supplier";
 
 export default function SupplierManagement() {
   const [supplierForm, setSupplierForm] = useState(supplierSourceSample);
@@ -115,9 +24,9 @@ export default function SupplierManagement() {
     supplierSourceSample,
   ]);
   const [supplierSourceView, setSupplierSourceView] =
-    useState<(typeof supplierSourceViews)[number]>("要約");
+    useState<SupplierSourceView>("要約");
   const [supplierDataView, setSupplierDataView] =
-    useState<(typeof supplierDataViews)[number]>("仕入れ元データ");
+    useState<SupplierDataView>("仕入れ元データ");
   const [supplierModalOpen, setSupplierModalOpen] = useState(false);
   const [supplierSubmitStatus, setSupplierSubmitStatus] = useState("");
 
@@ -133,7 +42,7 @@ export default function SupplierManagement() {
         );
         if (!response.ok) return;
 
-        const data = (await response.json()) as Record<string, unknown>[];
+        const data = (await response.json()) as SupplierSourceApiRow[];
         if (!cancelled && data.length) {
           setSupplierSources(data.map(supplierSourceFromApi));
         }
@@ -164,7 +73,7 @@ export default function SupplierManagement() {
     setSupplierSubmitStatus("保存中");
 
     const baseUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
-    const payload = {
+    const payload: SupplierSourceSubmitPayload = {
       source_row_no: Number(supplierForm.rowNo) || 0,
       sku: supplierForm.sku,
       order_no: supplierForm.orderNo,
@@ -214,7 +123,7 @@ export default function SupplierManagement() {
         return;
       }
 
-      const data = (await response.json()) as Record<string, unknown>;
+      const data = (await response.json()) as SupplierSourceApiRow;
       const savedSource = supplierSourceFromApi(data);
       setSupplierSources((current) => upsertSupplierSource(current, savedSource));
       setSupplierSubmitStatus("保存しました");
