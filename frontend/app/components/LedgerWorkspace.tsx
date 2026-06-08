@@ -11,6 +11,8 @@ const tabs = [
   "ペイメント",
 ];
 
+const supplierSourceViews = ["要約", "発送・梱包", "詳細・原票"] as const;
+
 const tabDescriptions: Record<string, string> = {
   古物台帳: "受入れ、払出し、相手方・確認に分けた台帳ビュー",
   仕入れ管理: "仕入れ元データと仕入れ表を統合した管理ビュー",
@@ -107,6 +109,8 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
   const [supplierForm, setSupplierForm] = useState(supplierSourceSample);
   const [reflectedSupplierSource, setReflectedSupplierSource] =
     useState(supplierSourceSample);
+  const [supplierSourceView, setSupplierSourceView] =
+    useState<(typeof supplierSourceViews)[number]>("要約");
   const [supplierSubmitStatus, setSupplierSubmitStatus] = useState("");
 
   useEffect(() => {
@@ -318,172 +322,230 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
                   <span>WordPress REST API に保存</span>
                 </div>
                 <form className="supplierForm" onSubmit={submitSupplierSource}>
-                  <label>
-                    <span>SKU</span>
-                    <input
-                      value={supplierForm.sku}
-                      onChange={(event) => updateSupplierForm("sku", event.target.value)}
-                    />
-                  </label>
-                  <label>
-                    <span>Order no.</span>
-                    <input
-                      value={supplierForm.orderNo}
-                      onChange={(event) =>
-                        updateSupplierForm("orderNo", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>アカウント</span>
-                    <input
-                      value={supplierForm.account}
-                      onChange={(event) =>
-                        updateSupplierForm("account", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>販売日</span>
-                    <input
-                      value={supplierForm.soldAt}
-                      onChange={(event) => updateSupplierForm("soldAt", event.target.value)}
-                    />
-                  </label>
-                  <label>
-                    <span>仕入日</span>
-                    <input
-                      value={supplierForm.acquiredAt}
-                      onChange={(event) =>
-                        updateSupplierForm("acquiredAt", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>国</span>
-                    <input
-                      value={supplierForm.country}
-                      onChange={(event) =>
-                        updateSupplierForm("country", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>販売額</span>
-                    <input
-                      value={supplierForm.saleAmount}
-                      onChange={(event) =>
-                        updateSupplierForm("saleAmount", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>仕入れ</span>
-                    <input
-                      value={supplierForm.purchasePrice}
-                      onChange={(event) =>
-                        updateSupplierForm("purchasePrice", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>送料</span>
-                    <input
-                      value={supplierForm.shippingCost}
-                      onChange={(event) =>
-                        updateSupplierForm("shippingCost", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>梱包者</span>
-                    <input
-                      value={supplierForm.packer}
-                      onChange={(event) => updateSupplierForm("packer", event.target.value)}
-                    />
-                  </label>
-                  <label>
-                    <span>発送サイト</span>
-                    <input
-                      value={supplierForm.shippingSite}
-                      onChange={(event) =>
-                        updateSupplierForm("shippingSite", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>実重g</span>
-                    <input
-                      value={supplierForm.actualWeight}
-                      onChange={(event) =>
-                        updateSupplierForm("actualWeight", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>体積重g</span>
-                    <input
-                      value={supplierForm.dimensionalWeight}
-                      onChange={(event) =>
-                        updateSupplierForm("dimensionalWeight", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>縦cm</span>
-                    <input
-                      value={supplierForm.length}
-                      onChange={(event) => updateSupplierForm("length", event.target.value)}
-                    />
-                  </label>
-                  <label>
-                    <span>横cm</span>
-                    <input
-                      value={supplierForm.width}
-                      onChange={(event) => updateSupplierForm("width", event.target.value)}
-                    />
-                  </label>
-                  <label>
-                    <span>高さcm</span>
-                    <input
-                      value={supplierForm.height}
-                      onChange={(event) => updateSupplierForm("height", event.target.value)}
-                    />
-                  </label>
-                  <label className="wideField">
-                    <span>商品名</span>
-                    <input
-                      value={supplierForm.itemName}
-                      onChange={(event) =>
-                        updateSupplierForm("itemName", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>仕入れ先</span>
-                    <input
-                      value={supplierForm.supplier}
-                      onChange={(event) =>
-                        updateSupplierForm("supplier", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>初回メール</span>
-                    <input
-                      value={supplierForm.firstMailAt}
-                      onChange={(event) =>
-                        updateSupplierForm("firstMailAt", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label className="wideField">
-                    <span>備考</span>
-                    <textarea
-                      value={supplierForm.note}
-                      onChange={(event) => updateSupplierForm("note", event.target.value)}
-                    />
-                  </label>
+                  <fieldset className="formSection">
+                    <legend>必須入力</legend>
+                    <div className="formSectionGrid">
+                      <label>
+                        <span>SKU</span>
+                        <input
+                          value={supplierForm.sku}
+                          onChange={(event) =>
+                            updateSupplierForm("sku", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>Order no.</span>
+                        <input
+                          value={supplierForm.orderNo}
+                          onChange={(event) =>
+                            updateSupplierForm("orderNo", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>仕入日</span>
+                        <input
+                          value={supplierForm.acquiredAt}
+                          onChange={(event) =>
+                            updateSupplierForm("acquiredAt", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>仕入れ先</span>
+                        <input
+                          value={supplierForm.supplier}
+                          onChange={(event) =>
+                            updateSupplierForm("supplier", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>仕入れ</span>
+                        <input
+                          value={supplierForm.purchasePrice}
+                          onChange={(event) =>
+                            updateSupplierForm("purchasePrice", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label className="wideField">
+                        <span>商品名</span>
+                        <input
+                          value={supplierForm.itemName}
+                          onChange={(event) =>
+                            updateSupplierForm("itemName", event.target.value)
+                          }
+                        />
+                      </label>
+                    </div>
+                  </fieldset>
+
+                  <fieldset className="formSection">
+                    <legend>よく使う入力</legend>
+                    <div className="formSectionGrid">
+                      <label>
+                        <span>アカウント</span>
+                        <input
+                          value={supplierForm.account}
+                          onChange={(event) =>
+                            updateSupplierForm("account", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>販売日</span>
+                        <input
+                          value={supplierForm.soldAt}
+                          onChange={(event) =>
+                            updateSupplierForm("soldAt", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>国</span>
+                        <input
+                          value={supplierForm.country}
+                          onChange={(event) =>
+                            updateSupplierForm("country", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>販売額</span>
+                        <input
+                          value={supplierForm.saleAmount}
+                          onChange={(event) =>
+                            updateSupplierForm("saleAmount", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>送料</span>
+                        <input
+                          value={supplierForm.shippingCost}
+                          onChange={(event) =>
+                            updateSupplierForm("shippingCost", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>発送サイト</span>
+                        <input
+                          value={supplierForm.shippingSite}
+                          onChange={(event) =>
+                            updateSupplierForm("shippingSite", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>梱包者</span>
+                        <input
+                          value={supplierForm.packer}
+                          onChange={(event) =>
+                            updateSupplierForm("packer", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label className="wideField">
+                        <span>備考</span>
+                        <textarea
+                          value={supplierForm.note}
+                          onChange={(event) =>
+                            updateSupplierForm("note", event.target.value)
+                          }
+                        />
+                      </label>
+                    </div>
+                  </fieldset>
+
+                  <fieldset className="formSection">
+                    <legend>詳細入力</legend>
+                    <div className="formSectionGrid">
+                      <label>
+                        <span>MAG</span>
+                        <input
+                          value={supplierForm.mag}
+                          onChange={(event) =>
+                            updateSupplierForm("mag", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>ポイント加算</span>
+                        <input
+                          value={supplierForm.points}
+                          onChange={(event) =>
+                            updateSupplierForm("points", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>実重g</span>
+                        <input
+                          value={supplierForm.actualWeight}
+                          onChange={(event) =>
+                            updateSupplierForm("actualWeight", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>体積重g</span>
+                        <input
+                          value={supplierForm.dimensionalWeight}
+                          onChange={(event) =>
+                            updateSupplierForm("dimensionalWeight", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>縦cm</span>
+                        <input
+                          value={supplierForm.length}
+                          onChange={(event) =>
+                            updateSupplierForm("length", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>横cm</span>
+                        <input
+                          value={supplierForm.width}
+                          onChange={(event) =>
+                            updateSupplierForm("width", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>高さcm</span>
+                        <input
+                          value={supplierForm.height}
+                          onChange={(event) =>
+                            updateSupplierForm("height", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>初回メール</span>
+                        <input
+                          value={supplierForm.firstMailAt}
+                          onChange={(event) =>
+                            updateSupplierForm("firstMailAt", event.target.value)
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>領収書印刷日</span>
+                        <input
+                          value={supplierForm.receiptPrintedAt}
+                          onChange={(event) =>
+                            updateSupplierForm("receiptPrintedAt", event.target.value)
+                          }
+                        />
+                      </label>
+                    </div>
+                  </fieldset>
                   <div className="formActions">
                     <button type="button" onClick={reflectSupplierSource}>
                       仕入元データへ反映
@@ -499,93 +561,159 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
                   <h2>仕入れ元データ</h2>
                   <span>入力フォームから反映された内容</span>
                 </div>
+                <div className="tableTabs" role="tablist" aria-label="仕入れ元データ表示">
+                  {supplierSourceViews.map((view) => (
+                    <button
+                      key={view}
+                      type="button"
+                      role="tab"
+                      aria-selected={supplierSourceView === view}
+                      className={supplierSourceView === view ? "active" : ""}
+                      onClick={() => setSupplierSourceView(view)}
+                    >
+                      {view}
+                    </button>
+                  ))}
+                </div>
                 <div className="ledgerTableFrame">
-                  <table className="ledgerGrid supplierSourceGrid">
-                    <colgroup>
-                      <col className="rowNoCol" />
-                      <col className="skuCol" />
-                      <col className="verifyCol" />
-                      <col className="sourceCol" />
-                      <col className="dateCol" />
-                      <col className="dateCol" />
-                      <col className="buyerCol" />
-                      <col className="typeCol" />
-                      <col className="moneyCol" />
-                      <col className="moneyCol" />
-                      <col className="moneyCol" />
-                      <col className="noteCol" />
-                      <col className="sourceCol" />
-                      <col className="sourceCol" />
-                      <col className="weightCol" />
-                      <col className="weightCol" />
-                      <col className="sizeCol" />
-                      <col className="sizeCol" />
-                      <col className="sizeCol" />
-                      <col className="nameCol" />
-                      <col className="sourceCol" />
-                      <col className="dateCol" />
-                    </colgroup>
-                    <thead>
-                      <tr className="headerRow">
-                        <th>No</th>
-                        <th>SKU</th>
-                        <th>Order no.</th>
-                        <th>アカウント</th>
-                        <th>販売日</th>
-                        <th>仕入日</th>
-                        <th>国</th>
-                        <th>MAG</th>
-                        <th>販売額</th>
-                        <th>仕入れ</th>
-                        <th>送料</th>
-                        <th>備考</th>
-                        <th>梱包者</th>
-                        <th>発送サイト</th>
-                        <th>実重g</th>
-                        <th>体積重g</th>
-                        <th>cm</th>
-                        <th>cm</th>
-                        <th>cm</th>
-                        <th>商品名</th>
-                        <th>仕入れ先</th>
-                        <th>初回メール</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>{reflectedSupplierSource.rowNo}</td>
-                        <td className="selectedCell">{reflectedSupplierSource.sku}</td>
-                        <td>{reflectedSupplierSource.orderNo}</td>
-                        <td>{reflectedSupplierSource.account}</td>
-                        <td>{reflectedSupplierSource.soldAt}</td>
-                        <td>{reflectedSupplierSource.acquiredAt}</td>
-                        <td>{reflectedSupplierSource.country}</td>
-                        <td>{reflectedSupplierSource.mag}</td>
-                        <td className="numberCell">{reflectedSupplierSource.saleAmount}</td>
-                        <td className="numberCell">
-                          {reflectedSupplierSource.purchasePrice}
-                        </td>
-                        <td className="numberCell">
-                          {reflectedSupplierSource.shippingCost}
-                        </td>
-                        <td>{reflectedSupplierSource.note}</td>
-                        <td>{reflectedSupplierSource.packer}</td>
-                        <td>{reflectedSupplierSource.shippingSite}</td>
-                        <td className="numberCell">
-                          {reflectedSupplierSource.actualWeight}
-                        </td>
-                        <td className="numberCell">
-                          {reflectedSupplierSource.dimensionalWeight}
-                        </td>
-                        <td className="numberCell">{reflectedSupplierSource.length}</td>
-                        <td className="numberCell">{reflectedSupplierSource.width}</td>
-                        <td className="numberCell">{reflectedSupplierSource.height}</td>
-                        <td className="nameCell">{reflectedSupplierSource.itemName}</td>
-                        <td>{reflectedSupplierSource.supplier}</td>
-                        <td>{reflectedSupplierSource.firstMailAt}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  {supplierSourceView === "要約" ? (
+                    <table className="ledgerGrid supplierSourceGrid">
+                      <colgroup>
+                        <col className="rowNoCol" />
+                        <col className="skuCol" />
+                        <col className="verifyCol" />
+                        <col className="dateCol" />
+                        <col className="sourceCol" />
+                        <col className="moneyCol" />
+                        <col className="nameCol" />
+                        <col className="dateCol" />
+                        <col className="moneyCol" />
+                        <col className="moneyCol" />
+                      </colgroup>
+                      <thead>
+                        <tr className="headerRow">
+                          <th>No</th>
+                          <th>SKU</th>
+                          <th>Order no.</th>
+                          <th>仕入日</th>
+                          <th>仕入れ先</th>
+                          <th>仕入れ</th>
+                          <th>商品名</th>
+                          <th>販売日</th>
+                          <th>販売額</th>
+                          <th>送料</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>{reflectedSupplierSource.rowNo}</td>
+                          <td className="selectedCell">{reflectedSupplierSource.sku}</td>
+                          <td>{reflectedSupplierSource.orderNo}</td>
+                          <td>{reflectedSupplierSource.acquiredAt}</td>
+                          <td>{reflectedSupplierSource.supplier}</td>
+                          <td className="numberCell">
+                            {reflectedSupplierSource.purchasePrice}
+                          </td>
+                          <td className="nameCell">{reflectedSupplierSource.itemName}</td>
+                          <td>{reflectedSupplierSource.soldAt}</td>
+                          <td className="numberCell">
+                            {reflectedSupplierSource.saleAmount}
+                          </td>
+                          <td className="numberCell">
+                            {reflectedSupplierSource.shippingCost}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  ) : null}
+
+                  {supplierSourceView === "発送・梱包" ? (
+                    <table className="ledgerGrid supplierSourceGrid">
+                      <colgroup>
+                        <col className="skuCol" />
+                        <col className="sourceCol" />
+                        <col className="sourceCol" />
+                        <col className="weightCol" />
+                        <col className="weightCol" />
+                        <col className="sizeCol" />
+                        <col className="sizeCol" />
+                        <col className="sizeCol" />
+                        <col className="dateCol" />
+                        <col className="dateCol" />
+                      </colgroup>
+                      <thead>
+                        <tr className="headerRow">
+                          <th>SKU</th>
+                          <th>発送サイト</th>
+                          <th>梱包者</th>
+                          <th>実重g</th>
+                          <th>体積重g</th>
+                          <th>縦cm</th>
+                          <th>横cm</th>
+                          <th>高さcm</th>
+                          <th>初回メール</th>
+                          <th>領収書印刷日</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="selectedCell">{reflectedSupplierSource.sku}</td>
+                          <td>{reflectedSupplierSource.shippingSite}</td>
+                          <td>{reflectedSupplierSource.packer}</td>
+                          <td className="numberCell">
+                            {reflectedSupplierSource.actualWeight}
+                          </td>
+                          <td className="numberCell">
+                            {reflectedSupplierSource.dimensionalWeight}
+                          </td>
+                          <td className="numberCell">{reflectedSupplierSource.length}</td>
+                          <td className="numberCell">{reflectedSupplierSource.width}</td>
+                          <td className="numberCell">{reflectedSupplierSource.height}</td>
+                          <td>{reflectedSupplierSource.firstMailAt}</td>
+                          <td>{reflectedSupplierSource.receiptPrintedAt}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  ) : null}
+
+                  {supplierSourceView === "詳細・原票" ? (
+                    <table className="ledgerGrid supplierSourceGrid">
+                      <colgroup>
+                        <col className="rowNoCol" />
+                        <col className="skuCol" />
+                        <col className="sourceCol" />
+                        <col className="buyerCol" />
+                        <col className="typeCol" />
+                        <col className="moneyCol" />
+                        <col className="noteCol" />
+                        <col className="noteCol" />
+                      </colgroup>
+                      <thead>
+                        <tr className="headerRow">
+                          <th>No</th>
+                          <th>SKU</th>
+                          <th>アカウント</th>
+                          <th>国</th>
+                          <th>MAG</th>
+                          <th>ポイント</th>
+                          <th>備考</th>
+                          <th>商品名</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>{reflectedSupplierSource.rowNo}</td>
+                          <td className="selectedCell">{reflectedSupplierSource.sku}</td>
+                          <td>{reflectedSupplierSource.account}</td>
+                          <td>{reflectedSupplierSource.country}</td>
+                          <td>{reflectedSupplierSource.mag}</td>
+                          <td className="numberCell">{reflectedSupplierSource.points}</td>
+                          <td>{reflectedSupplierSource.note}</td>
+                          <td className="nameCell">{reflectedSupplierSource.itemName}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  ) : null}
                 </div>
               </section>
 

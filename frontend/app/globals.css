@@ -310,12 +310,31 @@ fieldset input:not([type="checkbox"]) {
 }
 
 .supplierForm {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.52);
   padding: 12px;
+}
+
+.formSection {
+  margin: 0;
+  border: 1px solid rgba(31, 27, 24, 0.22);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.formSection legend {
+  padding: 0 6px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.formSectionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
 }
 
 .supplierForm label {
@@ -375,6 +394,29 @@ fieldset input:not([type="checkbox"]) {
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
+}
+
+.tableTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.tableTabs button {
+  min-height: 32px;
+  border: 1px solid rgba(31, 27, 24, 0.34);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.54);
+  padding: 5px 12px;
+  color: #2a2420;
+  font-weight: 800;
+}
+
+.tableTabs button.active {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: white;
 }
 
 .ledgerTableFrame {
