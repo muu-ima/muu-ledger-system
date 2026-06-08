@@ -76,9 +76,24 @@ const supplierSourceSample = {
   receiptPrintedAt: "",
 };
 
+type SupplierSource = typeof supplierSourceSample;
+
 function formatYen(value: number) {
   if (!value) return "";
   return `¥${value.toLocaleString("ja-JP")}`;
+}
+
+function formatMoneyAmount(value: unknown, currency: unknown) {
+  const amount = Number(value || 0);
+  if (!amount) return "";
+
+  const currencyLabel = String(currency || "USD");
+  if (currencyLabel === "JPY") return formatYen(amount);
+
+  return `${currencyLabel} ${amount.toLocaleString("ja-JP", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 function saleValue(item: LedgerItem) {
@@ -102,13 +117,56 @@ function wordpressRestUrl(baseUrl: string, route: string) {
   return `${baseUrl.replace(/\/$/, "")}/index.php?rest_route=${route}`;
 }
 
+function supplierSourceFromApi(row: Record<string, unknown>): SupplierSource {
+  return {
+    rowNo: String(row.source_row_no || row.id || ""),
+    sku: String(row.sku || ""),
+    orderNo: String(row.order_no || ""),
+    account: String(row.account_name || ""),
+    soldAt: String(row.sold_at_raw || row.sold_at || ""),
+    acquiredAt: String(row.acquired_at_raw || row.acquired_at || ""),
+    country: String(row.buyer_country || ""),
+    mag: String(row.mag || ""),
+    saleAmount: formatMoneyAmount(row.sale_amount, row.sale_currency),
+    purchasePrice: formatYen(Number(row.purchase_price_jpy || 0)),
+    shippingCost: formatYen(Number(row.shipping_cost_jpy || 0)),
+    points: String(row.points || ""),
+    note: String(row.notes || ""),
+    packer: String(row.packer || ""),
+    shippingSite: String(row.shipping_site || ""),
+    actualWeight: String(row.actual_weight_g || ""),
+    dimensionalWeight: String(row.dimensional_weight_g || ""),
+    length: String(row.package_length_cm || ""),
+    width: String(row.package_width_cm || ""),
+    height: String(row.package_height_cm || ""),
+    itemName: String(row.item_name || ""),
+    supplier: String(row.supplier_name_raw || ""),
+    firstMailAt: String(row.first_mail_at_raw || ""),
+    receiptPrintedAt: String(row.receipt_printed_at_raw || ""),
+  };
+}
+
+function upsertSupplierSource(
+  rows: SupplierSource[],
+  nextRow: SupplierSource,
+): SupplierSource[] {
+  const key = nextRow.sku.trim();
+  if (!key) return rows;
+
+  const existingIndex = rows.findIndex((row) => row.sku.trim() === key);
+  if (existingIndex === -1) return [nextRow, ...rows];
+
+  return rows.map((row, index) => (index === existingIndex ? nextRow : row));
+}
+
 export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState("古物台帳");
   const [supplierForm, setSupplierForm] = useState(supplierSourceSample);
-  const [reflectedSupplierSource, setReflectedSupplierSource] =
-    useState(supplierSourceSample);
+  const [supplierSources, setSupplierSources] = useState<SupplierSource[]>([
+    supplierSourceSample,
+  ]);
   const [supplierSourceView, setSupplierSourceView] =
     useState<(typeof supplierSourceViews)[number]>("要約");
   const [supplierModalOpen, setSupplierModalOpen] = useState(false);
@@ -122,6 +180,35 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
   useEffect(() => {
     window.localStorage.setItem("kobutsu:sidebar-open", sidebarOpen ? "1" : "0");
   }, [sidebarOpen]);
+
+  useEffect(() => {
+    const baseUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
+    let cancelled = false;
+
+    async function loadSupplierSources() {
+      try {
+        const response = await fetch(
+          wordpressRestUrl(baseUrl, "/kobutsu/v1/supplier-sources"),
+          { credentials: "include" },
+        );
+        if (!response.ok) return;
+
+        const data = (await response.json()) as Record<string, unknown>[];
+        if (!cancelled && data.length) {
+          const rows = data.map(supplierSourceFromApi);
+          setSupplierSources(rows);
+        }
+      } catch {
+        // Use the bundled sample row when WordPress is unavailable.
+      }
+    }
+
+    loadSupplierSources();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const visibleItems = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -141,7 +228,8 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
     );
   }, [items, query]);
 
-  const resultCount = activeTab === "仕入れ管理" ? 1 : visibleItems.length;
+  const resultCount =
+    activeTab === "仕入れ管理" ? supplierSources.length : visibleItems.length;
 
   function updateSupplierForm(
     field: keyof typeof supplierSourceSample,
@@ -152,13 +240,12 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
   }
 
   function reflectSupplierSource() {
-    setReflectedSupplierSource(supplierForm);
+    setSupplierSources((current) => upsertSupplierSource(current, supplierForm));
     setSupplierSubmitStatus("仕入元データへ反映しました");
   }
 
   async function submitSupplierSource(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setReflectedSupplierSource(supplierForm);
     setSupplierSubmitStatus("保存中");
 
     const baseUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
@@ -212,6 +299,9 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
         return;
       }
 
+      const data = (await response.json()) as Record<string, unknown>;
+      const savedSource = supplierSourceFromApi(data);
+      setSupplierSources((current) => upsertSupplierSource(current, savedSource));
       setSupplierSubmitStatus("保存しました");
       setSupplierModalOpen(false);
     } catch {
@@ -633,24 +723,20 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td>{reflectedSupplierSource.rowNo}</td>
-                          <td className="selectedCell">{reflectedSupplierSource.sku}</td>
-                          <td>{reflectedSupplierSource.orderNo}</td>
-                          <td>{reflectedSupplierSource.acquiredAt}</td>
-                          <td>{reflectedSupplierSource.supplier}</td>
-                          <td className="numberCell">
-                            {reflectedSupplierSource.purchasePrice}
-                          </td>
-                          <td className="nameCell">{reflectedSupplierSource.itemName}</td>
-                          <td>{reflectedSupplierSource.soldAt}</td>
-                          <td className="numberCell">
-                            {reflectedSupplierSource.saleAmount}
-                          </td>
-                          <td className="numberCell">
-                            {reflectedSupplierSource.shippingCost}
-                          </td>
-                        </tr>
+                        {supplierSources.map((source) => (
+                          <tr key={source.sku}>
+                            <td>{source.rowNo}</td>
+                            <td className="selectedCell">{source.sku}</td>
+                            <td>{source.orderNo}</td>
+                            <td>{source.acquiredAt}</td>
+                            <td>{source.supplier}</td>
+                            <td className="numberCell">{source.purchasePrice}</td>
+                            <td className="nameCell">{source.itemName}</td>
+                            <td>{source.soldAt}</td>
+                            <td className="numberCell">{source.saleAmount}</td>
+                            <td className="numberCell">{source.shippingCost}</td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   ) : null}
@@ -684,22 +770,20 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td className="selectedCell">{reflectedSupplierSource.sku}</td>
-                          <td>{reflectedSupplierSource.shippingSite}</td>
-                          <td>{reflectedSupplierSource.packer}</td>
-                          <td className="numberCell">
-                            {reflectedSupplierSource.actualWeight}
-                          </td>
-                          <td className="numberCell">
-                            {reflectedSupplierSource.dimensionalWeight}
-                          </td>
-                          <td className="numberCell">{reflectedSupplierSource.length}</td>
-                          <td className="numberCell">{reflectedSupplierSource.width}</td>
-                          <td className="numberCell">{reflectedSupplierSource.height}</td>
-                          <td>{reflectedSupplierSource.firstMailAt}</td>
-                          <td>{reflectedSupplierSource.receiptPrintedAt}</td>
-                        </tr>
+                        {supplierSources.map((source) => (
+                          <tr key={source.sku}>
+                            <td className="selectedCell">{source.sku}</td>
+                            <td>{source.shippingSite}</td>
+                            <td>{source.packer}</td>
+                            <td className="numberCell">{source.actualWeight}</td>
+                            <td className="numberCell">{source.dimensionalWeight}</td>
+                            <td className="numberCell">{source.length}</td>
+                            <td className="numberCell">{source.width}</td>
+                            <td className="numberCell">{source.height}</td>
+                            <td>{source.firstMailAt}</td>
+                            <td>{source.receiptPrintedAt}</td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   ) : null}
@@ -729,16 +813,18 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td>{reflectedSupplierSource.rowNo}</td>
-                          <td className="selectedCell">{reflectedSupplierSource.sku}</td>
-                          <td>{reflectedSupplierSource.account}</td>
-                          <td>{reflectedSupplierSource.country}</td>
-                          <td>{reflectedSupplierSource.mag}</td>
-                          <td className="numberCell">{reflectedSupplierSource.points}</td>
-                          <td>{reflectedSupplierSource.note}</td>
-                          <td className="nameCell">{reflectedSupplierSource.itemName}</td>
-                        </tr>
+                        {supplierSources.map((source) => (
+                          <tr key={source.sku}>
+                            <td>{source.rowNo}</td>
+                            <td className="selectedCell">{source.sku}</td>
+                            <td>{source.account}</td>
+                            <td>{source.country}</td>
+                            <td>{source.mag}</td>
+                            <td className="numberCell">{source.points}</td>
+                            <td>{source.note}</td>
+                            <td className="nameCell">{source.itemName}</td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   ) : null}
@@ -779,20 +865,20 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td className="selectedCell">{reflectedSupplierSource.sku}</td>
-                        <td>{reflectedSupplierSource.orderNo}</td>
-                        <td>{reflectedSupplierSource.acquiredAt}</td>
-                        <td>{reflectedSupplierSource.supplier}</td>
-                        <td className="numberCell">
-                          {reflectedSupplierSource.purchasePrice}
-                        </td>
-                        <td className="warningCell">未分類</td>
-                        <td className="nameCell">{reflectedSupplierSource.itemName}</td>
-                        <td>{reflectedSupplierSource.soldAt}</td>
-                        <td>ebay</td>
-                        <td className="numberCell">{reflectedSupplierSource.saleAmount}</td>
-                      </tr>
+                      {supplierSources.map((source) => (
+                        <tr key={source.sku}>
+                          <td className="selectedCell">{source.sku}</td>
+                          <td>{source.orderNo}</td>
+                          <td>{source.acquiredAt}</td>
+                          <td>{source.supplier}</td>
+                          <td className="numberCell">{source.purchasePrice}</td>
+                          <td className="warningCell">未分類</td>
+                          <td className="nameCell">{source.itemName}</td>
+                          <td>{source.soldAt}</td>
+                          <td>ebay</td>
+                          <td className="numberCell">{source.saleAmount}</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>

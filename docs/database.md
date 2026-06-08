@@ -14,6 +14,8 @@
 
 仕入れ管理の原票テーブルです。`supplier_master_sample.csv` / 仕入れ元データの列を保持します。古物台帳への反映前データとして独立して保存し、フォームの簡易入力と詳細入力は同じテーブルを使います。
 
+`sku` は一意キーです。同じSKUで登録した場合は新規行を追加せず、既存の仕入れ管理原票を更新します。別行として追加したい場合はSKUを変える必要があります。
+
 主な項目: `sku`, `order_no`, `account_name`, `sold_at`, `acquired_at`, `buyer_country`, `sale_amount`, `sale_currency`, `purchase_price_jpy`, `shipping_cost_jpy`, `packer`, `shipping_site`, `actual_weight_g`, `dimensional_weight_g`, `package_length_cm`, `package_width_cm`, `package_height_cm`, `item_name`, `supplier_name_raw`
 
 ### `wp_kobutsu_items`
@@ -56,7 +58,7 @@ CSV取込履歴です。どのCSVをいつ何行取り込んだか、何行エ�
 
 - `GET /wp-json/kobutsu/v1/schema`: テーブル概要
 - `GET /wp-json/kobutsu/v1/supplier-sources`: 仕入れ管理原票の一覧
-- `POST /wp-json/kobutsu/v1/supplier-sources`: 仕入れ管理原票の登録
+- `POST /wp-json/kobutsu/v1/supplier-sources`: 仕入れ管理原票の登録。同じSKUは更新扱い
 - `GET /wp-json/kobutsu/v1/items`: 商品、仕入、販売を結合した一覧
 - `GET /wp-json/kobutsu/v1/items/{id}`: 1件取得
 - `POST /wp-json/kobutsu/v1/items`: 1件登録
