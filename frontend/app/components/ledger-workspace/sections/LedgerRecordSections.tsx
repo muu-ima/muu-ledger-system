@@ -1,6 +1,6 @@
-import { LedgerIntakeSection } from "@/app/components/ledger-workspace/LedgerIntakeSection";
-import { LedgerPartySection } from "@/app/components/ledger-workspace/LedgerPartySection";
-import { LedgerPayoutSection } from "@/app/components/ledger-workspace/LedgerPayoutSection";
+import { LedgerIntakeSection } from "@/app/components/ledger-workspace/sections/LedgerIntakeSection";
+import { LedgerPartySection } from "@/app/components/ledger-workspace/sections/LedgerPartySection";
+import { LedgerPayoutSection } from "@/app/components/ledger-workspace/sections/LedgerPayoutSection";
 import type { LedgerItem } from "@/types/ledger";
 
 export function LedgerRecordSections({

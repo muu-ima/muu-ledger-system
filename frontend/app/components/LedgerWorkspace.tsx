@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { LedgerRecordSections } from "@/app/components/ledger-workspace/LedgerRecordSections";
-import { LedgerWorkspaceHeader } from "@/app/components/ledger-workspace/LedgerWorkspaceHeader";
-import { LedgerWorkspaceSidebar } from "@/app/components/ledger-workspace/LedgerWorkspaceSidebar";
-import { LedgerWorkspaceTop } from "@/app/components/ledger-workspace/LedgerWorkspaceTop";
+import { LedgerWorkspaceHeader } from "@/app/components/ledger-workspace/layout/LedgerWorkspaceHeader";
+import { LedgerWorkspaceSidebar } from "@/app/components/ledger-workspace/layout/LedgerWorkspaceSidebar";
+import { LedgerWorkspaceTop } from "@/app/components/ledger-workspace/layout/LedgerWorkspaceTop";
 import {
   tabs,
   type WorkspaceTab,
 } from "@/app/components/ledger-workspace/ledgerWorkspaceConfig";
+import { LedgerRecordSections } from "@/app/components/ledger-workspace/sections/LedgerRecordSections";
 import SupplierManagement from "@/app/components/SupplierManagement";
 import type { LedgerItem } from "@/types/ledger";
 
