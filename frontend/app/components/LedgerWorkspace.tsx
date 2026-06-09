@@ -10,9 +10,11 @@ const tabs = [
   "EC販売",
   "為替レート",
   "ペイメント",
-];
+] as const;
 
-const tabDescriptions: Record<string, string> = {
+type WorkspaceTab = (typeof tabs)[number];
+
+const tabDescriptions: Record<WorkspaceTab, string> = {
   古物台帳: "受入れ、払出し、相手方・確認に分けた台帳ビュー",
   仕入れ管理: "仕入れ元データと仕入れ表を統合した管理ビュー",
   EC販売: "販売、精算、送料、損益を確認するビュー",
@@ -62,7 +64,7 @@ function saleValue(item: LedgerItem) {
 export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [query, setQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("古物台帳");
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>("古物台帳");
 
   useEffect(() => {
     const saved = window.localStorage.getItem("kobutsu:sidebar-open");

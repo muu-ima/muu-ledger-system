@@ -1,5 +1,32 @@
 import type { LedgerItem } from "@/types/ledger";
 
+type ApiValue = string | number | null | undefined;
+
+type LedgerItemApiRow = {
+  id?: ApiValue;
+  management_no?: ApiValue;
+  managementNo?: ApiValue;
+  category?: ApiValue;
+  item_name?: ApiValue;
+  itemName?: ApiValue;
+  description?: ApiValue;
+  acquired_at?: ApiValue;
+  acquiredAt?: ApiValue;
+  acquired_from?: ApiValue;
+  acquiredFrom?: ApiValue;
+  seller_identification?: ApiValue;
+  sellerIdentification?: ApiValue;
+  purchase_price?: ApiValue;
+  purchasePrice?: ApiValue;
+  sold_at?: ApiValue;
+  soldAt?: ApiValue;
+  sold_to?: ApiValue;
+  soldTo?: ApiValue;
+  sale_price?: ApiValue;
+  salePrice?: ApiValue;
+  status?: ApiValue;
+};
+
 const fallbackItems: LedgerItem[] = [
   {
     id: 1,
@@ -18,7 +45,7 @@ const fallbackItems: LedgerItem[] = [
   },
 ];
 
-function normalizeItem(item: Record<string, unknown>): LedgerItem {
+function normalizeItem(item: LedgerItemApiRow): LedgerItem {
   return {
     id: Number(item.id ?? 0),
     managementNo: String(item.management_no ?? item.managementNo ?? ""),
@@ -60,7 +87,7 @@ export async function getLedgerItems(): Promise<LedgerItem[]> {
       return fallbackItems;
     }
 
-    const data = (await response.json()) as Record<string, unknown>[];
+    const data = (await response.json()) as LedgerItemApiRow[];
     return data.map(normalizeItem);
   } catch {
     return fallbackItems;

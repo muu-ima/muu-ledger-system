@@ -1,6 +1,7 @@
 import type {
   SupplierSource,
   SupplierSourceApiRow,
+  SupplierSourceSubmitPayload,
 } from "@/types/supplier";
 
 export const supplierSourceSample = {
@@ -92,6 +93,39 @@ export function supplierSourceFromApi(row: SupplierSourceApiRow): SupplierSource
     supplier: String(row.supplier_name_raw || ""),
     firstMailAt: String(row.first_mail_at_raw || ""),
     receiptPrintedAt: String(row.receipt_printed_at_raw || ""),
+  };
+}
+
+export function supplierSourceToSubmitPayload(
+  source: SupplierSource,
+): SupplierSourceSubmitPayload {
+  return {
+    source_row_no: Number(source.rowNo) || 0,
+    sku: source.sku,
+    order_no: source.orderNo,
+    account_name: source.account,
+    sold_at: normalizeSampleDate(source.soldAt),
+    acquired_at: normalizeSampleDate(source.acquiredAt),
+    buyer_country: source.country,
+    mag: source.mag,
+    sale_amount: source.saleAmount,
+    purchase_price: source.purchasePrice,
+    shipping_cost: source.shippingCost,
+    points: source.points,
+    shipping_note: source.note,
+    packer: source.packer,
+    shipping_site: source.shippingSite,
+    actual_weight_g: Number(source.actualWeight) || 0,
+    dimensional_weight_g: Number(source.dimensionalWeight) || 0,
+    package_length_cm: source.length,
+    package_width_cm: source.width,
+    package_height_cm: source.height,
+    item_name: source.itemName,
+    acquired_from: source.supplier,
+    first_mail_at: source.firstMailAt,
+    receipt_printed_at: source.receiptPrintedAt,
+    sold_to: "ebay",
+    status: source.soldAt ? "sold" : "in_stock",
   };
 }
 
