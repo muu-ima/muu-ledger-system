@@ -209,6 +209,12 @@ function exchangeRateForCurrency(
   }
 }
 
+function isBlankOrJpyAmount(value: string) {
+  const normalized = normalizeText(value);
+  if (!normalized) return true;
+  return normalizeCurrency(normalized) === "JPY";
+}
+
 function findExchangeRateByDate(
   exchangeRates: ShopeeExchangeRate[],
   date: string,
@@ -499,6 +505,8 @@ function calculateDaysToSell(purchasedAt: string, soldAt: string) {
   if (Number.isNaN(purchasedMs) || Number.isNaN(soldMs)) return "";
 
   const diffDays = Math.round((soldMs - purchasedMs) / 86400000);
+  if (diffDays < 0) return "";
+
   return String(diffDays);
 }
 
@@ -633,17 +641,24 @@ export function attachExchangeRatesToEcSalesRecord(
       )
     : record.receivedAmountJpy;
 
-  const profitValue =
-    parseNumberLike(receivedAmountJpy) +
-    parseNumberLike(record.purchaseTaxRefundJpy) +
-    parseNumberLike(record.feeTaxRefundJpy) -
-    parseNumberLike(record.purchasePriceJpy) -
-    parseNumberLike(record.overseasShippingYen);
+  const hasProfitInputs = Boolean(
+    receivedAmountJpy &&
+      record.purchasePriceJpy &&
+      isBlankOrJpyAmount(record.overseasShippingYen),
+  );
+  const profitValue = hasProfitInputs
+    ? parseNumberLike(receivedAmountJpy) +
+      parseNumberLike(record.purchaseTaxRefundJpy) +
+      parseNumberLike(record.feeTaxRefundJpy) -
+      parseNumberLike(record.purchasePriceJpy) -
+      parseNumberLike(record.overseasShippingYen)
+    : 0;
 
   const purchaseBase =
     parseNumberLike(record.purchasePriceJpy) +
     parseNumberLike(record.overseasShippingYen);
-  const profitRate = purchaseBase ? (profitValue / purchaseBase) * 100 : 0;
+  const profitRate =
+    hasProfitInputs && purchaseBase ? (profitValue / purchaseBase) * 100 : 0;
 
   return {
     ...record,
