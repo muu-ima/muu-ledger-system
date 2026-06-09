@@ -178,16 +178,6 @@ type EcSalesTableProps = {
 
 function inputTypeForColumn(column: EcSalesColumn) {
   if (["soldAt", "payoutAt"].includes(column.key)) return "date";
-  if (
-    [
-      "receivedAmountJpy",
-      "profitJpy",
-      "profitRate",
-      "daysToSell",
-    ].includes(column.key)
-  ) {
-    return "number";
-  }
 
   return "text";
 }

@@ -136,6 +136,32 @@ function kobutsu_ledger_render_ec_sales_admin_page(): void
     <?php
 }
 
+function kobutsu_ledger_get_ec_sales(WP_REST_Request $request): WP_REST_Response
+{
+    $rows = kobutsu_ledger_admin_get_ec_sales();
+
+    return rest_ensure_response(array_map('kobutsu_ledger_format_ec_sale_row', $rows));
+}
+
+function kobutsu_ledger_update_ec_sale(WP_REST_Request $request): WP_REST_Response|WP_Error
+{
+    $sale_id = absint($request['id']);
+    $sale = kobutsu_ledger_admin_get_ec_sale($sale_id);
+
+    if (!$sale) {
+        return new WP_Error('kobutsu_ec_sale_not_found', 'EC販売データが見つかりません。', ['status' => 404]);
+    }
+
+    kobutsu_ledger_update_ec_sale_from_payload($sale_id, $request->get_json_params() ?: [], $sale);
+
+    $updated_sale = kobutsu_ledger_admin_get_ec_sale($sale_id);
+    if (!$updated_sale) {
+        return new WP_Error('kobutsu_ec_sale_not_found', 'EC販売データが見つかりません。', ['status' => 404]);
+    }
+
+    return rest_ensure_response(kobutsu_ledger_format_ec_sale_row($updated_sale));
+}
+
 function kobutsu_ledger_handle_ec_sales_admin_action(): void
 {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_POST['kobutsu_ec_sale_action'])) {
@@ -529,6 +555,71 @@ function kobutsu_ledger_admin_quick_update_ec_sale(int $sale_id): void
     $wpdb->query('COMMIT');
 }
 
+function kobutsu_ledger_update_ec_sale_from_payload(
+    int $sale_id,
+    array $payload,
+    array $sale
+): void {
+    global $wpdb;
+
+    $now = current_time('mysql');
+    $order_no = kobutsu_ledger_payload_text($payload, 'order_no', (string) $sale['order_no']);
+    $sale_currency = strtoupper(substr(kobutsu_ledger_payload_text($payload, 'sale_currency', (string) $sale['sale_currency']), 0, 3));
+    $sale_amount = kobutsu_ledger_payload_float($payload, 'sale_amount', (float) $sale['sale_amount']);
+
+    $wpdb->query('START TRANSACTION');
+
+    $wpdb->update(kobutsu_ledger_table('sales'), [
+        'order_no' => $order_no,
+        'sale_date' => kobutsu_ledger_admin_date_or_null($payload['sale_date'] ?? $sale['sale_date']),
+        'sale_amount' => $sale_amount,
+        'sale_currency' => $sale_currency ?: 'USD',
+        'sale_amount_jpy' => $sale_currency === 'JPY' ? (int) round($sale_amount) : 0,
+        'tracking_no' => kobutsu_ledger_payload_text($payload, 'domestic_tracking_no', (string) $sale['tracking_no']),
+        'shipping_site' => kobutsu_ledger_payload_text($payload, 'sls_tracking_no', (string) $sale['shipping_site']),
+        'updated_at' => $now,
+    ], ['id' => $sale_id], ['%s', '%s', '%f', '%s', '%d', '%s', '%s', '%s'], ['%d']);
+
+    $settlement_data = [
+        'sale_id' => $sale_id,
+        'order_no' => $order_no,
+        'payout_date' => kobutsu_ledger_admin_date_or_null($payload['payout_date'] ?? $sale['payout_date']),
+        'payout_id' => (string) $sale['payout_id'],
+        'total_fees' => (float) $sale['total_fees'],
+        'ad_fee' => (float) $sale['ad_fee'],
+        'ebay_fee' => (float) $sale['ebay_fee'],
+        'payout_amount' => (float) $sale['payout_amount'],
+        'sale_exchange_rate' => (float) $sale['sale_exchange_rate'],
+        'payout_exchange_rate' => (float) $sale['payout_exchange_rate'],
+        'received_amount_jpy' => kobutsu_ledger_payload_int($payload, 'received_amount_jpy', (int) $sale['received_amount_jpy']),
+        'overseas_shipping_jpy' => (int) $sale['overseas_shipping_jpy'],
+        'fee_tax_refund_jpy' => (int) $sale['fee_tax_refund_jpy'],
+        'consumption_tax_refund_jpy' => (int) $sale['consumption_tax_refund_jpy'],
+        'profit_jpy' => kobutsu_ledger_payload_int($payload, 'profit_jpy', (int) $sale['profit_jpy']),
+        'profit_rate' => kobutsu_ledger_payload_float($payload, 'profit_rate', (float) $sale['profit_rate']),
+        'days_to_sell' => (int) $sale['days_to_sell'],
+        'updated_at' => $now,
+    ];
+
+    if (!empty($sale['settlement_id'])) {
+        $wpdb->update(
+            kobutsu_ledger_table('sales_settlements'),
+            $settlement_data,
+            ['id' => (int) $sale['settlement_id']],
+            ['%d', '%s', '%s', '%s', '%f', '%f', '%f', '%f', '%f', '%f', '%d', '%d', '%d', '%d', '%d', '%f', '%d', '%s'],
+            ['%d']
+        );
+    } else {
+        $wpdb->insert(
+            kobutsu_ledger_table('sales_settlements'),
+            $settlement_data,
+            ['%d', '%s', '%s', '%s', '%f', '%f', '%f', '%f', '%f', '%f', '%d', '%d', '%d', '%d', '%d', '%f', '%d', '%s']
+        );
+    }
+
+    $wpdb->query('COMMIT');
+}
+
 function kobutsu_ledger_admin_delete_ec_sale(int $sale_id): void
 {
     global $wpdb;
@@ -558,6 +649,67 @@ function kobutsu_ledger_admin_format_rate(float $rate): string
     }
 
     return number_format($rate, 2) . '%';
+}
+
+function kobutsu_ledger_format_ec_sale_row(array $row): array
+{
+    return [
+        'sale_id' => (int) $row['sale_id'],
+        'bundled_flag' => '',
+        'sku' => (string) $row['sku'],
+        'order_no' => (string) $row['order_no'],
+        'purchase_date' => (string) $row['purchase_date'],
+        'listed_at' => '',
+        'sold_at' => (string) $row['sale_date'],
+        'payout_at' => (string) $row['payout_date'],
+        'item_name' => (string) $row['item_name'],
+        'purchase_price_jpy' => (int) $row['purchase_price_jpy'],
+        'sale_amount_raw' => kobutsu_ledger_admin_format_money((float) $row['sale_amount'], (string) $row['sale_currency']),
+        'sale_amount_jpy' => (int) $row['sale_amount_jpy'],
+        'total_fees_raw' => (float) $row['total_fees'],
+        'ad_fee_raw' => (float) $row['ad_fee'],
+        'marketplace_fee_raw' => (float) $row['ebay_fee'],
+        'payout_amount_raw' => (float) $row['payout_amount'],
+        'sale_exchange_rate' => (float) $row['sale_exchange_rate'],
+        'payout_exchange_rate' => (float) $row['payout_exchange_rate'],
+        'received_amount_jpy' => (int) $row['received_amount_jpy'],
+        'overseas_shipping_yen' => (int) $row['overseas_shipping_jpy'],
+        'fee_tax_refund_jpy' => (int) $row['fee_tax_refund_jpy'],
+        'purchase_tax_refund_jpy' => (int) $row['consumption_tax_refund_jpy'],
+        'profit_jpy' => (int) $row['profit_jpy'],
+        'profit_rate' => (float) $row['profit_rate'],
+        'days_to_sell' => (int) $row['days_to_sell'],
+        'domestic_tracking_no' => (string) $row['tracking_no'],
+        'sls_tracking_no' => (string) $row['shipping_site'],
+        'settlement_note' => (string) $row['sale_notes'],
+    ];
+}
+
+function kobutsu_ledger_payload_text(array $payload, string $key, string $fallback): string
+{
+    if (!array_key_exists($key, $payload)) {
+        return $fallback;
+    }
+
+    return sanitize_text_field((string) $payload[$key]);
+}
+
+function kobutsu_ledger_payload_float(array $payload, string $key, float $fallback): float
+{
+    if (!array_key_exists($key, $payload)) {
+        return $fallback;
+    }
+
+    return (float) $payload[$key];
+}
+
+function kobutsu_ledger_payload_int(array $payload, string $key, int $fallback): int
+{
+    if (!array_key_exists($key, $payload)) {
+        return $fallback;
+    }
+
+    return (int) $payload[$key];
 }
 
 function kobutsu_ledger_render_ec_sales_admin_styles(): void

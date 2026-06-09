@@ -1,12 +1,19 @@
 "use client";
 
-import { useDeferredValue, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import { EcSalesSummaryTabs } from "@/app/components/ec-sales/EcSalesSummaryTabs";
 import { EcSalesTabs } from "@/app/components/ec-sales/EcSalesTabs";
 import { EcSalesTable } from "@/app/components/ec-sales/EcSalesTable";
+import {
+  normalizeCurrency,
+  normalizeEcSalesRecord,
+  parseNumberLike,
+} from "@/lib/ecSales";
 import { ecSalesSampleRecords } from "@/lib/ecSalesSamples";
+import { wordpressRestUrl } from "@/lib/supplierSources";
 import type {
   EcSalesRecord,
+  EcSalesRecordApiRow,
   EcSalesSummaryView,
   EcSalesView,
 } from "@/types/ecSales";
@@ -21,17 +28,10 @@ const ecSalesStatusViews: { label: string; value: EcSalesStatusView }[] = [
   { label: "配送あり", value: "shipped" },
 ];
 
-function parseSignedNumber(value: string) {
-  const normalized = value.replace(/[^0-9.-]/g, "");
-  const parsed = Number(normalized);
-
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
 function matchesStatus(record: EcSalesRecord, statusView: EcSalesStatusView) {
   if (statusView === "unsettled") return record.receivedAmountJpy === "";
-  if (statusView === "profit") return parseSignedNumber(record.profitJpy) > 0;
-  if (statusView === "loss") return parseSignedNumber(record.profitJpy) < 0;
+  if (statusView === "profit") return parseNumberLike(record.profitJpy) > 0;
+  if (statusView === "loss") return parseNumberLike(record.profitJpy) < 0;
   if (statusView === "shipped") {
     return Boolean(record.domesticTrackingNo || record.slsTrackingNo);
   }
@@ -49,6 +49,33 @@ function matchesSearch(record: EcSalesRecord, searchQuery: string) {
     .includes(normalizedQuery);
 }
 
+function findRecordIndex(
+  records: EcSalesRecord[],
+  sku: string,
+  orderNo: string,
+) {
+  return records.findIndex(
+    (record) => record.sku === sku && record.orderNo === orderNo,
+  );
+}
+
+function ecSalesRecordToUpdatePayload(record: EcSalesRecord) {
+  const saleCurrency = normalizeCurrency(record.saleAmountRaw);
+
+  return {
+    order_no: record.orderNo,
+    sale_date: record.soldAt,
+    sale_amount: parseNumberLike(record.saleAmountRaw),
+    sale_currency: saleCurrency === "UNKNOWN" ? "USD" : saleCurrency,
+    payout_date: record.payoutAt,
+    received_amount_jpy: parseNumberLike(record.receivedAmountJpy),
+    profit_jpy: parseNumberLike(record.profitJpy),
+    profit_rate: parseNumberLike(record.profitRate),
+    domestic_tracking_no: record.domesticTrackingNo,
+    sls_tracking_no: record.slsTrackingNo,
+  };
+}
+
 export default function EcSalesWorkspace() {
   const [activeView, setActiveView] = useState<EcSalesView>("集計ビュー");
   const [summaryView, setSummaryView] = useState<EcSalesSummaryView>("全体");
@@ -63,23 +90,96 @@ export default function EcSalesWorkspace() {
       matchesSearch(record, deferredSearchQuery),
   );
 
+  useEffect(() => {
+    const baseUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
+    let cancelled = false;
+
+    async function loadEcSales() {
+      try {
+        const response = await fetch(
+          wordpressRestUrl(baseUrl, "/kobutsu/v1/ec-sales"),
+          { credentials: "include" },
+        );
+        if (!response.ok) return;
+
+        const data = (await response.json()) as EcSalesRecordApiRow[];
+        if (!cancelled && data.length) {
+          setRecords(data.map(normalizeEcSalesRecord));
+        }
+      } catch {
+        // Keep sample records available when WordPress is unavailable.
+      }
+    }
+
+    loadEcSales();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const updateRecord = (
     sku: string,
     orderNo: string,
     field: keyof EcSalesRecord,
     value: string,
   ) => {
-    setRecords((currentRecords) =>
-      currentRecords.map((record) =>
-        record.sku === sku && record.orderNo === orderNo
-          ? { ...record, [field]: value }
-          : record,
-      ),
-    );
+    setRecords((currentRecords) => {
+      const recordIndex = findRecordIndex(currentRecords, sku, orderNo);
+      if (recordIndex === -1) return currentRecords;
+
+      return currentRecords.map((record, index) =>
+        index === recordIndex ? { ...record, [field]: value } : record,
+      );
+    });
   };
 
-  const markRecordUpdated = (record: EcSalesRecord) => {
-    setUpdateStatus(`${record.sku || record.orderNo} を画面上で更新しました`);
+  const markRecordUpdated = async (record: EcSalesRecord) => {
+    if (!/^\d+$/.test(record.saleId)) {
+      setUpdateStatus(
+        `${record.sku || record.orderNo} は画面上で更新しました。DB保存はAPIデータ読込後に有効になります`,
+      );
+      return;
+    }
+
+    setUpdateStatus(`${record.sku || record.orderNo} を保存中`);
+    const baseUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
+
+    try {
+      const response = await fetch(
+        wordpressRestUrl(baseUrl, `/kobutsu/v1/ec-sales/${record.saleId}`),
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(ecSalesRecordToUpdatePayload(record)),
+        },
+      );
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as
+          | { message?: string }
+          | null;
+        setUpdateStatus(data?.message || "保存できませんでした");
+        return;
+      }
+
+      const savedRecord = normalizeEcSalesRecord(
+        (await response.json()) as EcSalesRecordApiRow,
+      );
+      setRecords((currentRecords) =>
+        currentRecords.map((currentRecord) =>
+          currentRecord.saleId === savedRecord.saleId
+            ? savedRecord
+            : currentRecord,
+        ),
+      );
+      setUpdateStatus(`${savedRecord.sku || savedRecord.orderNo} を保存しました`);
+    } catch {
+      setUpdateStatus("WordPressに接続できませんでした");
+    }
   };
 
   return (

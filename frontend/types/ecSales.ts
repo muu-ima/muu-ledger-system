@@ -350,6 +350,7 @@ export type ShopeeSupplierApiRow = {
 };
 
 export type EcSalesRecord = {
+  saleId: string;
   bundledFlag: string;
   sku: string;
   orderNo: string;
@@ -380,6 +381,7 @@ export type EcSalesRecord = {
 };
 
 export type EcSalesRecordApiRow = {
+  sale_id?: ApiValue;
   bundled_flag?: ApiValue;
   sku?: ApiValue;
   order_no?: ApiValue;

@@ -81,17 +81,52 @@ export function normalizeCurrency(
 ) {
   const normalized = normalizeText(value).toUpperCase();
 
-  if (normalized === "JPY" || normalized.includes("¥")) return "JPY";
-  if (normalized === "PHP" || normalized.includes("₱")) return "PHP";
-  if (normalized === "SGD" || normalized === "SDG") return "SGD";
-  if (normalized === "USD" || normalized.includes("$")) return "USD";
-  if (normalized === "GBP" || normalized.includes("£") || normalized.includes("￡")) {
+  if (
+    normalized === "JPY" ||
+    normalized.includes("JPY") ||
+    normalized.includes("¥")
+  ) {
+    return "JPY";
+  }
+  if (
+    normalized === "PHP" ||
+    normalized.includes("PHP") ||
+    normalized.includes("₱")
+  ) {
+    return "PHP";
+  }
+  if (
+    normalized === "SGD" ||
+    normalized === "SDG" ||
+    normalized.includes("SGD")
+  ) {
+    return "SGD";
+  }
+  if (
+    normalized === "USD" ||
+    normalized.includes("USD") ||
+    normalized.includes("$")
+  ) {
+    return "USD";
+  }
+  if (
+    normalized === "GBP" ||
+    normalized.includes("GBP") ||
+    normalized.includes("£") ||
+    normalized.includes("￡")
+  ) {
     return "GBP";
   }
-  if (normalized === "EUR" || normalized.includes("€")) return "EUR";
-  if (normalized === "CAD") return "CAD";
-  if (normalized === "AUD") return "AUD";
-  if (normalized === "BRL") return "BRL";
+  if (
+    normalized === "EUR" ||
+    normalized.includes("EUR") ||
+    normalized.includes("€")
+  ) {
+    return "EUR";
+  }
+  if (normalized === "CAD" || normalized.includes("CAD")) return "CAD";
+  if (normalized === "AUD" || normalized.includes("AUD")) return "AUD";
+  if (normalized === "BRL" || normalized.includes("BRL")) return "BRL";
 
   if (fallbackRegion === "ph") return "PHP";
   if (fallbackRegion === "sg") return "SGD";
@@ -455,6 +490,7 @@ export function normalizeShopeePayment(
 
 export function normalizeEcSalesRecord(row: EcSalesRecordApiRow): EcSalesRecord {
   return {
+    saleId: normalizeText(row.sale_id),
     bundledFlag: normalizeFlag(row.bundled_flag),
     sku: normalizeKey(row.sku),
     orderNo: normalizeKey(row.order_no),
@@ -546,6 +582,7 @@ export function buildEcSalesIntermediateRecord(
   );
 
   return {
+    saleId: purchase.sku || purchase.orderNo,
     bundledFlag: inferBundledFlag(purchase),
     sku: purchase.sku,
     orderNo: choosePreferredValue(purchase.orderNo, normalizedSupplier?.orderNo ?? ""),

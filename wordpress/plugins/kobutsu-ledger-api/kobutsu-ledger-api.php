@@ -329,6 +329,18 @@ function kobutsu_ledger_register_routes(): void
         ],
     ]);
 
+    register_rest_route('kobutsu/v1', '/ec-sales', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'kobutsu_ledger_get_ec_sales',
+        'permission_callback' => 'kobutsu_ledger_can_read',
+    ]);
+
+    register_rest_route('kobutsu/v1', '/ec-sales/(?P<id>\d+)', [
+        'methods' => WP_REST_Server::EDITABLE,
+        'callback' => 'kobutsu_ledger_update_ec_sale',
+        'permission_callback' => 'kobutsu_ledger_can_write',
+    ]);
+
     register_rest_route('kobutsu/v1', '/items', [
         [
             'methods' => WP_REST_Server::READABLE,
