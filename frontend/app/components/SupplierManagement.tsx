@@ -1,23 +1,15 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent } from "react";
 import { SupplierManagementHeader } from "@/app/components/supplier-management/SupplierManagementHeader";
 import { SupplierSourceForm } from "@/app/components/supplier-management/SupplierSourceForm";
 import { useSupplierSourceForm } from "@/app/components/supplier-management/hooks/useSupplierSourceForm";
+import { useSupplierManagementUI } from "@/app/components/supplier-management/hooks/useSupplierManagementUI";
 import { useSupplierSources } from "@/app/components/supplier-management/hooks/useSupplierSources";
 import { SupplierSourceModal } from "@/app/components/supplier-management/SupplierSourceModal";
 import { SupplierSourceTables } from "@/app/components/supplier-management/SupplierSourceTables";
-import {
-  type SupplierDataView,
-  type SupplierSourceView,
-} from "@/types/supplier";
 
 export default function SupplierManagement() {
-  const [supplierSourceView, setSupplierSourceView] =
-    useState<SupplierSourceView>("要約");
-  const [supplierDataView, setSupplierDataView] =
-    useState<SupplierDataView>("仕入れ元データ");
-  const [supplierModalOpen, setSupplierModalOpen] = useState(false);
   const { supplierForm, resetSupplierForm, updateSupplierForm } =
     useSupplierSourceForm();
   const {
@@ -27,16 +19,25 @@ export default function SupplierManagement() {
     supplierSources,
     supplierSubmitStatus,
   } = useSupplierSources();
+  const {
+    closeSupplierModal,
+    openSupplierModal,
+    setSupplierDataView,
+    setSupplierSourceView,
+    supplierDataView,
+    supplierModalOpen,
+    supplierSourceView,
+  } = useSupplierManagementUI();
 
-  function openSupplierModal() {
+  function openSupplierSourceModal() {
     resetSupplierForm();
     clearSupplierSubmitStatus();
-    setSupplierModalOpen(true);
+    openSupplierModal();
   }
 
-  function closeSupplierModal() {
+  function closeSupplierSourceModal() {
     clearSupplierSubmitStatus();
-    setSupplierModalOpen(false);
+    closeSupplierModal();
   }
 
   async function submitSupplierSource(event: FormEvent<HTMLFormElement>) {
@@ -44,7 +45,7 @@ export default function SupplierManagement() {
 
     const result = await saveSupplierSource(supplierForm);
     if (result.ok) {
-      closeSupplierModal();
+      closeSupplierSourceModal();
       resetSupplierForm();
     }
   }
@@ -53,13 +54,13 @@ export default function SupplierManagement() {
     <>
       <SupplierManagementHeader
         resultCount={supplierSources.length}
-        onCreate={openSupplierModal}
+        onCreate={openSupplierSourceModal}
       />
 
       <div className="ledgerSections">
         <SupplierSourceModal
           isOpen={supplierModalOpen}
-          onClose={closeSupplierModal}
+          onClose={closeSupplierSourceModal}
           onSubmit={submitSupplierSource}
         >
           <SupplierSourceForm
