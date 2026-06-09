@@ -159,6 +159,72 @@ export function normalizeMoneyAmount(
   return formatMoneyAmount(value, currency);
 }
 
+function formatRate(value: number) {
+  if (!value) return "";
+  return value.toLocaleString("ja-JP", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function formatRatio(value: number) {
+  if (!Number.isFinite(value)) return "";
+  return value.toLocaleString("ja-JP", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function moneyCurrencyFromRaw(value: string) {
+  return normalizeCurrency(value);
+}
+
+function exchangeRateForCurrency(
+  rate: ShopeeExchangeRate | null,
+  currency: CurrencyCode,
+) {
+  if (!rate) return 0;
+
+  switch (currency) {
+    case "USD":
+      return rate.usd;
+    case "GBP":
+      return rate.gbp;
+    case "EUR":
+      return rate.eur;
+    case "CAD":
+      return rate.cad;
+    case "AUD":
+      return rate.aud;
+    case "PHP":
+      return rate.php;
+    case "SGD":
+      return rate.sgd;
+    case "BRL":
+      return rate.brl;
+    case "JPY":
+    case "UNKNOWN":
+    default:
+      return 0;
+  }
+}
+
+function findExchangeRateByDate(
+  exchangeRates: ShopeeExchangeRate[],
+  date: string,
+) {
+  if (!date) return null;
+  return exchangeRates.find((rate) => rate.rateDate === date) ?? null;
+}
+
+function findPaymentByOrderNo(
+  payments: ShopeePayment[],
+  orderNo: string,
+) {
+  if (!orderNo) return null;
+  return payments.find((payment) => payment.orderId === orderNo) ?? null;
+}
+
 export function normalizeExchangeRateRow(
   row: ShopeeExchangeRateApiRow,
 ): ShopeeExchangeRate {
@@ -512,4 +578,99 @@ export function buildEcSalesIntermediateRecords(
       findSupplierBySkuOrOrder(suppliers, purchase),
     ),
   );
+}
+
+export function attachPaymentsToEcSalesRecord(
+  record: EcSalesRecord,
+  payment?: ShopeePayment | null,
+) {
+  if (!payment) return record;
+
+  return {
+    ...record,
+    payoutAt: choosePreferredValue(record.payoutAt, payment.payoutCompletedAt),
+    totalFeesRaw: choosePreferredValue(
+      record.totalFeesRaw,
+      payment.commissionFee,
+    ),
+    marketplaceFeeRaw: choosePreferredValue(
+      record.marketplaceFeeRaw,
+      payment.commissionFee,
+    ),
+    payoutAmountRaw: choosePreferredValue(
+      record.payoutAmountRaw,
+      payment.totalReleasedAmount,
+    ),
+  };
+}
+
+export function attachExchangeRatesToEcSalesRecord(
+  record: EcSalesRecord,
+  exchangeRates: ShopeeExchangeRate[],
+) {
+  const saleCurrency = moneyCurrencyFromRaw(record.saleAmountRaw);
+  const payoutCurrency = moneyCurrencyFromRaw(record.payoutAmountRaw);
+  const saleRateRow = findExchangeRateByDate(exchangeRates, record.soldAt);
+  const payoutRateRow = findExchangeRateByDate(exchangeRates, record.payoutAt);
+
+  const saleExchangeRate = exchangeRateForCurrency(saleRateRow, saleCurrency);
+  const payoutExchangeRate = exchangeRateForCurrency(
+    payoutRateRow,
+    payoutCurrency,
+  );
+
+  const saleAmountJpy = saleExchangeRate
+    ? formatMoneyAmount(
+        parseNumberLike(record.saleAmountRaw) * saleExchangeRate,
+        "JPY",
+      )
+    : record.saleAmountJpy;
+
+  const receivedAmountJpy = payoutExchangeRate
+    ? formatMoneyAmount(
+        parseNumberLike(record.payoutAmountRaw) * payoutExchangeRate,
+        "JPY",
+      )
+    : record.receivedAmountJpy;
+
+  const profitValue =
+    parseNumberLike(receivedAmountJpy) +
+    parseNumberLike(record.purchaseTaxRefundJpy) +
+    parseNumberLike(record.feeTaxRefundJpy) -
+    parseNumberLike(record.purchasePriceJpy) -
+    parseNumberLike(record.overseasShippingYen);
+
+  const purchaseBase =
+    parseNumberLike(record.purchasePriceJpy) +
+    parseNumberLike(record.overseasShippingYen);
+  const profitRate = purchaseBase ? (profitValue / purchaseBase) * 100 : 0;
+
+  return {
+    ...record,
+    saleAmountJpy,
+    saleExchangeRate: choosePreferredValue(
+      record.saleExchangeRate,
+      formatRate(saleExchangeRate),
+    ),
+    payoutExchangeRate: choosePreferredValue(
+      record.payoutExchangeRate,
+      formatRate(payoutExchangeRate),
+    ),
+    receivedAmountJpy,
+    profitJpy: profitValue ? formatMoneyAmount(profitValue, "JPY") : "",
+    profitRate: profitRate ? formatRatio(profitRate) : record.profitRate,
+  };
+}
+
+export function buildEcSalesViewRecords(
+  purchases: ShopeePurchase[],
+  suppliers: ShopeeSupplier[] = [],
+  payments: ShopeePayment[] = [],
+  exchangeRates: ShopeeExchangeRate[] = [],
+) {
+  return buildEcSalesIntermediateRecords(purchases, suppliers).map((record) => {
+    const payment = findPaymentByOrderNo(payments, record.orderNo);
+    const withPayment = attachPaymentsToEcSalesRecord(record, payment);
+    return attachExchangeRatesToEcSalesRecord(withPayment, exchangeRates);
+  });
 }
