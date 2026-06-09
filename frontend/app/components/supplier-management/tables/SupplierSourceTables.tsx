@@ -1,8 +1,8 @@
-import { PurchaseProjectionTable } from "@/app/components/supplier-management/PurchaseProjectionTable";
-import { SupplierSourceDetailTable } from "@/app/components/supplier-management/SupplierSourceDetailTable";
-import { SupplierSourceShippingTable } from "@/app/components/supplier-management/SupplierSourceShippingTable";
-import { SupplierSourceSummaryTable } from "@/app/components/supplier-management/SupplierSourceSummaryTable";
-import { SupplierSourceTabs } from "@/app/components/supplier-management/SupplierSourceTabs";
+import { PurchaseProjectionTable } from "@/app/components/supplier-management/tables/PurchaseProjectionTable";
+import { SupplierSourceDetailTable } from "@/app/components/supplier-management/tables/SupplierSourceDetailTable";
+import { SupplierSourceShippingTable } from "@/app/components/supplier-management/tables/SupplierSourceShippingTable";
+import { SupplierSourceSummaryTable } from "@/app/components/supplier-management/tables/SupplierSourceSummaryTable";
+import { SupplierSourceTabs } from "@/app/components/supplier-management/tables/SupplierSourceTabs";
 import {
   type SupplierDataView,
   type SupplierSource,

@@ -1,13 +1,13 @@
 "use client";
 
 import { type FormEvent } from "react";
-import { SupplierManagementHeader } from "@/app/components/supplier-management/SupplierManagementHeader";
-import { SupplierSourceForm } from "@/app/components/supplier-management/SupplierSourceForm";
+import { SupplierSourceForm } from "@/app/components/supplier-management/form/SupplierSourceForm";
 import { useSupplierSourceForm } from "@/app/components/supplier-management/hooks/useSupplierSourceForm";
 import { useSupplierManagementUI } from "@/app/components/supplier-management/hooks/useSupplierManagementUI";
 import { useSupplierSources } from "@/app/components/supplier-management/hooks/useSupplierSources";
-import { SupplierSourceModal } from "@/app/components/supplier-management/SupplierSourceModal";
-import { SupplierSourceTables } from "@/app/components/supplier-management/SupplierSourceTables";
+import { SupplierManagementHeader } from "@/app/components/supplier-management/layout/SupplierManagementHeader";
+import { SupplierSourceModal } from "@/app/components/supplier-management/layout/SupplierSourceModal";
+import { SupplierSourceTables } from "@/app/components/supplier-management/tables/SupplierSourceTables";
 
 export default function SupplierManagement() {
   const { supplierForm, resetSupplierForm, updateSupplierForm } =

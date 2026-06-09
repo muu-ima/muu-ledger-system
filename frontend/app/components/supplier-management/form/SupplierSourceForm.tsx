@@ -1,6 +1,6 @@
 "use client";
 
-import { SupplierSourceFormSections } from "@/app/components/supplier-management/SupplierSourceFormSections";
+import { SupplierSourceFormSections } from "@/app/components/supplier-management/form/SupplierSourceFormSections";
 import type { SupplierSource } from "@/types/supplier";
 
 type SupplierSourceFormProps = {
