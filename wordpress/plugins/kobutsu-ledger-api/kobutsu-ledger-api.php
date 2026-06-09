@@ -11,6 +11,7 @@ if (!defined('ABSPATH')) {
 }
 
 require_once __DIR__ . '/admin-supplier-sources.php';
+require_once __DIR__ . '/admin-ec-sales.php';
 
 const KOBUTSU_LEDGER_DB_VERSION = '0.3.0';
 
@@ -747,6 +748,16 @@ function kobutsu_ledger_register_admin_menu(): void
         'kobutsu_ledger_render_supplier_sources_admin_page',
         'dashicons-cart',
         27
+    );
+
+    add_menu_page(
+        'EC販売',
+        'EC販売',
+        'edit_posts',
+        'kobutsu-ec-sales',
+        'kobutsu_ledger_render_ec_sales_admin_page',
+        'dashicons-chart-line',
+        28
     );
 }
 
