@@ -343,6 +343,7 @@ export type EcSalesRecord = {
   sku: string;
   orderNo: string;
   purchaseDate: string;
+  listedAt: string;
   soldAt: string;
   payoutAt: string;
   itemName: string;
@@ -372,6 +373,7 @@ export type EcSalesRecordApiRow = {
   sku?: ApiValue;
   order_no?: ApiValue;
   purchase_date?: ApiValue;
+  listed_at?: ApiValue;
   sold_at?: ApiValue;
   payout_at?: ApiValue;
   item_name?: ApiValue;

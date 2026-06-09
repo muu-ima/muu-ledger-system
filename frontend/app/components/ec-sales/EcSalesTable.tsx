@@ -14,6 +14,7 @@ export function EcSalesTable({ records }: EcSalesTableProps) {
         <col className="dateCol" />
         <col className="dateCol" />
         <col className="dateCol" />
+        <col className="dateCol" />
         <col className="nameCol" />
         <col className="moneyCol" />
         <col className="moneyCol" />
@@ -40,6 +41,7 @@ export function EcSalesTable({ records }: EcSalesTableProps) {
           <th>SKU</th>
           <th>Order number</th>
           <th>仕入れ日</th>
+          <th>出品日</th>
           <th>販売日</th>
           <th>出金日</th>
           <th>商品名</th>
@@ -70,6 +72,7 @@ export function EcSalesTable({ records }: EcSalesTableProps) {
             <td className="selectedCell">{record.sku}</td>
             <td>{record.orderNo}</td>
             <td>{record.purchaseDate}</td>
+            <td>{record.listedAt}</td>
             <td>{record.soldAt}</td>
             <td>{record.payoutAt}</td>
             <td className="nameCell">{record.itemName}</td>
