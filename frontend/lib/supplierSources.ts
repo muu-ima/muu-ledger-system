@@ -31,6 +31,12 @@ export const supplierSourceSample = {
   receiptPrintedAt: "",
 } satisfies SupplierSource;
 
+export function createSupplierSourceDraft(
+  source: SupplierSource = supplierSourceSample,
+): SupplierSource {
+  return { ...source };
+}
+
 export function formatYen(value: number) {
   if (!value) return "";
   return `¥${value.toLocaleString("ja-JP")}`;
