@@ -509,6 +509,111 @@ fieldset input:not([type="checkbox"]) {
   overflow: auto;
 }
 
+.ecSalesListCard {
+  border: 1px solid rgba(31, 27, 24, 0.28);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 10px 28px rgba(90, 61, 48, 0.12);
+  overflow: auto;
+}
+
+.ecSalesListToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid rgba(31, 27, 24, 0.18);
+  padding: 12px;
+}
+
+.ecSalesStatusTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ecSalesStatusTabs button {
+  min-height: 32px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  padding: 5px 12px;
+  color: #312c29;
+  font-weight: 800;
+}
+
+.ecSalesStatusTabs button.active {
+  border-color: #8fc99b;
+  background: #dff1df;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.68);
+}
+
+.ecSalesSearch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ecSalesSearch input {
+  width: min(320px, 38vw);
+  min-height: 34px;
+  border: 1px solid rgba(31, 27, 24, 0.28);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 0 12px;
+}
+
+.ecSalesListCard .tableTabs {
+  margin: 0;
+  border-bottom: 1px solid rgba(31, 27, 24, 0.18);
+  padding: 10px 12px;
+}
+
+.ecSalesCellInput {
+  width: 100%;
+  min-height: 26px;
+  border: 1px solid rgba(31, 27, 24, 0.24);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.74);
+  padding: 2px 6px;
+  color: #161310;
+  font-size: 12px;
+}
+
+.numberCell .ecSalesCellInput {
+  text-align: right;
+}
+
+.actionCell {
+  position: sticky;
+  right: 0;
+  z-index: 3;
+  background: rgba(255, 238, 220, 0.96) !important;
+  text-align: center;
+}
+
+.actionCell button {
+  min-height: 26px;
+  border: 0;
+  border-radius: 6px;
+  background: #008060;
+  padding: 3px 10px;
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ecSalesUpdateStatus {
+  border-top: 1px solid rgba(31, 27, 24, 0.18);
+  padding: 10px 12px;
+  color: #31613d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .emptyTableState {
   min-height: 96px;
   border: 1px solid var(--line);
@@ -638,6 +743,10 @@ fieldset input:not([type="checkbox"]) {
 
 .sourceCol {
   width: 140px;
+}
+
+.actionCol {
+  width: 86px;
 }
 
 .verifyCol {

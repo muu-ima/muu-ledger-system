@@ -3,6 +3,7 @@ import type { EcSalesRecord, EcSalesSummaryView } from "@/types/ecSales";
 type EcSalesColumn = {
   className: string;
   cellClassName?: string;
+  editable?: boolean;
   key: keyof EcSalesRecord;
   label: string;
 };
@@ -10,11 +11,11 @@ type EcSalesColumn = {
 const allColumns: EcSalesColumn[] = [
   { key: "bundledFlag", label: "同梱", className: "typeCol" },
   { key: "sku", label: "SKU", className: "skuCol", cellClassName: "selectedCell" },
-  { key: "orderNo", label: "Order number", className: "verifyCol" },
+  { key: "orderNo", label: "Order number", className: "verifyCol", editable: true },
   { key: "purchaseDate", label: "仕入れ日", className: "dateCol" },
   { key: "listedAt", label: "出品日", className: "dateCol" },
-  { key: "soldAt", label: "販売日", className: "dateCol" },
-  { key: "payoutAt", label: "出金日", className: "dateCol" },
+  { key: "soldAt", label: "販売日", className: "dateCol", editable: true },
+  { key: "payoutAt", label: "出金日", className: "dateCol", editable: true },
   { key: "itemName", label: "商品名", className: "nameCol", cellClassName: "nameCell" },
   {
     key: "purchasePriceJpy",
@@ -27,6 +28,7 @@ const allColumns: EcSalesColumn[] = [
     label: "販売金額",
     className: "moneyCol",
     cellClassName: "numberCell",
+    editable: true,
   },
   {
     key: "saleAmountJpy",
@@ -70,6 +72,7 @@ const allColumns: EcSalesColumn[] = [
     label: "受取金額",
     className: "moneyCol",
     cellClassName: "numberCell",
+    editable: true,
   },
   {
     key: "overseasShippingYen",
@@ -89,11 +92,29 @@ const allColumns: EcSalesColumn[] = [
     className: "moneyCol",
     cellClassName: "numberCell",
   },
-  { key: "profitJpy", label: "最終損益", className: "moneyCol", cellClassName: "numberCell" },
-  { key: "profitRate", label: "利益率", className: "rateCol", cellClassName: "numberCell" },
-  { key: "daysToSell", label: "売れるまで", className: "qtyCol", cellClassName: "numberCell" },
-  { key: "domesticTrackingNo", label: "国内送り状", className: "sourceCol" },
-  { key: "slsTrackingNo", label: "SLS送り状", className: "sourceCol" },
+  {
+    key: "profitJpy",
+    label: "最終損益",
+    className: "moneyCol",
+    cellClassName: "numberCell",
+    editable: true,
+  },
+  {
+    key: "profitRate",
+    label: "利益率",
+    className: "rateCol",
+    cellClassName: "numberCell",
+    editable: true,
+  },
+  {
+    key: "daysToSell",
+    label: "売れるまで",
+    className: "qtyCol",
+    cellClassName: "numberCell",
+    editable: true,
+  },
+  { key: "domesticTrackingNo", label: "国内送り状", className: "sourceCol", editable: true },
+  { key: "slsTrackingNo", label: "SLS送り状", className: "sourceCol", editable: true },
 ];
 
 const summaryColumns: Record<EcSalesSummaryView, EcSalesColumn[]> = {
@@ -145,11 +166,39 @@ const summaryColumns: Record<EcSalesSummaryView, EcSalesColumn[]> = {
 };
 
 type EcSalesTableProps = {
+  onRecordChange: (
+    sku: string,
+    orderNo: string,
+    field: keyof EcSalesRecord,
+    value: string,
+  ) => void;
+  onRecordUpdate: (record: EcSalesRecord) => void;
   records: EcSalesRecord[];
   summaryView: EcSalesSummaryView;
 };
 
-export function EcSalesTable({ records, summaryView }: EcSalesTableProps) {
+function inputTypeForColumn(column: EcSalesColumn) {
+  if (["soldAt", "payoutAt"].includes(column.key)) return "date";
+  if (
+    [
+      "receivedAmountJpy",
+      "profitJpy",
+      "profitRate",
+      "daysToSell",
+    ].includes(column.key)
+  ) {
+    return "number";
+  }
+
+  return "text";
+}
+
+export function EcSalesTable({
+  onRecordChange,
+  onRecordUpdate,
+  records,
+  summaryView,
+}: EcSalesTableProps) {
   const columns = summaryColumns[summaryView];
 
   return (
@@ -158,12 +207,14 @@ export function EcSalesTable({ records, summaryView }: EcSalesTableProps) {
         {columns.map((column) => (
           <col key={column.key} className={column.className} />
         ))}
+        <col className="actionCol" />
       </colgroup>
       <thead>
         <tr className="headerRow">
           {columns.map((column) => (
             <th key={column.key}>{column.label}</th>
           ))}
+          <th>操作</th>
         </tr>
       </thead>
       <tbody>
@@ -171,9 +222,30 @@ export function EcSalesTable({ records, summaryView }: EcSalesTableProps) {
           <tr key={`${record.sku}-${record.orderNo}`}>
             {columns.map((column) => (
               <td key={column.key} className={column.cellClassName}>
-                {record[column.key]}
+                {column.editable ? (
+                  <input
+                    className="ecSalesCellInput"
+                    type={inputTypeForColumn(column)}
+                    value={record[column.key]}
+                    onChange={(event) =>
+                      onRecordChange(
+                        record.sku,
+                        record.orderNo,
+                        column.key,
+                        event.target.value,
+                      )
+                    }
+                  />
+                ) : (
+                  record[column.key]
+                )}
               </td>
             ))}
+            <td className="actionCell">
+              <button type="button" onClick={() => onRecordUpdate(record)}>
+                更新
+              </button>
+            </td>
           </tr>
         ))}
       </tbody>
