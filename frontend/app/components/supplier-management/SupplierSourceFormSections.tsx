@@ -8,6 +8,8 @@ type SupplierSourceFormSectionsProps = {
   onFieldChange: (field: keyof SupplierSource, value: string) => void;
 };
 
+type SupplierSourceFieldType = "input" | "textarea";
+
 type SupplierSourceFieldProps = {
   field: keyof SupplierSource;
   form: SupplierSource;
@@ -18,10 +20,63 @@ type SupplierSourceFieldProps = {
 
 type SupplierSourceTextareaFieldProps = SupplierSourceFieldProps;
 
+type SupplierSourceFieldConfig = {
+  field: keyof SupplierSource;
+  label: string;
+  type?: SupplierSourceFieldType;
+  wide?: boolean;
+};
+
+type SupplierSourceSectionConfig = {
+  fields: SupplierSourceFieldConfig[];
+  title: string;
+};
+
 type SupplierSourceSectionProps = {
   children: ReactNode;
   title: string;
 };
+
+const supplierSourceFormSections: SupplierSourceSectionConfig[] = [
+  {
+    title: "必須入力",
+    fields: [
+      { field: "sku", label: "SKU" },
+      { field: "orderNo", label: "Order no." },
+      { field: "acquiredAt", label: "仕入日" },
+      { field: "supplier", label: "仕入れ先" },
+      { field: "purchasePrice", label: "仕入れ" },
+      { field: "itemName", label: "商品名", wide: true },
+    ],
+  },
+  {
+    title: "よく使う入力",
+    fields: [
+      { field: "account", label: "アカウント" },
+      { field: "soldAt", label: "販売日" },
+      { field: "country", label: "国" },
+      { field: "saleAmount", label: "販売額" },
+      { field: "shippingCost", label: "送料" },
+      { field: "shippingSite", label: "発送サイト" },
+      { field: "packer", label: "梱包者" },
+      { field: "note", label: "備考", type: "textarea", wide: true },
+    ],
+  },
+  {
+    title: "詳細入力",
+    fields: [
+      { field: "mag", label: "MAG" },
+      { field: "points", label: "ポイント加算" },
+      { field: "actualWeight", label: "実重g" },
+      { field: "dimensionalWeight", label: "体積重g" },
+      { field: "length", label: "縦cm" },
+      { field: "width", label: "横cm" },
+      { field: "height", label: "高さcm" },
+      { field: "firstMailAt", label: "初回メール" },
+      { field: "receiptPrintedAt", label: "領収書印刷日" },
+    ],
+  },
+];
 
 function SupplierSourceSection({
   children,
@@ -77,154 +132,31 @@ export function SupplierSourceFormSections({
 }: SupplierSourceFormSectionsProps) {
   return (
     <>
-      <SupplierSourceSection title="必須入力">
-        <SupplierSourceInputField
-          field="sku"
-          form={form}
-          label="SKU"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="orderNo"
-          form={form}
-          label="Order no."
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="acquiredAt"
-          form={form}
-          label="仕入日"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="supplier"
-          form={form}
-          label="仕入れ先"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="purchasePrice"
-          form={form}
-          label="仕入れ"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="itemName"
-          form={form}
-          label="商品名"
-          onFieldChange={onFieldChange}
-          wide
-        />
-      </SupplierSourceSection>
-
-      <SupplierSourceSection title="よく使う入力">
-        <SupplierSourceInputField
-          field="account"
-          form={form}
-          label="アカウント"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="soldAt"
-          form={form}
-          label="販売日"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="country"
-          form={form}
-          label="国"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="saleAmount"
-          form={form}
-          label="販売額"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="shippingCost"
-          form={form}
-          label="送料"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="shippingSite"
-          form={form}
-          label="発送サイト"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="packer"
-          form={form}
-          label="梱包者"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceTextareaField
-          field="note"
-          form={form}
-          label="備考"
-          onFieldChange={onFieldChange}
-          wide
-        />
-      </SupplierSourceSection>
-
-      <SupplierSourceSection title="詳細入力">
-        <SupplierSourceInputField
-          field="mag"
-          form={form}
-          label="MAG"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="points"
-          form={form}
-          label="ポイント加算"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="actualWeight"
-          form={form}
-          label="実重g"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="dimensionalWeight"
-          form={form}
-          label="体積重g"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="length"
-          form={form}
-          label="縦cm"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="width"
-          form={form}
-          label="横cm"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="height"
-          form={form}
-          label="高さcm"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="firstMailAt"
-          form={form}
-          label="初回メール"
-          onFieldChange={onFieldChange}
-        />
-        <SupplierSourceInputField
-          field="receiptPrintedAt"
-          form={form}
-          label="領収書印刷日"
-          onFieldChange={onFieldChange}
-        />
-      </SupplierSourceSection>
+      {supplierSourceFormSections.map((section) => (
+        <SupplierSourceSection key={section.title} title={section.title}>
+          {section.fields.map((field) =>
+            field.type === "textarea" ? (
+              <SupplierSourceTextareaField
+                key={field.field}
+                field={field.field}
+                form={form}
+                label={field.label}
+                onFieldChange={onFieldChange}
+                wide={field.wide}
+              />
+            ) : (
+              <SupplierSourceInputField
+                key={field.field}
+                field={field.field}
+                form={form}
+                label={field.label}
+                onFieldChange={onFieldChange}
+                wide={field.wide}
+              />
+            ),
+          )}
+        </SupplierSourceSection>
+      ))}
     </>
   );
 }
