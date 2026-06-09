@@ -111,7 +111,6 @@ const allColumns: EcSalesColumn[] = [
     label: "売れるまで",
     className: "qtyCol",
     cellClassName: "numberCell",
-    editable: true,
   },
   { key: "domesticTrackingNo", label: "国内送り状", className: "sourceCol", editable: true },
   { key: "slsTrackingNo", label: "SLS送り状", className: "sourceCol", editable: true },
