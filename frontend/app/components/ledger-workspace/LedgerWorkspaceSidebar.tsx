@@ -5,6 +5,40 @@ import {
   type WorkspaceTab,
 } from "@/app/components/ledger-workspace/ledgerWorkspaceConfig";
 
+type SidebarCheckboxSection = {
+  options: readonly string[];
+  title: string;
+};
+
+type SidebarInputConfig = {
+  placeholder: string;
+  type?: "controlled" | "static";
+};
+
+const sidebarCheckboxSections: SidebarCheckboxSection[] = [
+  {
+    title: "商品カテゴリ",
+    options: categories,
+  },
+  {
+    title: "仕入先",
+    options: supplierOptions,
+  },
+];
+
+const sidebarBasicInputs: SidebarInputConfig[] = [
+  {
+    placeholder: "SKU / 商品名 / 仕入先",
+    type: "controlled",
+  },
+  {
+    placeholder: "注文番号",
+  },
+  {
+    placeholder: "buyer ID",
+  },
+];
+
 type LedgerWorkspaceSidebarProps = {
   activeTab: WorkspaceTab;
   isOpen: boolean;
@@ -51,35 +85,32 @@ export function LedgerWorkspaceSidebar({
           ))}
         </div>
 
-        <fieldset>
-          <legend>商品カテゴリ</legend>
-          {categories.map((category) => (
-            <label key={category} className="checkRow">
-              <input type="checkbox" />
-              <span>{category}</span>
-            </label>
-          ))}
-        </fieldset>
+        {sidebarCheckboxSections.map((section) => (
+          <fieldset key={section.title}>
+            <legend>{section.title}</legend>
+            {section.options.map((option) => (
+              <label key={option} className="checkRow">
+                <input type="checkbox" />
+                <span>{option}</span>
+              </label>
+            ))}
+          </fieldset>
+        ))}
 
         <fieldset>
           <legend>基本情報</legend>
-          <input
-            value={query}
-            onChange={(event) => onQueryChange(event.target.value)}
-            placeholder="SKU / 商品名 / 仕入先"
-          />
-          <input placeholder="注文番号" />
-          <input placeholder="buyer ID" />
-        </fieldset>
-
-        <fieldset>
-          <legend>仕入先</legend>
-          {supplierOptions.map((supplier) => (
-            <label key={supplier} className="checkRow">
-              <input type="checkbox" />
-              <span>{supplier}</span>
-            </label>
-          ))}
+          {sidebarBasicInputs.map((input) =>
+            input.type === "controlled" ? (
+              <input
+                key={input.placeholder}
+                value={query}
+                onChange={(event) => onQueryChange(event.target.value)}
+                placeholder={input.placeholder}
+              />
+            ) : (
+              <input key={input.placeholder} placeholder={input.placeholder} />
+            ),
+          )}
         </fieldset>
 
         <button className="filterButton" type="button">
