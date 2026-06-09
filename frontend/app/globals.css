@@ -545,6 +545,7 @@ fieldset input:not([type="checkbox"]) {
 
 .payoutGrid .headerRow th,
 .partyGrid .headerRow th,
+.ecSalesGrid .headerRow th,
 .supplierSourceGrid .headerRow th,
 .purchaseProjectionGrid .headerRow th {
   background: #c2b4df;
@@ -560,6 +561,7 @@ fieldset input:not([type="checkbox"]) {
 
 .payoutGrid tbody td,
 .partyGrid tbody td,
+.ecSalesGrid tbody td,
 .supplierSourceGrid tbody td,
 .purchaseProjectionGrid tbody td {
   background: rgba(255, 228, 199, 0.78);
@@ -617,6 +619,10 @@ fieldset input:not([type="checkbox"]) {
 
 .moneyCol {
   width: 110px;
+}
+
+.rateCol {
+  width: 96px;
 }
 
 .sourceCol {

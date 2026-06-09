@@ -9,6 +9,7 @@ import {
   type WorkspaceTab,
 } from "@/app/components/ledger-workspace/ledgerWorkspaceConfig";
 import { LedgerRecordSections } from "@/app/components/ledger-workspace/sections/LedgerRecordSections";
+import EcSalesWorkspace from "@/app/components/EcSalesWorkspace";
 import SupplierManagement from "@/app/components/SupplierManagement";
 import type { LedgerItem } from "@/types/ledger";
 
@@ -66,6 +67,8 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
         <main className="ledgerMain">
           {activeTab === "仕入れ管理" ? (
             <SupplierManagement />
+          ) : activeTab === "EC販売" ? (
+            <EcSalesWorkspace />
           ) : (
             <>
               <LedgerWorkspaceTop
