@@ -12,62 +12,113 @@ function kobutsu_ledger_render_ec_sales_admin_page(): void
 
     $edit_id = isset($_GET['edit']) ? absint($_GET['edit']) : 0;
     $message = isset($_GET['kobutsu_message']) ? sanitize_key($_GET['kobutsu_message']) : '';
+    $active_view = isset($_GET['view']) ? sanitize_key($_GET['view']) : 'all';
+    $search = isset($_GET['s']) ? sanitize_text_field((string) wp_unslash($_GET['s'])) : '';
     $edit_sale = $edit_id ? kobutsu_ledger_admin_get_ec_sale($edit_id) : null;
-    $rows = kobutsu_ledger_admin_get_ec_sales();
+    $rows = kobutsu_ledger_admin_get_ec_sales($active_view, $search);
+    $views = kobutsu_ledger_ec_sales_admin_views();
 
     ?>
     <div class="wrap kobutsu-ledger-admin">
-        <h1>EC販売</h1>
-        <p>EC販売の販売データと精算データを管理します。商品・仕入れ本体は削除せず、EC販売側の行だけを編集・削除します。</p>
+        <?php kobutsu_ledger_render_ec_sales_admin_styles(); ?>
 
-        <?php if ($message === 'saved') : ?>
-            <div class="notice notice-success is-dismissible"><p>保存しました。</p></div>
-        <?php elseif ($message === 'deleted') : ?>
-            <div class="notice notice-success is-dismissible"><p>削除しました。</p></div>
-        <?php elseif ($message === 'missing') : ?>
-            <div class="notice notice-error is-dismissible"><p>対象データが見つかりませんでした。</p></div>
-        <?php endif; ?>
+        <div class="kobutsu-shopify-shell">
+            <div class="kobutsu-shopify-header">
+                <div>
+                    <h1>EC販売</h1>
+                    <p>販売データと精算データを、行ごとにすばやく更新できます。</p>
+                </div>
+                <div class="kobutsu-shopify-actions">
+                    <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=kobutsu-ec-sales')); ?>">表示をリセット</a>
+                </div>
+            </div>
 
-        <?php if ($edit_sale) : ?>
-            <?php kobutsu_ledger_render_ec_sale_edit_form($edit_sale); ?>
-        <?php endif; ?>
+            <?php if ($message === 'saved') : ?>
+                <div class="notice notice-success is-dismissible"><p>保存しました。</p></div>
+            <?php elseif ($message === 'deleted') : ?>
+                <div class="notice notice-success is-dismissible"><p>削除しました。</p></div>
+            <?php elseif ($message === 'missing') : ?>
+                <div class="notice notice-error is-dismissible"><p>対象データが見つかりませんでした。</p></div>
+            <?php endif; ?>
 
-        <h2>EC販売データ</h2>
-        <table class="widefat fixed striped">
-            <thead>
-                <tr>
-                    <th style="width: 70px;">ID</th>
-                    <th style="width: 140px;">SKU</th>
-                    <th>商品名</th>
-                    <th style="width: 140px;">Order no.</th>
-                    <th style="width: 105px;">販売日</th>
-                    <th style="width: 110px;">販売額</th>
-                    <th style="width: 105px;">Payout</th>
-                    <th style="width: 110px;">受取金額</th>
-                    <th style="width: 110px;">最終損益</th>
-                    <th style="width: 85px;">利益率</th>
-                    <th style="width: 95px;">操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!$rows) : ?>
-                    <tr><td colspan="11">EC販売データはありません。</td></tr>
-                <?php endif; ?>
-                <?php foreach ($rows as $row) : ?>
+            <?php if ($edit_sale) : ?>
+                <?php kobutsu_ledger_render_ec_sale_edit_form($edit_sale); ?>
+            <?php endif; ?>
+
+            <div class="kobutsu-shopify-card">
+                <div class="kobutsu-shopify-toolbar">
+                    <nav class="kobutsu-shopify-tabs" aria-label="EC販売ステータス">
+                        <?php foreach ($views as $view_key => $view_label) : ?>
+                            <a
+                                class="<?php echo esc_attr($active_view === $view_key ? 'is-active' : ''); ?>"
+                                href="<?php echo esc_url(add_query_arg(['page' => 'kobutsu-ec-sales', 'view' => $view_key, 's' => $search], admin_url('admin.php'))); ?>"
+                            >
+                                <?php echo esc_html($view_label); ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </nav>
+                    <form method="get" class="kobutsu-shopify-search">
+                        <input type="hidden" name="page" value="kobutsu-ec-sales">
+                        <input type="hidden" name="view" value="<?php echo esc_attr($active_view); ?>">
+                        <label class="screen-reader-text" for="kobutsu_ec_sales_search">EC販売を検索</label>
+                        <input id="kobutsu_ec_sales_search" name="s" type="search" placeholder="SKU / 商品名 / Order no." value="<?php echo esc_attr($search); ?>">
+                        <button type="submit" class="button">検索</button>
+                    </form>
+                </div>
+
+                <div class="kobutsu-shopify-table-wrap">
+                    <table class="widefat fixed striped kobutsu-shopify-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 44px;"><span class="screen-reader-text">選択</span></th>
+                                <th style="width: 210px;">商品</th>
+                                <th style="width: 145px;">Order no.</th>
+                                <th style="width: 118px;">販売日</th>
+                                <th style="width: 150px;">販売額</th>
+                                <th style="width: 118px;">Payout</th>
+                                <th style="width: 120px;">受取金額</th>
+                                <th style="width: 120px;">最終損益</th>
+                                <th style="width: 90px;">利益率</th>
+                                <th style="width: 96px;">売れるまで</th>
+                                <th style="width: 150px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (!$rows) : ?>
+                                <tr><td colspan="11">EC販売データはありません。</td></tr>
+                            <?php endif; ?>
+                            <?php foreach ($rows as $row) : ?>
+                                <?php $form_id = 'kobutsu-ec-sale-row-' . (int) $row['sale_id']; ?>
                     <tr>
-                        <td><?php echo esc_html((string) $row['sale_id']); ?></td>
-                        <td><strong><?php echo esc_html($row['sku']); ?></strong></td>
-                        <td><?php echo esc_html($row['item_name']); ?></td>
-                        <td><?php echo esc_html($row['order_no']); ?></td>
-                        <td><?php echo esc_html($row['sale_date']); ?></td>
-                        <td><?php echo esc_html(kobutsu_ledger_admin_format_money((float) $row['sale_amount'], $row['sale_currency'])); ?></td>
-                        <td><?php echo esc_html($row['payout_date']); ?></td>
-                        <td><?php echo esc_html(kobutsu_ledger_admin_format_yen((int) $row['received_amount_jpy'])); ?></td>
-                        <td><?php echo esc_html(kobutsu_ledger_admin_format_yen((int) $row['profit_jpy'])); ?></td>
-                        <td><?php echo esc_html(kobutsu_ledger_admin_format_rate((float) $row['profit_rate'])); ?></td>
+                        <td><input type="checkbox" aria-label="<?php echo esc_attr($row['sku'] . ' を選択'); ?>"></td>
                         <td>
-                            <a class="button button-small" href="<?php echo esc_url(add_query_arg(['page' => 'kobutsu-ec-sales', 'edit' => (int) $row['sale_id']], admin_url('admin.php'))); ?>">編集</a>
-                            <form method="post" style="display:inline;" onsubmit="return confirm('このEC販売データを削除しますか？商品・仕入れデータは残ります。');">
+                            <strong><?php echo esc_html($row['item_name'] ?: '商品名未設定'); ?></strong>
+                            <span class="kobutsu-muted"><?php echo esc_html($row['sku'] ?: ('Sale #' . $row['sale_id'])); ?></span>
+                        </td>
+                        <td><input form="<?php echo esc_attr($form_id); ?>" name="order_no" type="text" value="<?php echo esc_attr($row['order_no']); ?>"></td>
+                        <td><input form="<?php echo esc_attr($form_id); ?>" name="sale_date" type="date" value="<?php echo esc_attr($row['sale_date']); ?>"></td>
+                        <td>
+                            <div class="kobutsu-money-input">
+                                <input form="<?php echo esc_attr($form_id); ?>" name="sale_amount" type="number" step="0.01" value="<?php echo esc_attr((string) $row['sale_amount']); ?>">
+                                <input form="<?php echo esc_attr($form_id); ?>" name="sale_currency" type="text" maxlength="3" value="<?php echo esc_attr($row['sale_currency']); ?>">
+                            </div>
+                        </td>
+                        <td><input form="<?php echo esc_attr($form_id); ?>" name="payout_date" type="date" value="<?php echo esc_attr($row['payout_date']); ?>"></td>
+                        <td><input form="<?php echo esc_attr($form_id); ?>" name="received_amount_jpy" type="number" value="<?php echo esc_attr((string) $row['received_amount_jpy']); ?>"></td>
+                        <td><input form="<?php echo esc_attr($form_id); ?>" name="profit_jpy" type="number" value="<?php echo esc_attr((string) $row['profit_jpy']); ?>"></td>
+                        <td><input form="<?php echo esc_attr($form_id); ?>" name="profit_rate" type="number" step="0.0001" value="<?php echo esc_attr((string) $row['profit_rate']); ?>"></td>
+                        <td><input form="<?php echo esc_attr($form_id); ?>" name="days_to_sell" type="number" value="<?php echo esc_attr((string) $row['days_to_sell']); ?>"></td>
+                        <td class="kobutsu-row-actions">
+                            <form id="<?php echo esc_attr($form_id); ?>" method="post">
+                                <?php wp_nonce_field('kobutsu_ec_sale_quick_update_' . (int) $row['sale_id']); ?>
+                                <input type="hidden" name="kobutsu_ec_sale_action" value="quick_update">
+                                <input type="hidden" name="sale_id" value="<?php echo esc_attr((string) $row['sale_id']); ?>">
+                                <input type="hidden" name="current_view" value="<?php echo esc_attr($active_view); ?>">
+                                <input type="hidden" name="current_search" value="<?php echo esc_attr($search); ?>">
+                                <button type="submit" class="button button-primary button-small">更新</button>
+                            </form>
+                            <a class="button button-small" href="<?php echo esc_url(add_query_arg(['page' => 'kobutsu-ec-sales', 'edit' => (int) $row['sale_id']], admin_url('admin.php'))); ?>">詳細</a>
+                            <form method="post" onsubmit="return confirm('このEC販売データを削除しますか？商品・仕入れデータは残ります。');">
                                 <?php wp_nonce_field('kobutsu_ec_sale_delete_' . (int) $row['sale_id']); ?>
                                 <input type="hidden" name="kobutsu_ec_sale_action" value="delete">
                                 <input type="hidden" name="sale_id" value="<?php echo esc_attr((string) $row['sale_id']); ?>">
@@ -75,9 +126,12 @@ function kobutsu_ledger_render_ec_sales_admin_page(): void
                             </form>
                         </td>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
     <?php
 }
@@ -101,6 +155,14 @@ function kobutsu_ledger_handle_ec_sales_admin_action(): void
         kobutsu_ledger_ec_sales_admin_redirect(['kobutsu_message' => 'deleted']);
     }
 
+    if ($action === 'quick_update') {
+        check_admin_referer('kobutsu_ec_sale_quick_update_' . $sale_id);
+        kobutsu_ledger_admin_quick_update_ec_sale($sale_id);
+        kobutsu_ledger_ec_sales_admin_redirect(kobutsu_ledger_ec_sales_current_filter_args([
+            'kobutsu_message' => 'saved',
+        ]));
+    }
+
     if ($action === 'save') {
         check_admin_referer('kobutsu_ec_sale_save_' . $sale_id);
         kobutsu_ledger_admin_update_ec_sale($sale_id);
@@ -114,16 +176,69 @@ function kobutsu_ledger_ec_sales_admin_redirect(array $args): void
     exit;
 }
 
-function kobutsu_ledger_admin_get_ec_sales(): array
+function kobutsu_ledger_ec_sales_current_filter_args(array $args = []): array
+{
+    $view = isset($_POST['current_view']) ? sanitize_key((string) wp_unslash($_POST['current_view'])) : 'all';
+    $search = isset($_POST['current_search']) ? sanitize_text_field((string) wp_unslash($_POST['current_search'])) : '';
+
+    if ($view !== '' && $view !== 'all') {
+        $args['view'] = $view;
+    }
+
+    if ($search !== '') {
+        $args['s'] = $search;
+    }
+
+    return $args;
+}
+
+function kobutsu_ledger_ec_sales_admin_views(): array
+{
+    return [
+        'all' => 'すべて',
+        'unsettled' => '未精算',
+        'profit' => '利益あり',
+        'loss' => '赤字',
+        'shipped' => '配送あり',
+    ];
+}
+
+function kobutsu_ledger_admin_get_ec_sales(string $view = 'all', string $search = ''): array
 {
     global $wpdb;
 
-    return $wpdb->get_results(
-        kobutsu_ledger_ec_sales_select_sql() . '
-        ORDER BY COALESCE(s.sale_date, s.created_at) DESC, s.id DESC
-        LIMIT 100',
-        ARRAY_A
-    ) ?: [];
+    $where = [];
+    $args = [];
+
+    if ($view === 'unsettled') {
+        $where[] = '(ss.id IS NULL OR ss.received_amount_jpy = 0)';
+    } elseif ($view === 'profit') {
+        $where[] = 'ss.profit_jpy > 0';
+    } elseif ($view === 'loss') {
+        $where[] = 'ss.profit_jpy < 0';
+    } elseif ($view === 'shipped') {
+        $where[] = '(s.tracking_no <> "" OR s.shipping_site <> "")';
+    }
+
+    if ($search !== '') {
+        $like = '%' . $wpdb->esc_like($search) . '%';
+        $where[] = '(i.sku LIKE %s OR i.item_name LIKE %s OR s.order_no LIKE %s)';
+        $args[] = $like;
+        $args[] = $like;
+        $args[] = $like;
+    }
+
+    $sql = kobutsu_ledger_ec_sales_select_sql();
+    if ($where) {
+        $sql .= ' WHERE ' . implode(' AND ', $where);
+    }
+    $sql .= ' ORDER BY COALESCE(s.sale_date, s.created_at) DESC, s.id DESC LIMIT 100';
+
+    if ($args) {
+        $sql = $wpdb->prepare($sql, ...$args);
+    }
+
+    return $wpdb->get_results($sql, ARRAY_A) ?: [];
 }
 
 function kobutsu_ledger_admin_get_ec_sale(int $sale_id): ?array
@@ -349,6 +464,71 @@ function kobutsu_ledger_admin_update_ec_sale(int $sale_id): void
     $wpdb->query('COMMIT');
 }
 
+function kobutsu_ledger_admin_quick_update_ec_sale(int $sale_id): void
+{
+    global $wpdb;
+
+    $sale = kobutsu_ledger_admin_get_ec_sale($sale_id);
+    if (!$sale) {
+        return;
+    }
+
+    $now = current_time('mysql');
+    $order_no = sanitize_text_field((string) wp_unslash($_POST['order_no'] ?? $sale['order_no']));
+    $sale_currency = strtoupper(substr(sanitize_text_field((string) wp_unslash($_POST['sale_currency'] ?? $sale['sale_currency'])), 0, 3));
+    $sale_amount = (float) ($_POST['sale_amount'] ?? $sale['sale_amount']);
+
+    $wpdb->query('START TRANSACTION');
+
+    $wpdb->update(kobutsu_ledger_table('sales'), [
+        'order_no' => $order_no,
+        'sale_date' => kobutsu_ledger_admin_date_or_null($_POST['sale_date'] ?? $sale['sale_date']),
+        'sale_amount' => $sale_amount,
+        'sale_currency' => $sale_currency ?: 'USD',
+        'sale_amount_jpy' => $sale_currency === 'JPY' ? (int) round($sale_amount) : 0,
+        'updated_at' => $now,
+    ], ['id' => $sale_id], ['%s', '%s', '%f', '%s', '%d', '%s'], ['%d']);
+
+    $settlement_data = [
+        'sale_id' => $sale_id,
+        'order_no' => $order_no,
+        'payout_date' => kobutsu_ledger_admin_date_or_null($_POST['payout_date'] ?? $sale['payout_date']),
+        'payout_id' => (string) $sale['payout_id'],
+        'total_fees' => (float) $sale['total_fees'],
+        'ad_fee' => (float) $sale['ad_fee'],
+        'ebay_fee' => (float) $sale['ebay_fee'],
+        'payout_amount' => (float) $sale['payout_amount'],
+        'sale_exchange_rate' => (float) $sale['sale_exchange_rate'],
+        'payout_exchange_rate' => (float) $sale['payout_exchange_rate'],
+        'received_amount_jpy' => (int) ($_POST['received_amount_jpy'] ?? $sale['received_amount_jpy']),
+        'overseas_shipping_jpy' => (int) $sale['overseas_shipping_jpy'],
+        'fee_tax_refund_jpy' => (int) $sale['fee_tax_refund_jpy'],
+        'consumption_tax_refund_jpy' => (int) $sale['consumption_tax_refund_jpy'],
+        'profit_jpy' => (int) ($_POST['profit_jpy'] ?? $sale['profit_jpy']),
+        'profit_rate' => (float) ($_POST['profit_rate'] ?? $sale['profit_rate']),
+        'days_to_sell' => (int) ($_POST['days_to_sell'] ?? $sale['days_to_sell']),
+        'updated_at' => $now,
+    ];
+
+    if (!empty($sale['settlement_id'])) {
+        $wpdb->update(
+            kobutsu_ledger_table('sales_settlements'),
+            $settlement_data,
+            ['id' => (int) $sale['settlement_id']],
+            ['%d', '%s', '%s', '%s', '%f', '%f', '%f', '%f', '%f', '%f', '%d', '%d', '%d', '%d', '%d', '%f', '%d', '%s'],
+            ['%d']
+        );
+    } else {
+        $wpdb->insert(
+            kobutsu_ledger_table('sales_settlements'),
+            $settlement_data,
+            ['%d', '%s', '%s', '%s', '%f', '%f', '%f', '%f', '%f', '%f', '%d', '%d', '%d', '%d', '%d', '%f', '%d', '%s']
+        );
+    }
+
+    $wpdb->query('COMMIT');
+}
+
 function kobutsu_ledger_admin_delete_ec_sale(int $sale_id): void
 {
     global $wpdb;
@@ -378,4 +558,153 @@ function kobutsu_ledger_admin_format_rate(float $rate): string
     }
 
     return number_format($rate, 2) . '%';
+}
+
+function kobutsu_ledger_render_ec_sales_admin_styles(): void
+{
+    ?>
+    <style>
+        .kobutsu-shopify-shell {
+            color: #202223;
+            max-width: 1600px;
+        }
+
+        .kobutsu-shopify-header {
+            align-items: center;
+            display: flex;
+            justify-content: space-between;
+            margin: 18px 0;
+        }
+
+        .kobutsu-shopify-header h1 {
+            font-size: 28px;
+            font-weight: 650;
+            margin: 0 0 6px;
+        }
+
+        .kobutsu-shopify-header p {
+            color: #6d7175;
+            margin: 0;
+        }
+
+        .kobutsu-shopify-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .kobutsu-shopify-card {
+            background: #fff;
+            border: 1px solid #dcdfe4;
+            border-radius: 12px;
+            box-shadow: 0 1px 2px rgba(31, 33, 36, 0.08);
+            overflow: hidden;
+        }
+
+        .kobutsu-shopify-toolbar {
+            align-items: center;
+            border-bottom: 1px solid #e1e3e5;
+            display: flex;
+            gap: 16px;
+            justify-content: space-between;
+            padding: 12px 14px;
+        }
+
+        .kobutsu-shopify-tabs {
+            display: flex;
+            gap: 4px;
+        }
+
+        .kobutsu-shopify-tabs a {
+            border-radius: 8px;
+            color: #202223;
+            padding: 7px 12px;
+            text-decoration: none;
+        }
+
+        .kobutsu-shopify-tabs a.is-active {
+            background: #e3f1df;
+            box-shadow: inset 0 0 0 1px #a7cfa2;
+            font-weight: 650;
+        }
+
+        .kobutsu-shopify-search {
+            display: flex;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .kobutsu-shopify-search input[type="search"] {
+            min-width: 280px;
+        }
+
+        .kobutsu-shopify-table-wrap {
+            overflow-x: auto;
+        }
+
+        .kobutsu-shopify-table {
+            border: 0;
+            min-width: 1320px;
+        }
+
+        .kobutsu-shopify-table th {
+            background: #f6f6f7;
+            color: #6d7175;
+            font-size: 12px;
+            font-weight: 650;
+        }
+
+        .kobutsu-shopify-table td {
+            vertical-align: middle;
+        }
+
+        .kobutsu-shopify-table input[type="text"],
+        .kobutsu-shopify-table input[type="date"],
+        .kobutsu-shopify-table input[type="number"] {
+            border-color: #c9cccf;
+            border-radius: 8px;
+            max-width: 100%;
+            min-height: 34px;
+            width: 100%;
+        }
+
+        .kobutsu-muted {
+            color: #6d7175;
+            display: block;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .kobutsu-money-input {
+            display: grid;
+            gap: 6px;
+            grid-template-columns: minmax(72px, 1fr) 48px;
+        }
+
+        .kobutsu-row-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .kobutsu-row-actions form {
+            margin: 0;
+        }
+
+        @media (max-width: 960px) {
+            .kobutsu-shopify-header,
+            .kobutsu-shopify-toolbar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .kobutsu-shopify-tabs {
+                flex-wrap: wrap;
+            }
+
+            .kobutsu-shopify-search,
+            .kobutsu-shopify-search input[type="search"] {
+                width: 100%;
+            }
+        }
+    </style>
+    <?php
 }
