@@ -201,6 +201,7 @@ export type ShopeePurchase = {
   soldAt: string;
   firstChatAt: string;
   purchasedAt: string;
+  listedAt: string;
   country: string;
   saleAmount: string;
   purchasedFlag: string;
@@ -233,6 +234,7 @@ export type ShopeePurchaseApiRow = {
   sold_at?: ApiValue;
   first_chat_at?: ApiValue;
   purchased_at?: ApiValue;
+  listed_at?: ApiValue;
   country?: ApiValue;
   sale_amount?: ApiValue;
   purchased_flag?: ApiValue;

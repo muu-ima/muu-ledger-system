@@ -257,6 +257,7 @@ export function normalizeShopeePurchase(
     soldAt: normalizeDate(row.sold_at, { fallbackYear: 2026 }),
     firstChatAt: normalizeDate(row.first_chat_at, { fallbackYear: 2026 }),
     purchasedAt: normalizeDate(row.purchased_at, { fallbackYear: 2026 }),
+    listedAt: normalizeDate(row.listed_at, { fallbackYear: 2026 }),
     country: normalizeText(row.country),
     saleAmount: normalizeMoneyAmount(row.sale_amount),
     purchasedFlag: normalizeFlag(row.purchased_flag),
@@ -497,10 +498,16 @@ function inferBundledFlag(purchase: ShopeePurchase) {
   return "";
 }
 
-function calculateDaysToSell(purchasedAt: string, soldAt: string) {
-  if (!purchasedAt || !soldAt) return "";
+function calculateDaysToSell({
+  listedAt,
+  soldAt,
+}: {
+  listedAt: string;
+  soldAt: string;
+}) {
+  if (!listedAt || !soldAt) return "";
 
-  const purchasedMs = Date.parse(purchasedAt);
+  const purchasedMs = Date.parse(listedAt);
   const soldMs = Date.parse(soldAt);
   if (Number.isNaN(purchasedMs) || Number.isNaN(soldMs)) return "";
 
@@ -566,7 +573,10 @@ export function buildEcSalesIntermediateRecord(
     purchaseTaxRefundJpy: "",
     profitJpy: "",
     profitRate: "",
-    daysToSell: calculateDaysToSell(purchasedAt, soldAt),
+    daysToSell: calculateDaysToSell({
+      listedAt: purchase.listedAt,
+      soldAt,
+    }),
     domesticTrackingNo: purchase.domesticTrackingNo,
     slsTrackingNo: purchase.slsTrackingNo,
     settlementNote: choosePreferredValue(
