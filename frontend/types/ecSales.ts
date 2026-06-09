@@ -1,5 +1,16 @@
 type ApiValue = string | number | null | undefined;
 
+export const ecSalesViews = ["集計ビュー", "ペイメント", "為替レート"] as const;
+export const ecSalesSummaryViews = [
+  "全体",
+  "収益",
+  "手数料・為替",
+  "配送・日付",
+] as const;
+
+export type EcSalesView = (typeof ecSalesViews)[number];
+export type EcSalesSummaryView = (typeof ecSalesSummaryViews)[number];
+
 export type MarketplaceRegion = "sg" | "ph" | "unknown";
 
 export type CurrencyCode =

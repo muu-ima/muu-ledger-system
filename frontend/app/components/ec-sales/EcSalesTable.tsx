@@ -1,99 +1,179 @@
-import type { EcSalesRecord } from "@/types/ecSales";
+import type { EcSalesRecord, EcSalesSummaryView } from "@/types/ecSales";
+
+type EcSalesColumn = {
+  className: string;
+  cellClassName?: string;
+  key: keyof EcSalesRecord;
+  label: string;
+};
+
+const allColumns: EcSalesColumn[] = [
+  { key: "bundledFlag", label: "同梱", className: "typeCol" },
+  { key: "sku", label: "SKU", className: "skuCol", cellClassName: "selectedCell" },
+  { key: "orderNo", label: "Order number", className: "verifyCol" },
+  { key: "purchaseDate", label: "仕入れ日", className: "dateCol" },
+  { key: "listedAt", label: "出品日", className: "dateCol" },
+  { key: "soldAt", label: "販売日", className: "dateCol" },
+  { key: "payoutAt", label: "出金日", className: "dateCol" },
+  { key: "itemName", label: "商品名", className: "nameCol", cellClassName: "nameCell" },
+  {
+    key: "purchasePriceJpy",
+    label: "仕入れ金額",
+    className: "moneyCol",
+    cellClassName: "numberCell",
+  },
+  {
+    key: "saleAmountRaw",
+    label: "販売金額",
+    className: "moneyCol",
+    cellClassName: "numberCell",
+  },
+  {
+    key: "saleAmountJpy",
+    label: "販売金額(円)",
+    className: "moneyCol",
+    cellClassName: "numberCell",
+  },
+  {
+    key: "totalFeesRaw",
+    label: "手数料合計",
+    className: "moneyCol",
+    cellClassName: "numberCell",
+  },
+  { key: "adFeeRaw", label: "広告費", className: "moneyCol", cellClassName: "numberCell" },
+  {
+    key: "marketplaceFeeRaw",
+    label: "shopee手数料",
+    className: "moneyCol",
+    cellClassName: "numberCell",
+  },
+  {
+    key: "payoutAmountRaw",
+    label: "Payout金額",
+    className: "moneyCol",
+    cellClassName: "numberCell",
+  },
+  {
+    key: "saleExchangeRate",
+    label: "販売時為替",
+    className: "rateCol",
+    cellClassName: "numberCell",
+  },
+  {
+    key: "payoutExchangeRate",
+    label: "出金時為替",
+    className: "rateCol",
+    cellClassName: "numberCell",
+  },
+  {
+    key: "receivedAmountJpy",
+    label: "受取金額",
+    className: "moneyCol",
+    cellClassName: "numberCell",
+  },
+  {
+    key: "overseasShippingYen",
+    label: "海外送料",
+    className: "moneyCol",
+    cellClassName: "numberCell",
+  },
+  {
+    key: "feeTaxRefundJpy",
+    label: "手数料還付",
+    className: "moneyCol",
+    cellClassName: "numberCell",
+  },
+  {
+    key: "purchaseTaxRefundJpy",
+    label: "消費税還付",
+    className: "moneyCol",
+    cellClassName: "numberCell",
+  },
+  { key: "profitJpy", label: "最終損益", className: "moneyCol", cellClassName: "numberCell" },
+  { key: "profitRate", label: "利益率", className: "rateCol", cellClassName: "numberCell" },
+  { key: "daysToSell", label: "売れるまで", className: "qtyCol", cellClassName: "numberCell" },
+  { key: "domesticTrackingNo", label: "国内送り状", className: "sourceCol" },
+  { key: "slsTrackingNo", label: "SLS送り状", className: "sourceCol" },
+];
+
+const summaryColumns: Record<EcSalesSummaryView, EcSalesColumn[]> = {
+  全体: allColumns,
+  収益: allColumns.filter((column) =>
+    [
+      "sku",
+      "orderNo",
+      "itemName",
+      "purchasePriceJpy",
+      "saleAmountRaw",
+      "saleAmountJpy",
+      "receivedAmountJpy",
+      "profitJpy",
+      "profitRate",
+    ].includes(column.key),
+  ),
+  "手数料・為替": allColumns.filter((column) =>
+    [
+      "sku",
+      "orderNo",
+      "saleAmountRaw",
+      "totalFeesRaw",
+      "adFeeRaw",
+      "marketplaceFeeRaw",
+      "payoutAmountRaw",
+      "saleExchangeRate",
+      "payoutExchangeRate",
+      "receivedAmountJpy",
+      "feeTaxRefundJpy",
+      "purchaseTaxRefundJpy",
+    ].includes(column.key),
+  ),
+  "配送・日付": allColumns.filter((column) =>
+    [
+      "bundledFlag",
+      "sku",
+      "orderNo",
+      "purchaseDate",
+      "listedAt",
+      "soldAt",
+      "payoutAt",
+      "overseasShippingYen",
+      "daysToSell",
+      "domesticTrackingNo",
+      "slsTrackingNo",
+    ].includes(column.key),
+  ),
+};
 
 type EcSalesTableProps = {
   records: EcSalesRecord[];
+  summaryView: EcSalesSummaryView;
 };
 
-export function EcSalesTable({ records }: EcSalesTableProps) {
+export function EcSalesTable({ records, summaryView }: EcSalesTableProps) {
+  const columns = summaryColumns[summaryView];
+
   return (
     <table className="ledgerGrid ecSalesGrid">
       <colgroup>
-        <col className="typeCol" />
-        <col className="skuCol" />
-        <col className="verifyCol" />
-        <col className="dateCol" />
-        <col className="dateCol" />
-        <col className="dateCol" />
-        <col className="dateCol" />
-        <col className="nameCol" />
-        <col className="moneyCol" />
-        <col className="moneyCol" />
-        <col className="moneyCol" />
-        <col className="moneyCol" />
-        <col className="moneyCol" />
-        <col className="moneyCol" />
-        <col className="moneyCol" />
-        <col className="rateCol" />
-        <col className="rateCol" />
-        <col className="moneyCol" />
-        <col className="moneyCol" />
-        <col className="moneyCol" />
-        <col className="moneyCol" />
-        <col className="moneyCol" />
-        <col className="rateCol" />
-        <col className="qtyCol" />
-        <col className="sourceCol" />
-        <col className="sourceCol" />
+        {columns.map((column) => (
+          <col key={column.key} className={column.className} />
+        ))}
       </colgroup>
       <thead>
         <tr className="headerRow">
-          <th>同梱</th>
-          <th>SKU</th>
-          <th>Order number</th>
-          <th>仕入れ日</th>
-          <th>出品日</th>
-          <th>販売日</th>
-          <th>出金日</th>
-          <th>商品名</th>
-          <th>仕入れ金額</th>
-          <th>販売金額</th>
-          <th>販売金額(円)</th>
-          <th>手数料合計</th>
-          <th>広告費</th>
-          <th>shopee手数料</th>
-          <th>Payout金額</th>
-          <th>販売時為替</th>
-          <th>出金時為替</th>
-          <th>受取金額</th>
-          <th>海外送料</th>
-          <th>手数料還付</th>
-          <th>消費税還付</th>
-          <th>最終損益</th>
-          <th>利益率</th>
-          <th>売れるまで</th>
-          <th>国内送り状</th>
-          <th>SLS送り状</th>
+          {columns.map((column) => (
+            <th key={column.key}>{column.label}</th>
+          ))}
         </tr>
       </thead>
       <tbody>
         {records.map((record) => (
           <tr key={`${record.sku}-${record.orderNo}`}>
-            <td>{record.bundledFlag}</td>
-            <td className="selectedCell">{record.sku}</td>
-            <td>{record.orderNo}</td>
-            <td>{record.purchaseDate}</td>
-            <td>{record.listedAt}</td>
-            <td>{record.soldAt}</td>
-            <td>{record.payoutAt}</td>
-            <td className="nameCell">{record.itemName}</td>
-            <td className="numberCell">{record.purchasePriceJpy}</td>
-            <td className="numberCell">{record.saleAmountRaw}</td>
-            <td className="numberCell">{record.saleAmountJpy}</td>
-            <td className="numberCell">{record.totalFeesRaw}</td>
-            <td className="numberCell">{record.adFeeRaw}</td>
-            <td className="numberCell">{record.marketplaceFeeRaw}</td>
-            <td className="numberCell">{record.payoutAmountRaw}</td>
-            <td className="numberCell">{record.saleExchangeRate}</td>
-            <td className="numberCell">{record.payoutExchangeRate}</td>
-            <td className="numberCell">{record.receivedAmountJpy}</td>
-            <td className="numberCell">{record.overseasShippingYen}</td>
-            <td className="numberCell">{record.feeTaxRefundJpy}</td>
-            <td className="numberCell">{record.purchaseTaxRefundJpy}</td>
-            <td className="numberCell">{record.profitJpy}</td>
-            <td className="numberCell">{record.profitRate}</td>
-            <td className="numberCell">{record.daysToSell}</td>
-            <td>{record.domesticTrackingNo}</td>
-            <td>{record.slsTrackingNo}</td>
+            {columns.map((column) => (
+              <td key={column.key} className={column.cellClassName}>
+                {record[column.key]}
+              </td>
+            ))}
           </tr>
         ))}
       </tbody>

@@ -509,6 +509,17 @@ fieldset input:not([type="checkbox"]) {
   overflow: auto;
 }
 
+.emptyTableState {
+  min-height: 96px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.46);
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .ledgerGrid {
   width: max-content;
   min-width: 100%;
