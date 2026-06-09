@@ -1,0 +1,94 @@
+export const supplierSourceViews = ["要約", "発送・梱包", "詳細・原票"] as const;
+export const supplierDataViews = ["仕入れ元データ", "仕入れ表への反映"] as const;
+
+export type SupplierSourceView = (typeof supplierSourceViews)[number];
+export type SupplierDataView = (typeof supplierDataViews)[number];
+
+export type SupplierSource = {
+  rowNo: string;
+  sku: string;
+  orderNo: string;
+  account: string;
+  soldAt: string;
+  acquiredAt: string;
+  country: string;
+  mag: string;
+  saleAmount: string;
+  purchasePrice: string;
+  shippingCost: string;
+  points: string;
+  note: string;
+  packer: string;
+  shippingSite: string;
+  actualWeight: string;
+  dimensionalWeight: string;
+  length: string;
+  width: string;
+  height: string;
+  itemName: string;
+  supplier: string;
+  firstMailAt: string;
+  receiptPrintedAt: string;
+};
+
+type ApiValue = string | number | null | undefined;
+
+export type SupplierSourceApiRow = {
+  id?: ApiValue;
+  source_row_no?: ApiValue;
+  sku?: ApiValue;
+  order_no?: ApiValue;
+  account_name?: ApiValue;
+  sold_at?: ApiValue;
+  sold_at_raw?: ApiValue;
+  acquired_at?: ApiValue;
+  acquired_at_raw?: ApiValue;
+  buyer_country?: ApiValue;
+  mag?: ApiValue;
+  sale_amount?: ApiValue;
+  sale_currency?: ApiValue;
+  purchase_price_jpy?: ApiValue;
+  shipping_cost_jpy?: ApiValue;
+  points?: ApiValue;
+  notes?: ApiValue;
+  packer?: ApiValue;
+  shipping_site?: ApiValue;
+  actual_weight_g?: ApiValue;
+  dimensional_weight_g?: ApiValue;
+  package_length_cm?: ApiValue;
+  package_width_cm?: ApiValue;
+  package_height_cm?: ApiValue;
+  item_name?: ApiValue;
+  supplier_name_raw?: ApiValue;
+  first_mail_at_raw?: ApiValue;
+  receipt_printed_at_raw?: ApiValue;
+};
+
+export type SupplierSourceSubmitPayload = {
+  source_row_no: number;
+  sku: string;
+  order_no: string;
+  account_name: string;
+  sold_at: string;
+  acquired_at: string;
+  buyer_country: string;
+  mag: string;
+  sale_amount: string;
+  purchase_price: string;
+  shipping_cost: string;
+  points: string;
+  shipping_note: string;
+  packer: string;
+  shipping_site: string;
+  actual_weight_g: number;
+  dimensional_weight_g: number;
+  package_length_cm: string;
+  package_width_cm: string;
+  package_height_cm: string;
+  item_name: string;
+  acquired_from: string;
+  first_mail_at: string;
+  receipt_printed_at: string;
+  sold_to: string;
+  status: "in_stock" | "sold";
+};

@@ -17,6 +17,7 @@ WordPress を台帳データと管理権限のバックエンド、Next.js を�
 仕入れ管理フォームは、保存先テーブルを分けずに `wp_kobutsu_supplier_sources` を使い、UIだけを `必須入力`, `よく使う入力`, `詳細入力` の3区分に分けます。
 
 詳細は `docs/ui-reference.md` を参照してください。
+フロントエンドの責務分離と型整理の進め方は `docs/frontend-refactor.md` を参照してください。
 
 ## 参考プラグイン
 
