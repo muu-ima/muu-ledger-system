@@ -19,6 +19,9 @@ register_activation_hook(__FILE__, 'kobutsu_ledger_activate');
 add_action('plugins_loaded', 'kobutsu_ledger_maybe_upgrade');
 add_action('rest_api_init', 'kobutsu_ledger_register_routes');
 add_action('admin_menu', 'kobutsu_ledger_register_admin_menu');
+add_action('admin_init', 'kobutsu_ledger_handle_admin_action');
+add_action('admin_init', 'kobutsu_ledger_handle_supplier_sources_admin_action');
+add_action('admin_init', 'kobutsu_ledger_handle_ec_sales_admin_action');
 add_filter('rest_pre_serve_request', 'kobutsu_ledger_local_rest_headers', 10, 4);
 
 function kobutsu_ledger_activate(): void
@@ -766,8 +769,6 @@ function kobutsu_ledger_render_admin_page(): void
     if (!current_user_can('edit_posts')) {
         wp_die(esc_html__('このページにアクセスする権限がありません。', 'kobutsu-ledger'));
     }
-
-    kobutsu_ledger_handle_admin_action();
 
     $edit_id = isset($_GET['edit']) ? absint($_GET['edit']) : 0;
     $message = isset($_GET['kobutsu_message']) ? sanitize_key($_GET['kobutsu_message']) : '';

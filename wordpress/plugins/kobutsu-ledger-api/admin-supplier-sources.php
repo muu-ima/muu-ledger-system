@@ -49,8 +49,6 @@ function kobutsu_ledger_render_supplier_sources_admin_page(): void
         wp_die(esc_html__('このページにアクセスする権限がありません。', 'kobutsu-ledger'));
     }
 
-    kobutsu_ledger_handle_supplier_sources_admin_action();
-
     $message = isset($_GET['kobutsu_message']) ? sanitize_key($_GET['kobutsu_message']) : '';
     $rows = kobutsu_ledger_admin_get_supplier_sources();
 

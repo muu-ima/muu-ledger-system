@@ -10,8 +10,6 @@ function kobutsu_ledger_render_ec_sales_admin_page(): void
         wp_die(esc_html__('このページにアクセスする権限がありません。', 'kobutsu-ledger'));
     }
 
-    kobutsu_ledger_handle_ec_sales_admin_action();
-
     $edit_id = isset($_GET['edit']) ? absint($_GET['edit']) : 0;
     $message = isset($_GET['kobutsu_message']) ? sanitize_key($_GET['kobutsu_message']) : '';
     $edit_sale = $edit_id ? kobutsu_ledger_admin_get_ec_sale($edit_id) : null;
