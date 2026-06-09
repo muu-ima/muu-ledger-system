@@ -413,3 +413,103 @@ export function normalizeEcSalesRecord(row: EcSalesRecordApiRow): EcSalesRecord 
     settlementNote: normalizeText(row.settlement_note),
   };
 }
+
+function choosePreferredValue(...values: string[]) {
+  return values.find((value) => normalizeText(value)) ?? "";
+}
+
+function inferBundledFlag(purchase: ShopeePurchase) {
+  if (purchase.bundledWith || purchase.domesticTrackingNo.includes("↑同梱")) {
+    return "〇";
+  }
+  return "";
+}
+
+function calculateDaysToSell(purchasedAt: string, soldAt: string) {
+  if (!purchasedAt || !soldAt) return "";
+
+  const purchasedMs = Date.parse(purchasedAt);
+  const soldMs = Date.parse(soldAt);
+  if (Number.isNaN(purchasedMs) || Number.isNaN(soldMs)) return "";
+
+  const diffDays = Math.round((soldMs - purchasedMs) / 86400000);
+  return String(diffDays);
+}
+
+function findSupplierBySkuOrOrder(
+  suppliers: ShopeeSupplier[],
+  purchase: ShopeePurchase,
+) {
+  return (
+    suppliers.find(
+      (supplier) =>
+        supplier.sku === purchase.sku ||
+        (supplier.orderNo && supplier.orderNo === purchase.orderNo),
+    ) ?? null
+  );
+}
+
+export function buildEcSalesIntermediateRecord(
+  purchase: ShopeePurchase,
+  supplier?: ShopeeSupplier | null,
+): EcSalesRecord {
+  const normalizedSupplier = supplier ?? null;
+  const purchasedAt = choosePreferredValue(
+    purchase.purchasedAt,
+    normalizedSupplier?.purchasedAt ?? "",
+  );
+  const soldAt = choosePreferredValue(
+    purchase.soldAt,
+    normalizedSupplier?.soldAt ?? "",
+  );
+
+  return {
+    bundledFlag: inferBundledFlag(purchase),
+    sku: purchase.sku,
+    orderNo: choosePreferredValue(purchase.orderNo, normalizedSupplier?.orderNo ?? ""),
+    purchaseDate: purchasedAt,
+    soldAt,
+    payoutAt: "",
+    itemName: choosePreferredValue(purchase.itemName, normalizedSupplier?.itemName ?? ""),
+    purchasePriceJpy: choosePreferredValue(
+      purchase.purchasePrice,
+      normalizedSupplier?.purchasePrice ?? "",
+    ),
+    saleAmountRaw: choosePreferredValue(
+      purchase.saleAmount,
+      normalizedSupplier?.saleAmount ?? "",
+    ),
+    saleAmountJpy: "",
+    totalFeesRaw: "",
+    adFeeRaw: "",
+    marketplaceFeeRaw: "",
+    payoutAmountRaw: "",
+    saleExchangeRate: "",
+    payoutExchangeRate: "",
+    receivedAmountJpy: "",
+    overseasShippingYen: normalizedSupplier?.shippingActualYen ?? "",
+    feeTaxRefundJpy: "",
+    purchaseTaxRefundJpy: "",
+    profitJpy: "",
+    profitRate: "",
+    daysToSell: calculateDaysToSell(purchasedAt, soldAt),
+    domesticTrackingNo: purchase.domesticTrackingNo,
+    slsTrackingNo: purchase.slsTrackingNo,
+    settlementNote: choosePreferredValue(
+      purchase.note,
+      normalizedSupplier?.shippingNote ?? "",
+    ),
+  };
+}
+
+export function buildEcSalesIntermediateRecords(
+  purchases: ShopeePurchase[],
+  suppliers: ShopeeSupplier[] = [],
+) {
+  return purchases.map((purchase) =>
+    buildEcSalesIntermediateRecord(
+      purchase,
+      findSupplierBySkuOrOrder(suppliers, purchase),
+    ),
+  );
+}
