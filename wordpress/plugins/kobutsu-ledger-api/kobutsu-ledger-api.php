@@ -12,6 +12,7 @@ if (!defined('ABSPATH')) {
 
 require_once __DIR__ . '/admin-supplier-sources.php';
 require_once __DIR__ . '/admin-ec-sales.php';
+require_once __DIR__ . '/admin-launch-settings.php';
 
 const KOBUTSU_LEDGER_DB_VERSION = '0.3.2';
 
@@ -51,12 +52,7 @@ function kobutsu_ledger_local_rest_headers($served, $result, $request, $server)
     }
 
     $origin = get_http_origin();
-    $allowed_origins = [
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        'http://localhost:8081',
-        'http://127.0.0.1:8081',
-    ];
+    $allowed_origins = kobutsu_ledger_allowed_rest_origins();
 
     if ($origin && in_array($origin, $allowed_origins, true)) {
         header('Access-Control-Allow-Origin: ' . esc_url_raw($origin));
@@ -1214,6 +1210,8 @@ function kobutsu_ledger_register_admin_menu(): void
         'dashicons-chart-line',
         28
     );
+
+    kobutsu_ledger_register_launch_settings_menu();
 }
 
 function kobutsu_ledger_render_admin_page(): void

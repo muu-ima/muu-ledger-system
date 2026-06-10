@@ -8,6 +8,9 @@ if (!defined('ABSPATH')) {
 }
 
 $frontend_url = kobutsu_ledger_shell_frontend_url();
+$launch_settings_url = current_user_can('edit_posts')
+    ? admin_url('admin.php?page=kobutsu-launch-settings')
+    : '';
 ?>
 <!doctype html>
 <html <?php language_attributes(); ?>>
@@ -47,6 +50,13 @@ $frontend_url = kobutsu_ledger_shell_frontend_url();
         <main class="kobutsu-shell-fallback">
             <h1><?php echo esc_html__('Kobutsu Ledger', 'kobutsu-ledger-shell'); ?></h1>
             <p><?php echo esc_html__('Frontend URL is not configured.', 'kobutsu-ledger-shell'); ?></p>
+            <?php if ($launch_settings_url) : ?>
+                <p>
+                    <a href="<?php echo esc_url($launch_settings_url); ?>">
+                        <?php echo esc_html__('起動設定を開く', 'kobutsu-ledger-shell'); ?>
+                    </a>
+                </p>
+            <?php endif; ?>
         </main>
     <?php endif; ?>
 <?php wp_footer(); ?>
