@@ -105,6 +105,54 @@
 - `includes/ec-sales-admin-helpers.php`
   - format、payload helper、`days_to_sell` 補完
 
+## 今の 仕入元データ の分離例
+
+`admin-supplier-sources.php` も入口だけに寄せ、実装を以下へ分離しています。
+
+- `includes/supplier-sources-admin-view.php`
+  - 一覧表示
+- `includes/supplier-sources-admin-actions.php`
+  - create / update / delete / POST handler
+- `includes/supplier-sources-admin-query.php`
+  - 一覧取得、単票取得、SELECT SQL
+- `includes/supplier-sources-admin-helpers.php`
+  - format、表示用 helper
+
+## 現在のフォルダ構成
+
+現時点では、`wordpress/` 配下は次の構成です。
+
+```text
+wordpress/
+├── plugins/
+│   └── kobutsu-ledger-api/
+│       ├── kobutsu-ledger-api.php
+│       ├── admin-ec-sales.php
+│       ├── admin-launch-settings.php
+│       ├── admin-ledger.php
+│       ├── admin-supplier-sources.php
+│       └── includes/
+│           ├── admin-menu.php
+│           ├── bootstrap.php
+│           ├── database.php
+│           ├── helpers.php
+│           ├── ledger-rest-crud.php
+│           ├── rest.php
+│           ├── ec-sales-admin-actions.php
+│           ├── ec-sales-admin-helpers.php
+│           ├── ec-sales-admin-query.php
+│           ├── ec-sales-admin-view.php
+│           ├── supplier-sources-admin-actions.php
+│           ├── supplier-sources-admin-helpers.php
+│           ├── supplier-sources-admin-query.php
+│           └── supplier-sources-admin-view.php
+└── themes/
+    └── kobutsu-ledger-shell/
+        ├── functions.php
+        ├── index.php
+        └── style.css
+```
+
 ## 分けるときの判断基準
 
 - まず 1 ファイル 300 行超が見えたら分離を検討する
@@ -130,6 +178,7 @@
 
 ## 今後の進め方
 
-- `admin-supplier-sources.php` も `view / actions / query / helpers` に寄せる
 - 同期処理は `includes/sync/` にまとめる
+- `admin-ledger.php` は必要になったら `view / actions / query` に分ける
+- `admin-launch-settings.php` は設定項目が増えたら `view` と `settings helper` を分ける
 - 将来的に増える管理画面も同じ命名規則にそろえる
