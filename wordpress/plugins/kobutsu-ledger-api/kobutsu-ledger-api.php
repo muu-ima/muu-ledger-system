@@ -336,6 +336,12 @@ function kobutsu_ledger_register_routes(): void
         ],
     ]);
 
+    register_rest_route('kobutsu/v1', '/supplier-sources/(?P<id>\d+)', [
+        'methods' => WP_REST_Server::EDITABLE,
+        'callback' => 'kobutsu_ledger_update_supplier_source',
+        'permission_callback' => 'kobutsu_ledger_can_write',
+    ]);
+
     register_rest_route('kobutsu/v1', '/ec-sales', [
         'methods' => WP_REST_Server::READABLE,
         'callback' => 'kobutsu_ledger_get_ec_sales',

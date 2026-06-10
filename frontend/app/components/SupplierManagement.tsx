@@ -19,6 +19,8 @@ export default function SupplierManagement() {
     saveSupplierSource,
     supplierSources,
     supplierSubmitStatus,
+    updateSupplierSource,
+    updateSupplierSourceField,
   } = useSupplierSources();
   const {
     closeSupplierModal,
@@ -90,7 +92,10 @@ export default function SupplierManagement() {
           sourceView={supplierSourceView}
           sources={supplierSources}
           onDataViewChange={setSupplierDataView}
+          onSourceRowChange={updateSupplierSourceField}
+          onSourceRowSave={updateSupplierSource}
           onSourceViewChange={setSupplierSourceView}
+          sourceStatusMessage={supplierSubmitStatus}
         />
       </div>
     </>

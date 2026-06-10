@@ -15,6 +15,7 @@ type SupplierSourceTablesProps = {
   purchaseProjectionRows: PurchaseProjectionRow[];
   purchaseProjectionStatus: string;
   sourceView: SupplierSourceView;
+  sourceStatusMessage: string;
   sources: SupplierSource[];
   onDataViewChange: (view: SupplierDataView) => void;
   onPurchaseProjectionRowChange: (
@@ -23,6 +24,12 @@ type SupplierSourceTablesProps = {
     value: string,
   ) => void;
   onPurchaseProjectionRowSave: (row: PurchaseProjectionRow) => void;
+  onSourceRowChange: (
+    sku: string,
+    field: keyof SupplierSource,
+    value: string,
+  ) => void;
+  onSourceRowSave: (row: SupplierSource) => void;
   onSourceViewChange: (view: SupplierSourceView) => void;
 };
 
@@ -31,10 +38,13 @@ export function SupplierSourceTables({
   purchaseProjectionRows,
   purchaseProjectionStatus,
   sourceView,
+  sourceStatusMessage,
   sources,
   onDataViewChange,
   onPurchaseProjectionRowChange,
   onPurchaseProjectionRowSave,
+  onSourceRowChange,
+  onSourceRowSave,
   onSourceViewChange,
 }: SupplierSourceTablesProps) {
   return (
@@ -51,13 +61,28 @@ export function SupplierSourceTables({
       />
       <div className="ledgerTableFrame">
         {dataView === "仕入れ元データ" && sourceView === "要約" ? (
-          <SupplierSourceSummaryTable sources={sources} />
+          <SupplierSourceSummaryTable
+            sources={sources}
+            statusMessage={sourceStatusMessage}
+            onRowChange={onSourceRowChange}
+            onRowUpdate={onSourceRowSave}
+          />
         ) : null}
         {dataView === "仕入れ元データ" && sourceView === "発送・梱包" ? (
-          <SupplierSourceShippingTable sources={sources} />
+          <SupplierSourceShippingTable
+            sources={sources}
+            statusMessage={sourceStatusMessage}
+            onRowChange={onSourceRowChange}
+            onRowUpdate={onSourceRowSave}
+          />
         ) : null}
         {dataView === "仕入れ元データ" && sourceView === "詳細・原票" ? (
-          <SupplierSourceDetailTable sources={sources} />
+          <SupplierSourceDetailTable
+            sources={sources}
+            statusMessage={sourceStatusMessage}
+            onRowChange={onSourceRowChange}
+            onRowUpdate={onSourceRowSave}
+          />
         ) : null}
         {dataView === "仕入れ表への反映" ? (
           <PurchaseProjectionTable

@@ -7,6 +7,7 @@ import type {
 } from "@/types/supplier";
 
 export const supplierSourceSample = {
+  id: "",
   rowNo: "",
   sku: "20251125_mizushima_02",
   orderNo: "25-13888-57021",
@@ -43,7 +44,7 @@ export const supplierSourceSample = {
 export function createSupplierSourceDraft(
   source: SupplierSource = supplierSourceSample,
 ): SupplierSource {
-  return { ...source, rowNo: source.rowNo || "" };
+  return { ...source, id: source.id || "", rowNo: source.rowNo || "" };
 }
 
 export function formatYen(value: number) {
@@ -84,6 +85,7 @@ export function wordpressRestUrl(baseUrl: string, route: string) {
 
 export function supplierSourceFromApi(row: SupplierSourceApiRow): SupplierSource {
   return {
+    id: String(row.id || ""),
     rowNo: String(row.source_row_no || row.id || ""),
     sku: String(row.sku || ""),
     orderNo: String(row.order_no || ""),
@@ -156,6 +158,12 @@ export function supplierSourceToSubmitPayload(
     sold_to: "ebay",
     status: source.soldAt ? "sold" : "in_stock",
   };
+}
+
+export function supplierSourceToUpdatePayload(
+  source: SupplierSource,
+): SupplierSourceSubmitPayload {
+  return supplierSourceToSubmitPayload(source);
 }
 
 export function upsertSupplierSource(

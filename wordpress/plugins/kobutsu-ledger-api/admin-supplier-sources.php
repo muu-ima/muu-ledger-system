@@ -61,6 +61,92 @@ function kobutsu_ledger_create_supplier_source(WP_REST_Request $request): WP_RES
     return new WP_REST_Response(kobutsu_ledger_format_supplier_source_row($row), 201);
 }
 
+function kobutsu_ledger_update_supplier_source(WP_REST_Request $request): WP_REST_Response|WP_Error
+{
+    global $wpdb;
+
+    $source_id = (int) $request['id'];
+    $current = kobutsu_ledger_admin_get_supplier_source_by_id($source_id);
+    if (!$current) {
+        return new WP_Error('kobutsu_not_found', '仕入元データが見つかりません。', ['status' => 404]);
+    }
+
+    $param_or_current = static function (string $key, $fallback) use ($request) {
+        return $request->has_param($key) ? $request->get_param($key) : $fallback;
+    };
+    $merged = [
+        'source_row_no' => $current['source_row_no'],
+        'sku' => (string) $param_or_current('sku', $current['sku']),
+        'order_no' => (string) $param_or_current('order_no', $current['order_no']),
+        'account_name' => (string) $param_or_current('account_name', $current['account_name']),
+        'sold_at' => (string) $param_or_current('sold_at', $current['sold_at_raw'] ?: $current['sold_at']),
+        'acquired_at' => (string) $param_or_current('acquired_at', $current['acquired_at_raw'] ?: $current['acquired_at']),
+        'buyer_country' => (string) $param_or_current('buyer_country', $current['buyer_country']),
+        'mag' => (string) $param_or_current('mag', $current['mag']),
+        'sale_amount' => (string) $param_or_current('sale_amount', kobutsu_ledger_admin_format_supplier_source_sale_amount($current)),
+        'purchased_flag' => (string) $param_or_current('purchased_flag', $current['purchased_flag']),
+        'purchase_price' => (string) $param_or_current('purchase_price', '¥' . number_format((int) $current['purchase_price_jpy'])),
+        'shipping_cost' => (string) $param_or_current('shipping_cost', '¥' . number_format((int) $current['shipping_cost_jpy'])),
+        'points' => (string) $param_or_current('points', $current['points']),
+        'shipping_note' => (string) $param_or_current('shipping_note', $current['notes']),
+        'packer' => (string) $param_or_current('packer', $current['packer']),
+        'shipping_site' => (string) $param_or_current('shipping_site', $current['shipping_site']),
+        'actual_weight_g' => (string) $param_or_current('actual_weight_g', $current['actual_weight_g']),
+        'dimensional_weight_g' => (string) $param_or_current('dimensional_weight_g', $current['dimensional_weight_g']),
+        'package_length_cm' => (string) $param_or_current('package_length_cm', $current['package_length_cm']),
+        'package_width_cm' => (string) $param_or_current('package_width_cm', $current['package_width_cm']),
+        'package_height_cm' => (string) $param_or_current('package_height_cm', $current['package_height_cm']),
+        'size_memo' => (string) $param_or_current('size_memo', $current['size_memo']),
+        'shipping_chat_at' => (string) $param_or_current('shipping_chat_at', $current['shipping_chat_at_raw']),
+        'item_name' => (string) $param_or_current('item_name', $current['item_name']),
+        'acquired_from' => (string) $param_or_current('acquired_from', $current['supplier_name_raw']),
+        'first_mail_at' => (string) $param_or_current('first_mail_at', $current['first_mail_at_raw']),
+        'receipt_printed_at' => (string) $param_or_current('receipt_printed_at', $current['receipt_printed_at_raw']),
+        'domestic_tracking_no' => (string) $param_or_current('domestic_tracking_no', $current['domestic_tracking_no']),
+        'sls_tracking_no' => (string) $param_or_current('sls_tracking_no', $current['sls_tracking_no']),
+        'yamato_slip_flag' => (string) $param_or_current('yamato_slip_flag', $current['yamato_slip_flag']),
+        'balance_checked_flag' => (string) $param_or_current('balance_checked_flag', $current['balance_checked_flag']),
+        'status' => (string) $param_or_current('status', !empty($current['sold_at']) ? 'sold' : 'in_stock'),
+    ];
+
+    $purchase_price = kobutsu_ledger_parse_money($merged['purchase_price']);
+    $sale_money = kobutsu_ledger_parse_money($merged['sale_amount']);
+    $shipping_cost = kobutsu_ledger_parse_money($merged['shipping_cost']);
+    $update_request = new WP_REST_Request('POST', '/kobutsu/v1/supplier-sources/' . $source_id);
+    foreach ($merged as $key => $value) {
+        $update_request->set_param($key, $value);
+    }
+
+    $wpdb->query('START TRANSACTION');
+
+    $saved = kobutsu_ledger_save_supplier_source(
+        !empty($current['item_id']) ? (int) $current['item_id'] : null,
+        $update_request,
+        $purchase_price,
+        $sale_money,
+        $shipping_cost
+    );
+    if (!$saved) {
+        $wpdb->query('ROLLBACK');
+        return new WP_Error('kobutsu_update_failed', '仕入元データを更新できませんでした。', ['status' => 500]);
+    }
+
+    $updated_row = kobutsu_ledger_admin_get_supplier_source_by_sku((string) $merged['sku']);
+    if (!$updated_row) {
+        $wpdb->query('ROLLBACK');
+        return new WP_Error('kobutsu_not_found', '更新後の仕入元データが見つかりません。', ['status' => 500]);
+    }
+
+    if (!kobutsu_ledger_sync_supplier_source_dependents($updated_row)) {
+        $wpdb->query('ROLLBACK');
+        return new WP_Error('kobutsu_sync_failed', '関連テーブル同期に失敗しました。', ['status' => 500]);
+    }
+
+    $wpdb->query('COMMIT');
+
+    return rest_ensure_response(kobutsu_ledger_format_supplier_source_row($updated_row));
+}
+
 function kobutsu_ledger_render_supplier_sources_admin_page(): void
 {
     if (!current_user_can('edit_posts')) {
@@ -186,6 +272,21 @@ function kobutsu_ledger_admin_get_supplier_source_by_sku(string $sku): ?array
     return $row ?: null;
 }
 
+function kobutsu_ledger_admin_get_supplier_source_by_id(int $source_id): ?array
+{
+    global $wpdb;
+
+    $row = $wpdb->get_row(
+        $wpdb->prepare(
+            kobutsu_ledger_supplier_sources_select_sql() . ' WHERE id = %d',
+            $source_id
+        ),
+        ARRAY_A
+    );
+
+    return $row ?: null;
+}
+
 function kobutsu_ledger_supplier_sources_select_sql(): string
 {
     return 'SELECT id, item_id, source_row_no, sku, order_no, account_name, sold_at, sold_at_raw,
@@ -238,6 +339,22 @@ function kobutsu_ledger_format_supplier_source_row(array $row): array
         'yamato_slip_flag' => (string) ($row['yamato_slip_flag'] ?? ''),
         'balance_checked_flag' => (string) ($row['balance_checked_flag'] ?? ''),
     ];
+}
+
+function kobutsu_ledger_admin_format_supplier_source_sale_amount(array $row): string
+{
+    $currency = (string) ($row['sale_currency'] ?? 'USD');
+    $amount = (float) ($row['sale_amount'] ?? 0);
+
+    if ($amount === 0.0) {
+        return '';
+    }
+
+    if ($currency === 'JPY') {
+        return '¥' . number_format((int) round($amount));
+    }
+
+    return $currency . number_format($amount, 2, '.', '');
 }
 
 function kobutsu_ledger_admin_delete_supplier_source(int $source_id): void
