@@ -5,6 +5,7 @@ export type SupplierSourceView = (typeof supplierSourceViews)[number];
 export type SupplierDataView = (typeof supplierDataViews)[number];
 
 export type SupplierSource = {
+  id: string;
   rowNo: string;
   sku: string;
   orderNo: string;

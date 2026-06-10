@@ -306,6 +306,13 @@ fieldset input:not([type="checkbox"]) {
   padding-right: 4px;
 }
 
+.supplierManagementLayout {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  gap: 20px;
+}
+
 .ledgerSection {
   min-height: 0;
 }
@@ -325,6 +332,21 @@ fieldset input:not([type="checkbox"]) {
 .sectionTitle span {
   color: var(--muted);
   font-size: 12px;
+}
+
+.supplierSectionTitle {
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.supplierSectionTitle > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.ledgerTopActions.compact {
+  flex: 0 0 auto;
 }
 
 .modalOverlay {
@@ -533,6 +555,14 @@ fieldset input:not([type="checkbox"]) {
   padding-inline: 16px;
 }
 
+.supplierFormTabs {
+  margin-bottom: 12px;
+}
+
+.supplierFormTabs button {
+  min-width: 118px;
+}
+
 .ledgerTableFrame {
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.46);
@@ -600,6 +630,10 @@ fieldset input:not([type="checkbox"]) {
   margin: 0;
   border-bottom: 1px solid rgba(31, 27, 24, 0.18);
   padding: 10px 12px;
+}
+
+.supplierListCard .tableTabs {
+  padding-top: 12px;
 }
 
 .ecSalesCellInput {
