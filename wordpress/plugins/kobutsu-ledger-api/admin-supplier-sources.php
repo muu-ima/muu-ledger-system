@@ -190,9 +190,9 @@ function kobutsu_ledger_supplier_sources_select_sql(): string
 {
     return 'SELECT id, item_id, source_row_no, sku, order_no, account_name, sold_at, sold_at_raw,
         acquired_at, acquired_at_raw, buyer_country, mag, sale_amount, sale_currency,
-        purchase_price_jpy, shipping_cost_jpy, points, notes, packer, shipping_site,
+        purchased_flag, purchase_price_jpy, shipping_cost_jpy, points, notes, packer, shipping_site,
         actual_weight_g, dimensional_weight_g, package_length_cm, package_width_cm,
-        package_height_cm, shipping_chat_at_raw, item_name, supplier_name_raw, first_mail_at_raw,
+        package_height_cm, size_memo, shipping_chat_at_raw, item_name, supplier_name_raw, first_mail_at_raw,
         receipt_printed_at_raw, domestic_tracking_no, sls_tracking_no, yamato_slip_flag,
         balance_checked_flag
     FROM ' . kobutsu_ledger_table('supplier_sources');
@@ -215,6 +215,7 @@ function kobutsu_ledger_format_supplier_source_row(array $row): array
         'mag' => (string) $row['mag'],
         'sale_amount' => (float) $row['sale_amount'],
         'sale_currency' => (string) $row['sale_currency'],
+        'purchased_flag' => (string) ($row['purchased_flag'] ?? ''),
         'purchase_price_jpy' => (int) $row['purchase_price_jpy'],
         'shipping_cost_jpy' => (int) $row['shipping_cost_jpy'],
         'points' => (string) $row['points'],
@@ -226,6 +227,7 @@ function kobutsu_ledger_format_supplier_source_row(array $row): array
         'package_length_cm' => (float) $row['package_length_cm'],
         'package_width_cm' => (float) $row['package_width_cm'],
         'package_height_cm' => (float) $row['package_height_cm'],
+        'size_memo' => (string) ($row['size_memo'] ?? ''),
         'shipping_chat_at_raw' => (string) ($row['shipping_chat_at_raw'] ?? ''),
         'item_name' => (string) $row['item_name'],
         'supplier_name_raw' => (string) $row['supplier_name_raw'],

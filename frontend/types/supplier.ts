@@ -14,6 +14,7 @@ export type SupplierSource = {
   country: string;
   mag: string;
   saleAmount: string;
+  purchasedFlag: string;
   purchasePrice: string;
   shippingCost: string;
   points: string;
@@ -25,6 +26,7 @@ export type SupplierSource = {
   length: string;
   width: string;
   height: string;
+  size: string;
   shippingChatAt: string;
   itemName: string;
   supplier: string;
@@ -52,6 +54,7 @@ export type SupplierSourceApiRow = {
   mag?: ApiValue;
   sale_amount?: ApiValue;
   sale_currency?: ApiValue;
+  purchased_flag?: ApiValue;
   purchase_price_jpy?: ApiValue;
   shipping_cost_jpy?: ApiValue;
   points?: ApiValue;
@@ -63,6 +66,7 @@ export type SupplierSourceApiRow = {
   package_length_cm?: ApiValue;
   package_width_cm?: ApiValue;
   package_height_cm?: ApiValue;
+  size_memo?: ApiValue;
   shipping_chat_at_raw?: ApiValue;
   item_name?: ApiValue;
   supplier_name_raw?: ApiValue;
@@ -84,6 +88,7 @@ export type SupplierSourceSubmitPayload = {
   buyer_country: string;
   mag: string;
   sale_amount: string;
+  purchased_flag: string;
   purchase_price: string;
   shipping_cost: string;
   points: string;
@@ -95,6 +100,7 @@ export type SupplierSourceSubmitPayload = {
   package_length_cm: string;
   package_width_cm: string;
   package_height_cm: string;
+  size_memo: string;
   shipping_chat_at: string;
   item_name: string;
   acquired_from: string;

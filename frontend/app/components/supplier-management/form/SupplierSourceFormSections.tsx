@@ -8,7 +8,7 @@ type SupplierSourceFormSectionsProps = {
   onFieldChange: (field: keyof SupplierSource, value: string) => void;
 };
 
-type SupplierSourceFieldType = "input" | "textarea";
+type SupplierSourceFieldType = "input" | "textarea" | "checkbox";
 
 type SupplierSourceFieldProps = {
   field: keyof SupplierSource;
@@ -39,46 +39,49 @@ type SupplierSourceSectionProps = {
 
 const supplierSourceFormSections: SupplierSourceSectionConfig[] = [
   {
-    title: "必須入力",
+    title: "基本情報",
     fields: [
+      { field: "rowNo", label: "No." },
       { field: "sku", label: "SKU" },
-      { field: "orderNo", label: "Order no." },
-      { field: "acquiredAt", label: "仕入日" },
-      { field: "supplier", label: "仕入れ先" },
-      { field: "purchasePrice", label: "仕入れ" },
-      { field: "itemName", label: "商品名", wide: true },
-    ],
-  },
-  {
-    title: "よく使う入力",
-    fields: [
       { field: "account", label: "アカウント" },
+      { field: "orderNo", label: "Order no." },
       { field: "soldAt", label: "販売日" },
+      { field: "acquiredAt", label: "仕入日" },
       { field: "country", label: "国" },
       { field: "saleAmount", label: "販売額" },
-      { field: "shippingCost", label: "送料" },
-      { field: "shippingSite", label: "発送サイト" },
-      { field: "shippingChatAt", label: "発送チャット" },
-      { field: "packer", label: "梱包者" },
-      { field: "note", label: "備考", type: "textarea", wide: true },
+      { field: "purchasedFlag", label: "購入済み", type: "checkbox" },
+      { field: "purchasePrice", label: "仕入れ" },
+      { field: "shippingCost", label: "国内送料" },
+      { field: "points", label: "ポイント加算" },
+      { field: "note", label: "その他備考", type: "textarea", wide: true },
+      { field: "itemName", label: "商品名", wide: true },
+      { field: "supplier", label: "仕入れ先" },
     ],
   },
   {
-    title: "詳細入力",
+    title: "発送・梱包",
     fields: [
-      { field: "mag", label: "MAG" },
-      { field: "points", label: "ポイント加算" },
+      { field: "packer", label: "梱包者" },
       { field: "actualWeight", label: "実重g" },
       { field: "dimensionalWeight", label: "体積重g" },
       { field: "length", label: "縦cm" },
       { field: "width", label: "横cm" },
       { field: "height", label: "高さcm" },
+      { field: "size", label: "サイズ" },
+      { field: "shippingSite", label: "発送サイト" },
+      { field: "shippingChatAt", label: "発送チャット" },
       { field: "firstMailAt", label: "初回メール" },
       { field: "receiptPrintedAt", label: "領収書印刷日" },
       { field: "domesticTrackingNo", label: "国内追跡番号" },
       { field: "slsTrackingNo", label: "SLS追跡番号" },
-      { field: "yamatoSlipFlag", label: "ヤマト控え有無" },
-      { field: "balanceCheckedFlag", label: "収支チェック" },
+      { field: "yamatoSlipFlag", label: "ヤマト控え有無", type: "checkbox" },
+      { field: "balanceCheckedFlag", label: "収支チェック", type: "checkbox" },
+    ],
+  },
+  {
+    title: "補助項目",
+    fields: [
+      { field: "mag", label: "MAG" },
     ],
   },
 ];
@@ -172,6 +175,28 @@ function SupplierSourceTextareaField({
   );
 }
 
+function SupplierSourceCheckboxField({
+  field,
+  form,
+  label,
+  onFieldChange,
+}: SupplierSourceFieldProps) {
+  const checked = form[field] === "TRUE";
+
+  return (
+    <label className="checkboxField">
+      <span>{label}</span>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) =>
+          onFieldChange(field, event.target.checked ? "TRUE" : "FALSE")
+        }
+      />
+    </label>
+  );
+}
+
 export function SupplierSourceFormSections({
   form,
   onFieldChange,
@@ -195,6 +220,14 @@ export function SupplierSourceFormSections({
                 label={field.label}
                 onFieldChange={onFieldChange}
                 wide={field.wide}
+              />
+            ) : field.type === "checkbox" ? (
+              <SupplierSourceCheckboxField
+                key={field.field}
+                field={field.field}
+                form={form}
+                label={field.label}
+                onFieldChange={onFieldChange}
               />
             ) : (
               <SupplierSourceInputField

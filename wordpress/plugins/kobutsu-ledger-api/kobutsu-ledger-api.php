@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 require_once __DIR__ . '/admin-supplier-sources.php';
 require_once __DIR__ . '/admin-ec-sales.php';
 
-const KOBUTSU_LEDGER_DB_VERSION = '0.3.1';
+const KOBUTSU_LEDGER_DB_VERSION = '0.3.2';
 
 register_activation_hook(__FILE__, 'kobutsu_ledger_activate');
 add_action('plugins_loaded', 'kobutsu_ledger_maybe_upgrade');
@@ -117,6 +117,7 @@ function kobutsu_ledger_create_tables(): void
         mag varchar(80) NOT NULL DEFAULT '',
         sale_amount decimal(14,2) NOT NULL DEFAULT 0,
         sale_currency char(3) NOT NULL DEFAULT 'USD',
+        purchased_flag varchar(20) NOT NULL DEFAULT '',
         purchase_price_jpy int NOT NULL DEFAULT 0,
         shipping_cost_jpy int NOT NULL DEFAULT 0,
         points varchar(80) NOT NULL DEFAULT '',
@@ -128,6 +129,7 @@ function kobutsu_ledger_create_tables(): void
         package_length_cm decimal(8,2) NOT NULL DEFAULT 0,
         package_width_cm decimal(8,2) NOT NULL DEFAULT 0,
         package_height_cm decimal(8,2) NOT NULL DEFAULT 0,
+        size_memo varchar(40) NOT NULL DEFAULT '',
         shipping_chat_at_raw varchar(40) NOT NULL DEFAULT '',
         item_name text NOT NULL,
         supplier_name_raw varchar(191) NOT NULL DEFAULT '',
@@ -408,6 +410,7 @@ function kobutsu_ledger_rest_args(): array
         'sale_amount' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'sale_price' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'shipping_cost' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'purchased_flag' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'points' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'shipping_note' => ['required' => false, 'sanitize_callback' => 'sanitize_textarea_field'],
         'packer' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
@@ -417,6 +420,7 @@ function kobutsu_ledger_rest_args(): array
         'package_length_cm' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'package_width_cm' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'package_height_cm' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'size_memo' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'shipping_chat_at' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'mag' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'first_mail_at' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
@@ -674,6 +678,7 @@ function kobutsu_ledger_save_supplier_source(
         'mag' => $request['mag'] ?: '',
         'sale_amount' => $sale_money['amount'],
         'sale_currency' => $sale_money['currency'],
+        'purchased_flag' => $request['purchased_flag'] ?: '',
         'purchase_price_jpy' => $purchase_price['amount_jpy'],
         'shipping_cost_jpy' => $shipping_cost['amount_jpy'],
         'points' => $request['points'] ?: '',
@@ -685,6 +690,7 @@ function kobutsu_ledger_save_supplier_source(
         'package_length_cm' => (float) ($request['package_length_cm'] ?: 0),
         'package_width_cm' => (float) ($request['package_width_cm'] ?: 0),
         'package_height_cm' => (float) ($request['package_height_cm'] ?: 0),
+        'size_memo' => $request['size_memo'] ?: '',
         'shipping_chat_at_raw' => $request['shipping_chat_at'] ?: '',
         'item_name' => $request['item_name'],
         'supplier_name_raw' => $request['acquired_from'] ?: '',
@@ -698,8 +704,8 @@ function kobutsu_ledger_save_supplier_source(
     ];
     $formats = [
         '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s',
-        '%f', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%f',
-        '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s',
+        '%f', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%f',
+        '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s',
     ];
 
     if ($item_id !== null) {

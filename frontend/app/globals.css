@@ -422,6 +422,20 @@ fieldset input:not([type="checkbox"]) {
   font-weight: 800;
 }
 
+.stackedField {
+  display: grid;
+  gap: 6px;
+}
+
+.stackedField select {
+  min-height: 34px;
+  border: 1px solid rgba(31, 27, 24, 0.46);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.74);
+  padding: 6px 8px;
+  color: #1d1a18;
+}
+
 .supplierForm input,
 .supplierForm textarea {
   width: 100%;
@@ -436,6 +450,22 @@ fieldset input:not([type="checkbox"]) {
 .supplierForm textarea {
   min-height: 64px;
   resize: vertical;
+}
+
+.checkboxField {
+  align-items: flex-start;
+  justify-content: space-between;
+  border: 1px solid rgba(31, 27, 24, 0.16);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.46);
+  padding: 10px 12px;
+}
+
+.checkboxField input {
+  width: 18px;
+  min-height: 18px;
+  margin: 0;
+  accent-color: var(--blue);
 }
 
 .wideField {

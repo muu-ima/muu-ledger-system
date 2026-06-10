@@ -16,6 +16,7 @@ export function SupplierSourceShippingTable({
         <col className="sizeCol" />
         <col className="sizeCol" />
         <col className="sizeCol" />
+        <col className="sizeCol" />
         <col className="dateCol" />
         <col className="dateCol" />
         <col className="dateCol" />
@@ -34,6 +35,7 @@ export function SupplierSourceShippingTable({
           <th>縦cm</th>
           <th>横cm</th>
           <th>高さcm</th>
+          <th>サイズ</th>
           <th>発送チャット</th>
           <th>初回メール</th>
           <th>領収書印刷日</th>
@@ -54,6 +56,7 @@ export function SupplierSourceShippingTable({
             <td className="numberCell">{source.length}</td>
             <td className="numberCell">{source.width}</td>
             <td className="numberCell">{source.height}</td>
+            <td className="numberCell">{source.size}</td>
             <td>{source.shippingChatAt}</td>
             <td>{source.firstMailAt}</td>
             <td>{source.receiptPrintedAt}</td>
