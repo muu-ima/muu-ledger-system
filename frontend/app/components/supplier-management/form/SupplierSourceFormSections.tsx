@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { ReactNode } from "react";
 import type { SupplierSource } from "@/types/supplier";
 
@@ -78,7 +79,7 @@ const supplierSourceFormSections: SupplierSourceSectionConfig[] = [
     ],
   },
   {
-    title: "補助項目",
+    title: "補助・原票",
     fields: [
       { field: "mag", label: "MAG" },
     ],
@@ -200,47 +201,72 @@ export function SupplierSourceFormSections({
   form,
   onFieldChange,
 }: SupplierSourceFormSectionsProps) {
+  const [activeSectionTitle, setActiveSectionTitle] = useState(
+    supplierSourceFormSections[0]?.title ?? "",
+  );
+  const activeSection =
+    supplierSourceFormSections.find(
+      (section) => section.title === activeSectionTitle,
+    ) ?? supplierSourceFormSections[0];
+
   return (
     <>
-      {supplierSourceFormSections.map((section) => (
-        <SupplierSourceSection key={section.title} title={section.title}>
-          {section.fields.map((field) =>
-            field.field === "acquiredAt" ? (
-              <SupplierSourceAcquiredAtField
-                key={field.field}
-                form={form}
-                onFieldChange={onFieldChange}
-              />
-            ) : field.type === "textarea" ? (
-              <SupplierSourceTextareaField
-                key={field.field}
-                field={field.field}
-                form={form}
-                label={field.label}
-                onFieldChange={onFieldChange}
-                wide={field.wide}
-              />
-            ) : field.type === "checkbox" ? (
-              <SupplierSourceCheckboxField
-                key={field.field}
-                field={field.field}
-                form={form}
-                label={field.label}
-                onFieldChange={onFieldChange}
-              />
-            ) : (
-              <SupplierSourceInputField
-                key={field.field}
-                field={field.field}
-                form={form}
-                label={field.label}
-                onFieldChange={onFieldChange}
-                wide={field.wide}
-              />
-            ),
-          )}
-        </SupplierSourceSection>
-      ))}
+      <div
+        className="tableTabs primaryTabs supplierFormTabs"
+        role="tablist"
+        aria-label="新規仕入れフォームタブ"
+      >
+        {supplierSourceFormSections.map((section) => (
+          <button
+            key={section.title}
+            type="button"
+            role="tab"
+            aria-selected={activeSection.title === section.title}
+            className={activeSection.title === section.title ? "active" : ""}
+            onClick={() => setActiveSectionTitle(section.title)}
+          >
+            {section.title}
+          </button>
+        ))}
+      </div>
+
+      <SupplierSourceSection title={activeSection.title}>
+        {activeSection.fields.map((field) =>
+          field.field === "acquiredAt" ? (
+            <SupplierSourceAcquiredAtField
+              key={field.field}
+              form={form}
+              onFieldChange={onFieldChange}
+            />
+          ) : field.type === "textarea" ? (
+            <SupplierSourceTextareaField
+              key={field.field}
+              field={field.field}
+              form={form}
+              label={field.label}
+              onFieldChange={onFieldChange}
+              wide={field.wide}
+            />
+          ) : field.type === "checkbox" ? (
+            <SupplierSourceCheckboxField
+              key={field.field}
+              field={field.field}
+              form={form}
+              label={field.label}
+              onFieldChange={onFieldChange}
+            />
+          ) : (
+            <SupplierSourceInputField
+              key={field.field}
+              field={field.field}
+              form={form}
+              label={field.label}
+              onFieldChange={onFieldChange}
+              wide={field.wide}
+            />
+          ),
+        )}
+      </SupplierSourceSection>
     </>
   );
 }

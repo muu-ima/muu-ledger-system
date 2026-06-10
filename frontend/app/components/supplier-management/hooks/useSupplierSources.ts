@@ -53,11 +53,6 @@ export function useSupplierSources() {
     setSupplierSubmitStatus("");
   }
 
-  function reflectSupplierSource(source: SupplierSource) {
-    setSupplierSources((current) => upsertSupplierSource(current, source));
-    setSupplierSubmitStatus("仕入元データへ反映しました");
-  }
-
   function updateSupplierSourceField(
     sku: string,
     field: keyof SupplierSource,
@@ -158,7 +153,6 @@ export function useSupplierSources() {
 
   return {
     clearSupplierSubmitStatus,
-    reflectSupplierSource,
     saveSupplierSource,
     supplierSources,
     supplierSubmitStatus,

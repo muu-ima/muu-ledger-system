@@ -555,6 +555,14 @@ fieldset input:not([type="checkbox"]) {
   padding-inline: 16px;
 }
 
+.supplierFormTabs {
+  margin-bottom: 12px;
+}
+
+.supplierFormTabs button {
+  min-width: 118px;
+}
+
 .ledgerTableFrame {
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.46);

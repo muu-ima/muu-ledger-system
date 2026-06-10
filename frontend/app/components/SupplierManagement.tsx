@@ -78,7 +78,6 @@ export default function SupplierManagement() {
     useSupplierSourceForm();
   const {
     clearSupplierSubmitStatus,
-    reflectSupplierSource,
     saveSupplierSource,
     supplierSources,
     supplierSubmitStatus,
@@ -167,7 +166,6 @@ export default function SupplierManagement() {
               updateSupplierForm(field, value);
               clearSupplierSubmitStatus();
             }}
-            onReflect={() => reflectSupplierSource(supplierForm)}
           />
         </SupplierSourceModal>
 
