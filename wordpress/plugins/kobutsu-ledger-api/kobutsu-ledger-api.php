@@ -363,9 +363,16 @@ function kobutsu_ledger_register_routes(): void
     ]);
 
     register_rest_route('kobutsu/v1', '/items/(?P<id>\d+)', [
-        'methods' => WP_REST_Server::READABLE,
-        'callback' => 'kobutsu_ledger_get_item',
-        'permission_callback' => 'kobutsu_ledger_can_read',
+        [
+            'methods' => WP_REST_Server::READABLE,
+            'callback' => 'kobutsu_ledger_get_item',
+            'permission_callback' => 'kobutsu_ledger_can_read',
+        ],
+        [
+            'methods' => WP_REST_Server::EDITABLE,
+            'callback' => 'kobutsu_ledger_update_item',
+            'permission_callback' => 'kobutsu_ledger_can_write',
+        ],
     ]);
 
     register_rest_route('kobutsu/v1', '/schema', [
@@ -398,6 +405,9 @@ function kobutsu_ledger_rest_args(): array
         'category' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'item_name' => ['required' => true, 'sanitize_callback' => 'sanitize_text_field'],
         'description' => ['required' => false, 'sanitize_callback' => 'sanitize_textarea_field'],
+        'accessories' => ['required' => false, 'sanitize_callback' => 'sanitize_textarea_field'],
+        'condition_label' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'photo_url' => ['required' => false, 'sanitize_callback' => 'esc_url_raw'],
         'acquired_at' => ['required' => true, 'sanitize_callback' => 'sanitize_text_field'],
         'acquired_from' => ['required' => true, 'sanitize_callback' => 'sanitize_text_field'],
         'seller_identification' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
@@ -438,8 +448,8 @@ function kobutsu_ledger_get_items(WP_REST_Request $request): WP_REST_Response
     global $wpdb;
 
     $items = $wpdb->get_results(
-        "SELECT i.id, i.sku, i.category, i.item_name, i.description, i.status,
-            p.purchase_date, p.supplier_name_raw, p.seller_identification, p.purchase_price_jpy,
+        "SELECT i.id, i.sku, i.category, i.item_name, i.accessories, i.condition_label, i.description, i.photo_url, i.status,
+            p.purchase_date, p.supplier_name_raw, p.seller_identification, p.purchase_price_jpy, p.source_order_no,
             s.sale_date, s.marketplace, s.sale_amount, s.sale_currency, s.sale_amount_jpy
         FROM " . kobutsu_ledger_table('items') . " i
         LEFT JOIN " . kobutsu_ledger_table('purchases') . " p ON p.item_id = i.id
@@ -458,8 +468,8 @@ function kobutsu_ledger_get_item(WP_REST_Request $request): WP_REST_Response|WP_
 
     $row = $wpdb->get_row(
         $wpdb->prepare(
-            "SELECT i.id, i.sku, i.category, i.item_name, i.description, i.status,
-                p.purchase_date, p.supplier_name_raw, p.seller_identification, p.purchase_price_jpy,
+            "SELECT i.id, i.sku, i.category, i.item_name, i.accessories, i.condition_label, i.description, i.photo_url, i.status,
+                p.purchase_date, p.supplier_name_raw, p.seller_identification, p.purchase_price_jpy, p.source_order_no,
                 s.sale_date, s.marketplace, s.sale_amount, s.sale_currency, s.sale_amount_jpy
             FROM " . kobutsu_ledger_table('items') . " i
             LEFT JOIN " . kobutsu_ledger_table('purchases') . " p ON p.item_id = i.id
@@ -573,9 +583,12 @@ function kobutsu_ledger_create_item(WP_REST_Request $request): WP_REST_Response|
         'sku' => $sku,
         'category' => $request['category'] ?: '',
         'item_name' => $request['item_name'],
+        'accessories' => $request['accessories'] ?: '',
+        'condition_label' => $request['condition_label'] ?: '',
         'description' => $request['description'] ?? '',
+        'photo_url' => $request['photo_url'] ?: '',
         'status' => $request['status'] ?: 'in_stock',
-    ], ['%s', '%s', '%s', '%s', '%s']);
+    ], ['%s', '%s', '%s', '%s', '%s', '%s', '%s']);
 
     if (!$inserted) {
         $wpdb->query('ROLLBACK');
@@ -651,6 +664,145 @@ function kobutsu_ledger_create_item(WP_REST_Request $request): WP_REST_Response|
     }
 
     return new WP_REST_Response($item_response->get_data(), 201);
+}
+
+function kobutsu_ledger_update_item(WP_REST_Request $request): WP_REST_Response|WP_Error
+{
+    global $wpdb;
+
+    $item_id = (int) $request['id'];
+    $current = kobutsu_ledger_admin_get_item($item_id);
+    if (!$current) {
+        return new WP_Error('kobutsu_not_found', '台帳データが見つかりません。', ['status' => 404]);
+    }
+
+    $supplier_name = trim((string) ($request['acquired_from'] ?? $current['supplier_name_raw'] ?? ''));
+    $supplier_id = $supplier_name !== '' ? kobutsu_ledger_ensure_supplier($supplier_name) : null;
+    $purchase_exists = (int) $wpdb->get_var($wpdb->prepare(
+        'SELECT COUNT(*) FROM ' . kobutsu_ledger_table('purchases') . ' WHERE item_id = %d',
+        $item_id
+    ));
+    $sales_exists = (int) $wpdb->get_var($wpdb->prepare(
+        'SELECT COUNT(*) FROM ' . kobutsu_ledger_table('sales') . ' WHERE item_id = %d',
+        $item_id
+    ));
+    $param_or_current = static function (string $key, $fallback) use ($request) {
+        return $request->has_param($key) ? $request->get_param($key) : $fallback;
+    };
+
+    $purchase_price = kobutsu_ledger_parse_money(
+        $param_or_current('purchase_price', $current['purchase_price_jpy'] ?? 0)
+    );
+    $sale_money = kobutsu_ledger_parse_money(
+        $param_or_current('sale_amount', $current['sale_amount'] ?? 0)
+    );
+
+    $wpdb->query('START TRANSACTION');
+
+    $updated = $wpdb->update(kobutsu_ledger_table('items'), [
+        'sku' => (string) $param_or_current('sku', $current['sku']),
+        'item_name' => (string) $param_or_current('item_name', $current['item_name']),
+        'category' => (string) $param_or_current('category', $current['category']),
+        'accessories' => (string) $param_or_current('accessories', $current['accessories'] ?? ''),
+        'condition_label' => (string) $param_or_current('condition_label', $current['condition_label'] ?? ''),
+        'description' => (string) $param_or_current('description', $current['description'] ?? ''),
+        'photo_url' => (string) $param_or_current('photo_url', $current['photo_url'] ?? ''),
+        'status' => (string) $param_or_current('status', $current['status']),
+        'updated_at' => current_time('mysql'),
+    ], ['id' => $item_id], ['%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'], ['%d']);
+    if ($updated === false) {
+        $wpdb->query('ROLLBACK');
+        return new WP_Error('kobutsu_update_failed', '商品データを更新できませんでした。', ['status' => 500]);
+    }
+
+    $purchase_data = [
+        'item_id' => $item_id,
+        'supplier_id' => $supplier_id,
+        'purchase_date' => kobutsu_ledger_date_or_null((string) $param_or_current('acquired_at', $current['purchase_date'] ?? '')),
+        'supplier_name_raw' => $supplier_name,
+        'purchase_price_jpy' => $purchase_price['amount_jpy'],
+        'seller_identification' => (string) $param_or_current('seller_identification', $current['seller_identification'] ?? ''),
+        'source_order_no' => (string) $param_or_current('order_no', $current['source_order_no'] ?? ''),
+        'updated_at' => current_time('mysql'),
+    ];
+    if ($purchase_exists) {
+        $updated = $wpdb->update(
+            kobutsu_ledger_table('purchases'),
+            $purchase_data,
+            ['item_id' => $item_id],
+            ['%d', '%d', '%s', '%s', '%d', '%s', '%s', '%s'],
+            ['%d']
+        );
+        if ($updated === false) {
+            $wpdb->query('ROLLBACK');
+            return new WP_Error('kobutsu_update_failed', '仕入データを更新できませんでした。', ['status' => 500]);
+        }
+    } else {
+        $inserted = $wpdb->insert(
+            kobutsu_ledger_table('purchases'),
+            $purchase_data + ['created_at' => current_time('mysql')],
+            ['%d', '%d', '%s', '%s', '%d', '%s', '%s', '%s', '%s']
+        );
+        if (!$inserted) {
+            $wpdb->query('ROLLBACK');
+            return new WP_Error('kobutsu_insert_failed', '仕入データを登録できませんでした。', ['status' => 500]);
+        }
+    }
+
+    $marketplace = (string) $param_or_current('sold_to', $current['marketplace'] ?? '');
+    $order_no = (string) $param_or_current('order_no', $current['source_order_no'] ?? '');
+    $sale_date = kobutsu_ledger_date_or_null((string) $param_or_current('sold_at', $current['sale_date'] ?? ''));
+    if ($sales_exists || $marketplace !== '' || $order_no !== '' || $sale_date !== null) {
+        $sale_data = [
+            'item_id' => $item_id,
+            'marketplace' => $marketplace,
+            'account_name' => (string) $param_or_current('account_name', $current['account_name'] ?? ''),
+            'order_no' => $order_no,
+            'sale_date' => $sale_date,
+            'sale_amount' => $sale_money['amount'],
+            'sale_currency' => $sale_money['currency'],
+            'sale_amount_jpy' => $sale_money['amount_jpy'],
+            'buyer_country' => (string) $param_or_current('buyer_country', $current['buyer_country'] ?? ''),
+            'shipping_site' => (string) $param_or_current('shipping_site', $current['shipping_site'] ?? ''),
+            'actual_weight_g' => (int) $param_or_current('actual_weight_g', $current['actual_weight_g'] ?? 0),
+            'dimensional_weight_g' => (int) $param_or_current('dimensional_weight_g', $current['dimensional_weight_g'] ?? 0),
+            'package_length_cm' => (float) $param_or_current('package_length_cm', $current['package_length_cm'] ?? 0),
+            'package_width_cm' => (float) $param_or_current('package_width_cm', $current['package_width_cm'] ?? 0),
+            'package_height_cm' => (float) $param_or_current('package_height_cm', $current['package_height_cm'] ?? 0),
+            'notes' => (string) $param_or_current('description', $current['sale_notes'] ?? ''),
+            'updated_at' => current_time('mysql'),
+        ];
+        if ($sales_exists) {
+            $updated = $wpdb->update(
+                kobutsu_ledger_table('sales'),
+                $sale_data,
+                ['item_id' => $item_id],
+                ['%d', '%s', '%s', '%s', '%s', '%f', '%s', '%d', '%s', '%s', '%d', '%d', '%f', '%f', '%f', '%s', '%s'],
+                ['%d']
+            );
+            if ($updated === false) {
+                $wpdb->query('ROLLBACK');
+                return new WP_Error('kobutsu_update_failed', '販売データを更新できませんでした。', ['status' => 500]);
+            }
+        } else {
+            $inserted = $wpdb->insert(
+                kobutsu_ledger_table('sales'),
+                $sale_data + ['created_at' => current_time('mysql')],
+                ['%d', '%s', '%s', '%s', '%s', '%f', '%s', '%d', '%s', '%s', '%d', '%d', '%f', '%f', '%f', '%s', '%s', '%s']
+            );
+            if (!$inserted) {
+                $wpdb->query('ROLLBACK');
+                return new WP_Error('kobutsu_insert_failed', '販売データを登録できませんでした。', ['status' => 500]);
+            }
+        }
+    }
+
+    $wpdb->query('COMMIT');
+
+    $response = new WP_REST_Request('GET', '/kobutsu/v1/items/' . $item_id);
+    $response->set_param('id', $item_id);
+
+    return kobutsu_ledger_get_item($response);
 }
 
 function kobutsu_ledger_save_supplier_source(
@@ -960,9 +1112,13 @@ function kobutsu_ledger_format_row(array $row): array
         'id' => (int) $row['id'],
         'management_no' => (string) $row['sku'],
         'sku' => (string) $row['sku'],
+        'order_no' => (string) ($row['source_order_no'] ?? ''),
         'category' => (string) $row['category'],
         'item_name' => (string) $row['item_name'],
+        'accessories' => (string) ($row['accessories'] ?? ''),
+        'condition_label' => (string) ($row['condition_label'] ?? ''),
         'description' => (string) ($row['description'] ?? ''),
+        'photo_url' => (string) ($row['photo_url'] ?? ''),
         'acquired_at' => (string) ($row['purchase_date'] ?? ''),
         'acquired_from' => (string) ($row['supplier_name_raw'] ?? ''),
         'seller_identification' => (string) ($row['seller_identification'] ?? ''),
@@ -1182,7 +1338,7 @@ function kobutsu_ledger_admin_get_item(int $item_id): ?array
 
     $row = $wpdb->get_row(
         $wpdb->prepare(
-            "SELECT i.id, i.sku, i.item_name, i.category, i.description, i.status,
+            "SELECT i.id, i.sku, i.item_name, i.category, i.accessories, i.condition_label, i.description, i.photo_url, i.status,
                 p.purchase_date, p.supplier_name_raw, p.purchase_price_jpy,
                 p.seller_identification, p.source_order_no,
                 s.sale_date, s.marketplace, s.account_name, s.sale_amount,

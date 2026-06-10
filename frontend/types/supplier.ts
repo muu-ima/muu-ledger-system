@@ -113,3 +113,40 @@ export type SupplierSourceSubmitPayload = {
   sold_to: string;
   status: "in_stock" | "sold";
 };
+
+export type PurchaseProjectionRow = {
+  itemId: string;
+  sku: string;
+  orderNo: string;
+  acquiredAt: string;
+  supplier: string;
+  purchasePrice: string;
+  category: string;
+  accessories: string;
+  conditionLabel: string;
+  description: string;
+  photoUrl: string;
+  itemName: string;
+  soldAt: string;
+  soldTo: string;
+  saleAmount: string;
+};
+
+export type PurchaseProjectionApiRow = {
+  id?: ApiValue;
+  sku?: ApiValue;
+  order_no?: ApiValue;
+  category?: ApiValue;
+  accessories?: ApiValue;
+  condition_label?: ApiValue;
+  description?: ApiValue;
+  photo_url?: ApiValue;
+  item_name?: ApiValue;
+  acquired_at?: ApiValue;
+  acquired_from?: ApiValue;
+  purchase_price?: ApiValue;
+  sold_at?: ApiValue;
+  sold_to?: ApiValue;
+  sale_amount?: ApiValue;
+  sale_currency?: ApiValue;
+};

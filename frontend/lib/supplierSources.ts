@@ -1,4 +1,6 @@
 import type {
+  PurchaseProjectionApiRow,
+  PurchaseProjectionRow,
   SupplierSource,
   SupplierSourceApiRow,
   SupplierSourceSubmitPayload,
@@ -167,4 +169,87 @@ export function upsertSupplierSource(
   if (existingIndex === -1) return [nextRow, ...rows];
 
   return rows.map((row, index) => (index === existingIndex ? nextRow : row));
+}
+
+export function purchaseProjectionFromApi(
+  row: PurchaseProjectionApiRow,
+): PurchaseProjectionRow {
+  return {
+    itemId: String(row.id || ""),
+    sku: String(row.sku || ""),
+    orderNo: String(row.order_no || ""),
+    acquiredAt: String(row.acquired_at || ""),
+    supplier: String(row.acquired_from || ""),
+    purchasePrice: formatYen(Number(row.purchase_price || 0)),
+    category: String(row.category || ""),
+    accessories: String(row.accessories || ""),
+    conditionLabel: String(row.condition_label || ""),
+    description: String(row.description || ""),
+    photoUrl: String(row.photo_url || ""),
+    itemName: String(row.item_name || ""),
+    soldAt: String(row.sold_at || ""),
+    soldTo: String(row.sold_to || ""),
+    saleAmount: formatMoneyAmount(row.sale_amount, row.sale_currency),
+  };
+}
+
+export function mergePurchaseProjectionRows(
+  sources: SupplierSource[],
+  itemRows: PurchaseProjectionRow[],
+): PurchaseProjectionRow[] {
+  const itemRowsBySku = new Map(itemRows.map((row) => [row.sku, row]));
+
+  return sources.map((source) => {
+    const itemRow = itemRowsBySku.get(source.sku);
+    if (!itemRow) {
+      return {
+        itemId: "",
+        sku: source.sku,
+        orderNo: source.orderNo,
+        acquiredAt: source.acquiredAt,
+        supplier: source.supplier,
+        purchasePrice: source.purchasePrice,
+        category: "",
+        accessories: "",
+        conditionLabel: "",
+        description: "",
+        photoUrl: "",
+        itemName: source.itemName,
+        soldAt: source.soldAt,
+        soldTo: "ebay",
+        saleAmount: source.saleAmount,
+      };
+    }
+
+    return {
+      ...itemRow,
+      orderNo: itemRow.orderNo || source.orderNo,
+      acquiredAt: itemRow.acquiredAt || source.acquiredAt,
+      supplier: itemRow.supplier || source.supplier,
+      purchasePrice: itemRow.purchasePrice || source.purchasePrice,
+      itemName: itemRow.itemName || source.itemName,
+      soldAt: itemRow.soldAt || source.soldAt,
+      saleAmount: itemRow.saleAmount || source.saleAmount,
+    };
+  });
+}
+
+export function purchaseProjectionToUpdatePayload(
+  row: PurchaseProjectionRow,
+) {
+  return {
+    category: row.category,
+    accessories: row.accessories,
+    condition_label: row.conditionLabel,
+    description: row.description,
+    photo_url: row.photoUrl,
+    sold_to: row.soldTo,
+  };
+}
+
+export function upsertPurchaseProjectionRow(
+  rows: PurchaseProjectionRow[],
+  nextRow: PurchaseProjectionRow,
+): PurchaseProjectionRow[] {
+  return rows.map((row) => (row.sku === nextRow.sku ? nextRow : row));
 }
