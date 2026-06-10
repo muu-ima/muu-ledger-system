@@ -14,6 +14,8 @@ function kobutsu_ledger_get_supplier_sources(WP_REST_Request $request): WP_REST_
 
 function kobutsu_ledger_create_supplier_source(WP_REST_Request $request): WP_REST_Response|WP_Error
 {
+    global $wpdb;
+
     $sku = $request['sku'] ?: $request['management_no'];
     if (!$sku) {
         return new WP_Error('kobutsu_missing_sku', 'SKU または管理番号は必須です。', ['status' => 400]);
@@ -22,6 +24,8 @@ function kobutsu_ledger_create_supplier_source(WP_REST_Request $request): WP_RES
     $purchase_price = kobutsu_ledger_parse_money($request['purchase_price']);
     $sale_money = kobutsu_ledger_parse_money($request['sale_amount'] ?: $request['sale_price']);
     $shipping_cost = kobutsu_ledger_parse_money($request['shipping_cost']);
+
+    $wpdb->query('START TRANSACTION');
 
     $saved = kobutsu_ledger_save_supplier_source(
         null,
@@ -32,8 +36,22 @@ function kobutsu_ledger_create_supplier_source(WP_REST_Request $request): WP_RES
     );
 
     if (!$saved) {
+        $wpdb->query('ROLLBACK');
         return new WP_Error('kobutsu_insert_failed', '仕入元データを登録できませんでした。', ['status' => 500]);
     }
+
+    $row = kobutsu_ledger_admin_get_supplier_source_by_sku((string) $sku);
+    if (!$row) {
+        $wpdb->query('ROLLBACK');
+        return new WP_Error('kobutsu_not_found', '仕入元データが見つかりません。', ['status' => 500]);
+    }
+
+    if (!kobutsu_ledger_sync_supplier_source_dependents($row)) {
+        $wpdb->query('ROLLBACK');
+        return new WP_Error('kobutsu_sync_failed', '仕入元データの関連テーブル同期に失敗しました。', ['status' => 500]);
+    }
+
+    $wpdb->query('COMMIT');
 
     $row = kobutsu_ledger_admin_get_supplier_source_by_sku((string) $sku);
     if (!$row) {
