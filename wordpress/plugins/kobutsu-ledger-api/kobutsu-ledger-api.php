@@ -475,16 +475,53 @@ function kobutsu_ledger_parse_money($value): array
     }
 
     $currency = 'USD';
-    if (str_contains($raw, '¥')) {
+    $normalized = strtoupper($raw);
+
+    if (str_contains($raw, '¥') || str_contains($normalized, 'JPY')) {
         $currency = 'JPY';
-    } elseif (str_contains($raw, 'AUD') || str_contains($raw, 'AU$')) {
+    } elseif (
+        str_contains($raw, '₱') ||
+        str_contains($normalized, 'PHP')
+    ) {
+        $currency = 'PHP';
+    } elseif (
+        str_contains($normalized, 'SGD') ||
+        str_contains($normalized, 'SDG')
+    ) {
+        $currency = 'SGD';
+    } elseif (
+        str_contains($normalized, 'AUD') ||
+        str_contains($raw, 'AU$') ||
+        str_contains($raw, 'A$')
+    ) {
         $currency = 'AUD';
-    } elseif (str_contains($raw, '€')) {
-        $currency = 'EUR';
-    } elseif (str_contains($raw, '£') || str_contains($raw, '￡')) {
-        $currency = 'GBP';
-    } elseif (str_contains($raw, 'c$')) {
+    } elseif (
+        str_contains($normalized, 'CAD') ||
+        str_contains($raw, 'C$') ||
+        str_contains($raw, 'CA$')
+    ) {
         $currency = 'CAD';
+    } elseif (
+        str_contains($normalized, 'GBP') ||
+        str_contains($raw, '£') ||
+        str_contains($raw, '￡')
+    ) {
+        $currency = 'GBP';
+    } elseif (
+        str_contains($normalized, 'EUR') ||
+        str_contains($raw, '€')
+    ) {
+        $currency = 'EUR';
+    } elseif (
+        str_contains($normalized, 'BRL') ||
+        str_contains($raw, 'R$')
+    ) {
+        $currency = 'BRL';
+    } elseif (
+        str_contains($normalized, 'USD') ||
+        str_contains($raw, '$')
+    ) {
+        $currency = 'USD';
     }
 
     $amount = (float) preg_replace('/[^0-9.\-]/', '', $raw);
