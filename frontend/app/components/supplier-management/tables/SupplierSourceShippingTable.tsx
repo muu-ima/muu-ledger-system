@@ -16,8 +16,14 @@ export function SupplierSourceShippingTable({
         <col className="sizeCol" />
         <col className="sizeCol" />
         <col className="sizeCol" />
+        <col className="sizeCol" />
         <col className="dateCol" />
         <col className="dateCol" />
+        <col className="dateCol" />
+        <col className="sourceCol" />
+        <col className="sourceCol" />
+        <col className="sourceCol" />
+        <col className="sourceCol" />
       </colgroup>
       <thead>
         <tr className="headerRow">
@@ -29,8 +35,14 @@ export function SupplierSourceShippingTable({
           <th>縦cm</th>
           <th>横cm</th>
           <th>高さcm</th>
+          <th>サイズ</th>
+          <th>発送チャット</th>
           <th>初回メール</th>
           <th>領収書印刷日</th>
+          <th>国内追跡番号</th>
+          <th>SLS追跡番号</th>
+          <th>ヤマト控え有無</th>
+          <th>収支チェック</th>
         </tr>
       </thead>
       <tbody>
@@ -44,8 +56,14 @@ export function SupplierSourceShippingTable({
             <td className="numberCell">{source.length}</td>
             <td className="numberCell">{source.width}</td>
             <td className="numberCell">{source.height}</td>
+            <td className="numberCell">{source.size}</td>
+            <td>{source.shippingChatAt}</td>
             <td>{source.firstMailAt}</td>
             <td>{source.receiptPrintedAt}</td>
+            <td>{source.domesticTrackingNo}</td>
+            <td>{source.slsTrackingNo}</td>
+            <td>{source.yamatoSlipFlag}</td>
+            <td>{source.balanceCheckedFlag}</td>
           </tr>
         ))}
       </tbody>

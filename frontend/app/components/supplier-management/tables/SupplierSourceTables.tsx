@@ -4,6 +4,7 @@ import { SupplierSourceShippingTable } from "@/app/components/supplier-managemen
 import { SupplierSourceSummaryTable } from "@/app/components/supplier-management/tables/SupplierSourceSummaryTable";
 import { SupplierSourceTabs } from "@/app/components/supplier-management/tables/SupplierSourceTabs";
 import {
+  type PurchaseProjectionRow,
   type SupplierDataView,
   type SupplierSource,
   type SupplierSourceView,
@@ -11,17 +12,29 @@ import {
 
 type SupplierSourceTablesProps = {
   dataView: SupplierDataView;
+  purchaseProjectionRows: PurchaseProjectionRow[];
+  purchaseProjectionStatus: string;
   sourceView: SupplierSourceView;
   sources: SupplierSource[];
   onDataViewChange: (view: SupplierDataView) => void;
+  onPurchaseProjectionRowChange: (
+    sku: string,
+    field: keyof PurchaseProjectionRow,
+    value: string,
+  ) => void;
+  onPurchaseProjectionRowSave: (row: PurchaseProjectionRow) => void;
   onSourceViewChange: (view: SupplierSourceView) => void;
 };
 
 export function SupplierSourceTables({
   dataView,
+  purchaseProjectionRows,
+  purchaseProjectionStatus,
   sourceView,
   sources,
   onDataViewChange,
+  onPurchaseProjectionRowChange,
+  onPurchaseProjectionRowSave,
   onSourceViewChange,
 }: SupplierSourceTablesProps) {
   return (
@@ -47,7 +60,12 @@ export function SupplierSourceTables({
           <SupplierSourceDetailTable sources={sources} />
         ) : null}
         {dataView === "仕入れ表への反映" ? (
-          <PurchaseProjectionTable sources={sources} />
+          <PurchaseProjectionTable
+            rows={purchaseProjectionRows}
+            statusMessage={purchaseProjectionStatus}
+            onRowChange={onPurchaseProjectionRowChange}
+            onRowUpdate={onPurchaseProjectionRowSave}
+          />
         ) : null}
       </div>
     </section>

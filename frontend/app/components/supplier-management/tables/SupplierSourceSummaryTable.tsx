@@ -11,6 +11,7 @@ export function SupplierSourceSummaryTable({
         <col className="rowNoCol" />
         <col className="skuCol" />
         <col className="verifyCol" />
+        <col className="sourceCol" />
         <col className="dateCol" />
         <col className="sourceCol" />
         <col className="moneyCol" />
@@ -24,6 +25,7 @@ export function SupplierSourceSummaryTable({
           <th>No</th>
           <th>SKU</th>
           <th>Order no.</th>
+          <th>購入済み</th>
           <th>仕入日</th>
           <th>仕入れ先</th>
           <th>仕入れ</th>
@@ -39,6 +41,7 @@ export function SupplierSourceSummaryTable({
             <td>{source.rowNo}</td>
             <td className="selectedCell">{source.sku}</td>
             <td>{source.orderNo}</td>
+            <td>{source.purchasedFlag}</td>
             <td>{source.acquiredAt}</td>
             <td>{source.supplier}</td>
             <td className="numberCell">{source.purchasePrice}</td>

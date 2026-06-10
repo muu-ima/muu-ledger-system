@@ -14,6 +14,7 @@ export type SupplierSource = {
   country: string;
   mag: string;
   saleAmount: string;
+  purchasedFlag: string;
   purchasePrice: string;
   shippingCost: string;
   points: string;
@@ -25,10 +26,16 @@ export type SupplierSource = {
   length: string;
   width: string;
   height: string;
+  size: string;
+  shippingChatAt: string;
   itemName: string;
   supplier: string;
   firstMailAt: string;
   receiptPrintedAt: string;
+  domesticTrackingNo: string;
+  slsTrackingNo: string;
+  yamatoSlipFlag: string;
+  balanceCheckedFlag: string;
 };
 
 type ApiValue = string | number | null | undefined;
@@ -47,6 +54,7 @@ export type SupplierSourceApiRow = {
   mag?: ApiValue;
   sale_amount?: ApiValue;
   sale_currency?: ApiValue;
+  purchased_flag?: ApiValue;
   purchase_price_jpy?: ApiValue;
   shipping_cost_jpy?: ApiValue;
   points?: ApiValue;
@@ -58,10 +66,16 @@ export type SupplierSourceApiRow = {
   package_length_cm?: ApiValue;
   package_width_cm?: ApiValue;
   package_height_cm?: ApiValue;
+  size_memo?: ApiValue;
+  shipping_chat_at_raw?: ApiValue;
   item_name?: ApiValue;
   supplier_name_raw?: ApiValue;
   first_mail_at_raw?: ApiValue;
   receipt_printed_at_raw?: ApiValue;
+  domestic_tracking_no?: ApiValue;
+  sls_tracking_no?: ApiValue;
+  yamato_slip_flag?: ApiValue;
+  balance_checked_flag?: ApiValue;
 };
 
 export type SupplierSourceSubmitPayload = {
@@ -74,6 +88,7 @@ export type SupplierSourceSubmitPayload = {
   buyer_country: string;
   mag: string;
   sale_amount: string;
+  purchased_flag: string;
   purchase_price: string;
   shipping_cost: string;
   points: string;
@@ -85,10 +100,53 @@ export type SupplierSourceSubmitPayload = {
   package_length_cm: string;
   package_width_cm: string;
   package_height_cm: string;
+  size_memo: string;
+  shipping_chat_at: string;
   item_name: string;
   acquired_from: string;
   first_mail_at: string;
   receipt_printed_at: string;
+  domestic_tracking_no: string;
+  sls_tracking_no: string;
+  yamato_slip_flag: string;
+  balance_checked_flag: string;
   sold_to: string;
   status: "in_stock" | "sold";
+};
+
+export type PurchaseProjectionRow = {
+  itemId: string;
+  sku: string;
+  orderNo: string;
+  acquiredAt: string;
+  supplier: string;
+  purchasePrice: string;
+  category: string;
+  accessories: string;
+  conditionLabel: string;
+  description: string;
+  photoUrl: string;
+  itemName: string;
+  soldAt: string;
+  soldTo: string;
+  saleAmount: string;
+};
+
+export type PurchaseProjectionApiRow = {
+  id?: ApiValue;
+  sku?: ApiValue;
+  order_no?: ApiValue;
+  category?: ApiValue;
+  accessories?: ApiValue;
+  condition_label?: ApiValue;
+  description?: ApiValue;
+  photo_url?: ApiValue;
+  item_name?: ApiValue;
+  acquired_at?: ApiValue;
+  acquired_from?: ApiValue;
+  purchase_price?: ApiValue;
+  sold_at?: ApiValue;
+  sold_to?: ApiValue;
+  sale_amount?: ApiValue;
+  sale_currency?: ApiValue;
 };

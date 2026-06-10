@@ -2,6 +2,7 @@
 
 import { type FormEvent } from "react";
 import { SupplierSourceForm } from "@/app/components/supplier-management/form/SupplierSourceForm";
+import { usePurchaseProjectionRows } from "@/app/components/supplier-management/hooks/usePurchaseProjectionRows";
 import { useSupplierSourceForm } from "@/app/components/supplier-management/hooks/useSupplierSourceForm";
 import { useSupplierManagementUI } from "@/app/components/supplier-management/hooks/useSupplierManagementUI";
 import { useSupplierSources } from "@/app/components/supplier-management/hooks/useSupplierSources";
@@ -28,6 +29,12 @@ export default function SupplierManagement() {
     supplierModalOpen,
     supplierSourceView,
   } = useSupplierManagementUI();
+  const {
+    purchaseProjectionRows,
+    purchaseProjectionStatus,
+    savePurchaseProjectionRow,
+    updatePurchaseProjectionRow,
+  } = usePurchaseProjectionRows(supplierSources);
 
   function openSupplierSourceModal() {
     resetSupplierForm();
@@ -76,6 +83,10 @@ export default function SupplierManagement() {
 
         <SupplierSourceTables
           dataView={supplierDataView}
+          purchaseProjectionRows={purchaseProjectionRows}
+          purchaseProjectionStatus={purchaseProjectionStatus}
+          onPurchaseProjectionRowChange={updatePurchaseProjectionRow}
+          onPurchaseProjectionRowSave={savePurchaseProjectionRow}
           sourceView={supplierSourceView}
           sources={supplierSources}
           onDataViewChange={setSupplierDataView}
