@@ -75,12 +75,72 @@ function kobutsu_ledger_register_launch_settings_menu(): void
 {
     add_submenu_page(
         'kobutsu-ledger',
+        'Web起動',
+        'Web起動',
+        'edit_posts',
+        'kobutsu-launch',
+        'kobutsu_ledger_redirect_to_shell'
+    );
+
+    add_submenu_page(
+        'kobutsu-ledger',
         '起動設定',
         '起動設定',
         'edit_posts',
         'kobutsu-launch-settings',
         'kobutsu_ledger_render_launch_settings_page'
     );
+}
+
+function kobutsu_ledger_shell_launch_url(): string
+{
+    return home_url('/');
+}
+
+function kobutsu_ledger_shell_theme_is_active(): bool
+{
+    return get_stylesheet() === 'kobutsu-ledger-shell'
+        || get_template() === 'kobutsu-ledger-shell';
+}
+
+function kobutsu_ledger_launch_status_items(): array
+{
+    return [
+        [
+            'label' => 'シェルテーマ',
+            'status' => kobutsu_ledger_shell_theme_is_active() ? '有効' : '未有効',
+            'description' => kobutsu_ledger_shell_theme_is_active()
+                ? 'kobutsu-ledger-shell が有効です。'
+                : 'Web起動には kobutsu-ledger-shell テーマを有効化してください。',
+        ],
+        [
+            'label' => 'Frontend URL',
+            'status' => kobutsu_ledger_frontend_url() !== '' ? '設定済み' : '未設定',
+            'description' => kobutsu_ledger_frontend_url() !== ''
+                ? kobutsu_ledger_frontend_url()
+                : 'フロントエンド URL を設定してください。',
+        ],
+        [
+            'label' => 'Shell URL',
+            'status' => '利用可能',
+            'description' => kobutsu_ledger_shell_launch_url(),
+        ],
+        [
+            'label' => 'REST URL',
+            'status' => '利用可能',
+            'description' => rest_url('kobutsu/v1/schema'),
+        ],
+    ];
+}
+
+function kobutsu_ledger_redirect_to_shell(): void
+{
+    if (!current_user_can('edit_posts')) {
+        wp_die(esc_html__('このページにアクセスする権限がありません。', 'kobutsu-ledger'));
+    }
+
+    wp_safe_redirect(kobutsu_ledger_shell_launch_url());
+    exit;
 }
 
 function kobutsu_ledger_render_launch_settings_page(): void
@@ -90,10 +150,47 @@ function kobutsu_ledger_render_launch_settings_page(): void
     }
 
     $frontend_url = kobutsu_ledger_frontend_url();
+    $shell_url = kobutsu_ledger_shell_launch_url();
+    $schema_url = rest_url('kobutsu/v1/schema');
+    $status_items = kobutsu_ledger_launch_status_items();
     ?>
     <div class="wrap kobutsu-ledger-admin">
         <h1>起動設定</h1>
         <p>WordPress 側は起動入口を担い、実際の UI はフロントエンド URL へ委譲します。</p>
+
+        <div class="notice notice-info">
+            <p>
+                <a class="button button-primary" href="<?php echo esc_url($shell_url); ?>">
+                    Web起動
+                </a>
+                <a class="button" href="<?php echo esc_url($frontend_url); ?>">
+                    Frontend URLを開く
+                </a>
+                <a class="button" href="<?php echo esc_url($schema_url); ?>">
+                    REST Schemaを開く
+                </a>
+            </p>
+        </div>
+
+        <h2>起動状態</h2>
+        <table class="widefat striped" style="max-width: 960px; margin-bottom: 24px;">
+            <thead>
+                <tr>
+                    <th style="width: 180px;">項目</th>
+                    <th style="width: 120px;">状態</th>
+                    <th>内容</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($status_items as $item) : ?>
+                    <tr>
+                        <td><?php echo esc_html($item['label']); ?></td>
+                        <td><strong><?php echo esc_html($item['status']); ?></strong></td>
+                        <td><code><?php echo esc_html($item['description']); ?></code></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
 
         <form method="post" action="options.php">
             <?php settings_fields('kobutsu_ledger_launch'); ?>
@@ -113,6 +210,7 @@ function kobutsu_ledger_render_launch_settings_page(): void
                                 value="<?php echo esc_attr($frontend_url); ?>"
                             >
                             <p class="description">例: http://localhost:3000</p>
+                            <p class="description">WordPress シェルテーマはこの URL を iframe の起動先として利用します。</p>
                         </td>
                     </tr>
                 </tbody>
