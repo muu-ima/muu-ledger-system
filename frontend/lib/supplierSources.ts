@@ -5,7 +5,7 @@ import type {
 } from "@/types/supplier";
 
 export const supplierSourceSample = {
-  rowNo: "1",
+  rowNo: "",
   sku: "20251125_mizushima_02",
   orderNo: "25-13888-57021",
   account: "signpost",
@@ -41,7 +41,7 @@ export const supplierSourceSample = {
 export function createSupplierSourceDraft(
   source: SupplierSource = supplierSourceSample,
 ): SupplierSource {
-  return { ...source };
+  return { ...source, rowNo: source.rowNo || "" };
 }
 
 export function formatYen(value: number) {

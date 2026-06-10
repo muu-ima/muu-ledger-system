@@ -41,7 +41,6 @@ const supplierSourceFormSections: SupplierSourceSectionConfig[] = [
   {
     title: "基本情報",
     fields: [
-      { field: "rowNo", label: "No." },
       { field: "sku", label: "SKU" },
       { field: "account", label: "アカウント" },
       { field: "orderNo", label: "Order no." },

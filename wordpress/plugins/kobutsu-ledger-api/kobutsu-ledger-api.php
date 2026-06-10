@@ -664,9 +664,13 @@ function kobutsu_ledger_save_supplier_source(
 
     $sku = $request['sku'] ?: $request['management_no'];
     $now = current_time('mysql');
+    $source_row_no = kobutsu_ledger_next_supplier_source_row_no(
+        $sku,
+        (int) ($request['source_row_no'] ?: 0)
+    );
 
     $data = [
-        'source_row_no' => (int) ($request['source_row_no'] ?: 0),
+        'source_row_no' => $source_row_no,
         'sku' => $sku,
         'order_no' => $request['order_no'] ?: '',
         'account_name' => $request['account_name'] ?: '',
@@ -714,6 +718,31 @@ function kobutsu_ledger_save_supplier_source(
     }
 
     return (bool) $wpdb->replace(kobutsu_ledger_table('supplier_sources'), $data, $formats);
+}
+
+function kobutsu_ledger_next_supplier_source_row_no(string $sku, int $requested_row_no = 0): int
+{
+    global $wpdb;
+
+    if ($requested_row_no > 0) {
+        return $requested_row_no;
+    }
+
+    $existing_row_no = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            'SELECT source_row_no FROM ' . kobutsu_ledger_table('supplier_sources') . ' WHERE sku = %s',
+            $sku
+        )
+    );
+    if ($existing_row_no > 0) {
+        return $existing_row_no;
+    }
+
+    $max_row_no = (int) $wpdb->get_var(
+        'SELECT COALESCE(MAX(source_row_no), 0) FROM ' . kobutsu_ledger_table('supplier_sources')
+    );
+
+    return $max_row_no + 1;
 }
 
 function kobutsu_ledger_sync_supplier_source_dependents(array $source): bool
