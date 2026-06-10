@@ -58,6 +58,7 @@ const supplierSourceFormSections: SupplierSourceSectionConfig[] = [
       { field: "saleAmount", label: "販売額" },
       { field: "shippingCost", label: "送料" },
       { field: "shippingSite", label: "発送サイト" },
+      { field: "shippingChatAt", label: "発送チャット" },
       { field: "packer", label: "梱包者" },
       { field: "note", label: "備考", type: "textarea", wide: true },
     ],
@@ -74,6 +75,10 @@ const supplierSourceFormSections: SupplierSourceSectionConfig[] = [
       { field: "height", label: "高さcm" },
       { field: "firstMailAt", label: "初回メール" },
       { field: "receiptPrintedAt", label: "領収書印刷日" },
+      { field: "domesticTrackingNo", label: "国内追跡番号" },
+      { field: "slsTrackingNo", label: "SLS追跡番号" },
+      { field: "yamatoSlipFlag", label: "ヤマト控え有無" },
+      { field: "balanceCheckedFlag", label: "収支チェック" },
     ],
   },
 ];
@@ -108,6 +113,47 @@ function SupplierSourceInputField({
   );
 }
 
+function isIsoDateString(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function SupplierSourceAcquiredAtField({
+  form,
+  onFieldChange,
+}: SupplierSourceFormSectionsProps) {
+  const isInStock = form.acquiredAt === "有在庫";
+  const dateValue = isIsoDateString(form.acquiredAt) ? form.acquiredAt : "";
+
+  return (
+    <label>
+      <span>仕入日</span>
+      <div className="stackedField">
+        <select
+          value={isInStock ? "in_stock" : "date"}
+          onChange={(event) =>
+            onFieldChange(
+              "acquiredAt",
+              event.target.value === "in_stock" ? "有在庫" : "",
+            )
+          }
+        >
+          <option value="date">日付入力</option>
+          <option value="in_stock">有在庫</option>
+        </select>
+        {isInStock ? (
+          <input value="有在庫" readOnly />
+        ) : (
+          <input
+            type="date"
+            value={dateValue}
+            onChange={(event) => onFieldChange("acquiredAt", event.target.value)}
+          />
+        )}
+      </div>
+    </label>
+  );
+}
+
 function SupplierSourceTextareaField({
   field,
   form,
@@ -135,7 +181,13 @@ export function SupplierSourceFormSections({
       {supplierSourceFormSections.map((section) => (
         <SupplierSourceSection key={section.title} title={section.title}>
           {section.fields.map((field) =>
-            field.type === "textarea" ? (
+            field.field === "acquiredAt" ? (
+              <SupplierSourceAcquiredAtField
+                key={field.field}
+                form={form}
+                onFieldChange={onFieldChange}
+              />
+            ) : field.type === "textarea" ? (
               <SupplierSourceTextareaField
                 key={field.field}
                 field={field.field}

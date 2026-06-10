@@ -192,8 +192,9 @@ function kobutsu_ledger_supplier_sources_select_sql(): string
         acquired_at, acquired_at_raw, buyer_country, mag, sale_amount, sale_currency,
         purchase_price_jpy, shipping_cost_jpy, points, notes, packer, shipping_site,
         actual_weight_g, dimensional_weight_g, package_length_cm, package_width_cm,
-        package_height_cm, item_name, supplier_name_raw, first_mail_at_raw,
-        receipt_printed_at_raw
+        package_height_cm, shipping_chat_at_raw, item_name, supplier_name_raw, first_mail_at_raw,
+        receipt_printed_at_raw, domestic_tracking_no, sls_tracking_no, yamato_slip_flag,
+        balance_checked_flag
     FROM ' . kobutsu_ledger_table('supplier_sources');
 }
 
@@ -225,10 +226,15 @@ function kobutsu_ledger_format_supplier_source_row(array $row): array
         'package_length_cm' => (float) $row['package_length_cm'],
         'package_width_cm' => (float) $row['package_width_cm'],
         'package_height_cm' => (float) $row['package_height_cm'],
+        'shipping_chat_at_raw' => (string) ($row['shipping_chat_at_raw'] ?? ''),
         'item_name' => (string) $row['item_name'],
         'supplier_name_raw' => (string) $row['supplier_name_raw'],
         'first_mail_at_raw' => (string) $row['first_mail_at_raw'],
         'receipt_printed_at_raw' => (string) $row['receipt_printed_at_raw'],
+        'domestic_tracking_no' => (string) ($row['domestic_tracking_no'] ?? ''),
+        'sls_tracking_no' => (string) ($row['sls_tracking_no'] ?? ''),
+        'yamato_slip_flag' => (string) ($row['yamato_slip_flag'] ?? ''),
+        'balance_checked_flag' => (string) ($row['balance_checked_flag'] ?? ''),
     ];
 }
 

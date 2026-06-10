@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 require_once __DIR__ . '/admin-supplier-sources.php';
 require_once __DIR__ . '/admin-ec-sales.php';
 
-const KOBUTSU_LEDGER_DB_VERSION = '0.3.0';
+const KOBUTSU_LEDGER_DB_VERSION = '0.3.1';
 
 register_activation_hook(__FILE__, 'kobutsu_ledger_activate');
 add_action('plugins_loaded', 'kobutsu_ledger_maybe_upgrade');
@@ -128,10 +128,15 @@ function kobutsu_ledger_create_tables(): void
         package_length_cm decimal(8,2) NOT NULL DEFAULT 0,
         package_width_cm decimal(8,2) NOT NULL DEFAULT 0,
         package_height_cm decimal(8,2) NOT NULL DEFAULT 0,
+        shipping_chat_at_raw varchar(40) NOT NULL DEFAULT '',
         item_name text NOT NULL,
         supplier_name_raw varchar(191) NOT NULL DEFAULT '',
         first_mail_at_raw varchar(40) NOT NULL DEFAULT '',
         receipt_printed_at_raw varchar(40) NOT NULL DEFAULT '',
+        domestic_tracking_no varchar(191) NOT NULL DEFAULT '',
+        sls_tracking_no varchar(191) NOT NULL DEFAULT '',
+        yamato_slip_flag varchar(20) NOT NULL DEFAULT '',
+        balance_checked_flag varchar(20) NOT NULL DEFAULT '',
         created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY  (id),
@@ -412,9 +417,14 @@ function kobutsu_ledger_rest_args(): array
         'package_length_cm' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'package_width_cm' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'package_height_cm' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'shipping_chat_at' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'mag' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'first_mail_at' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'receipt_printed_at' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'domestic_tracking_no' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'sls_tracking_no' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'yamato_slip_flag' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
+        'balance_checked_flag' => ['required' => false, 'sanitize_callback' => 'sanitize_text_field'],
         'status' => ['required' => false, 'sanitize_callback' => 'sanitize_key'],
     ];
 }
@@ -533,6 +543,13 @@ function kobutsu_ledger_parse_money($value): array
     ];
 }
 
+function kobutsu_ledger_date_or_null($value): ?string
+{
+    $date = sanitize_text_field((string) $value);
+
+    return preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) ? $date : null;
+}
+
 function kobutsu_ledger_create_item(WP_REST_Request $request): WP_REST_Response|WP_Error
 {
     global $wpdb;
@@ -571,7 +588,7 @@ function kobutsu_ledger_create_item(WP_REST_Request $request): WP_REST_Response|
     $purchase_inserted = $wpdb->insert(kobutsu_ledger_table('purchases'), [
         'item_id' => $item_id,
         'supplier_id' => $supplier_id,
-        'purchase_date' => $request['acquired_at'] ?: null,
+        'purchase_date' => kobutsu_ledger_date_or_null($request['acquired_at'] ?? ''),
         'supplier_name_raw' => $request['acquired_from'] ?: '',
         'purchase_price_jpy' => $purchase_price['amount_jpy'],
         'seller_identification' => $request['seller_identification'] ?: '',
@@ -649,9 +666,9 @@ function kobutsu_ledger_save_supplier_source(
         'sku' => $sku,
         'order_no' => $request['order_no'] ?: '',
         'account_name' => $request['account_name'] ?: '',
-        'sold_at' => $request['sold_at'] ?: null,
+        'sold_at' => kobutsu_ledger_date_or_null($request['sold_at'] ?? ''),
         'sold_at_raw' => $request['sold_at'] ?: '',
-        'acquired_at' => $request['acquired_at'] ?: null,
+        'acquired_at' => kobutsu_ledger_date_or_null($request['acquired_at'] ?? ''),
         'acquired_at_raw' => $request['acquired_at'] ?: '',
         'buyer_country' => $request['buyer_country'] ?: '',
         'mag' => $request['mag'] ?: '',
@@ -668,16 +685,21 @@ function kobutsu_ledger_save_supplier_source(
         'package_length_cm' => (float) ($request['package_length_cm'] ?: 0),
         'package_width_cm' => (float) ($request['package_width_cm'] ?: 0),
         'package_height_cm' => (float) ($request['package_height_cm'] ?: 0),
+        'shipping_chat_at_raw' => $request['shipping_chat_at'] ?: '',
         'item_name' => $request['item_name'],
         'supplier_name_raw' => $request['acquired_from'] ?: '',
         'first_mail_at_raw' => $request['first_mail_at'] ?: '',
         'receipt_printed_at_raw' => $request['receipt_printed_at'] ?: '',
+        'domestic_tracking_no' => $request['domestic_tracking_no'] ?: '',
+        'sls_tracking_no' => $request['sls_tracking_no'] ?: '',
+        'yamato_slip_flag' => $request['yamato_slip_flag'] ?: '',
+        'balance_checked_flag' => $request['balance_checked_flag'] ?: '',
         'updated_at' => $now,
     ];
     $formats = [
         '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s',
         '%f', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%f',
-        '%f', '%f', '%s', '%s', '%s', '%s', '%s',
+        '%f', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s',
     ];
 
     if ($item_id !== null) {
@@ -773,7 +795,7 @@ function kobutsu_ledger_sync_supplier_source_dependents(array $source): bool
     $purchase_data = [
         'item_id' => $item_id,
         'supplier_id' => $supplier_id,
-        'purchase_date' => $source['acquired_at'] ?: null,
+        'purchase_date' => kobutsu_ledger_date_or_null($source['acquired_at'] ?? ''),
         'supplier_name_raw' => $supplier_name,
         'purchase_price_jpy' => (int) ($source['purchase_price_jpy'] ?? 0),
         'source_order_no' => (string) ($source['order_no'] ?? ''),
@@ -825,6 +847,7 @@ function kobutsu_ledger_sync_supplier_source_dependents(array $source): bool
         !empty($source['notes']) ? '備考: ' . $source['notes'] : '',
         !empty($source['packer']) ? '梱包者: ' . $source['packer'] : '',
         !empty($source['points']) ? 'ポイント: ' . $source['points'] : '',
+        !empty($source['shipping_chat_at_raw']) ? '発送チャット: ' . $source['shipping_chat_at_raw'] : '',
     ])));
 
     $sale_data = [
@@ -832,14 +855,15 @@ function kobutsu_ledger_sync_supplier_source_dependents(array $source): bool
         'marketplace' => 'shopee',
         'account_name' => (string) ($source['account_name'] ?? ''),
         'order_no' => (string) ($source['order_no'] ?? ''),
-        'sale_date' => $source['sold_at'] ?: null,
+        'sale_date' => kobutsu_ledger_date_or_null($source['sold_at'] ?? ''),
         'sale_amount' => (float) ($source['sale_amount'] ?? 0),
         'sale_currency' => (string) (($source['sale_currency'] ?? '') ?: 'USD'),
         'sale_amount_jpy' => strtoupper((string) ($source['sale_currency'] ?? '')) === 'JPY'
             ? (int) round((float) ($source['sale_amount'] ?? 0))
             : 0,
         'buyer_country' => (string) ($source['buyer_country'] ?? ''),
-        'shipping_site' => (string) ($source['shipping_site'] ?? ''),
+        'tracking_no' => (string) ($source['domestic_tracking_no'] ?? ''),
+        'shipping_site' => (string) ($source['sls_tracking_no'] ?? ''),
         'actual_weight_g' => (int) ($source['actual_weight_g'] ?? 0),
         'dimensional_weight_g' => (int) ($source['dimensional_weight_g'] ?? 0),
         'package_length_cm' => (float) ($source['package_length_cm'] ?? 0),
@@ -854,7 +878,7 @@ function kobutsu_ledger_sync_supplier_source_dependents(array $source): bool
             kobutsu_ledger_table('sales'),
             $sale_data,
             ['item_id' => $item_id],
-            ['%d', '%s', '%s', '%s', '%s', '%f', '%s', '%d', '%s', '%s', '%d', '%d', '%f', '%f', '%f', '%s', '%s'],
+            ['%d', '%s', '%s', '%s', '%s', '%f', '%s', '%d', '%s', '%s', '%s', '%d', '%d', '%f', '%f', '%f', '%s', '%s'],
             ['%d']
         );
 
@@ -864,7 +888,7 @@ function kobutsu_ledger_sync_supplier_source_dependents(array $source): bool
     $sale_inserted = $wpdb->insert(
         kobutsu_ledger_table('sales'),
         $sale_data,
-        ['%d', '%s', '%s', '%s', '%s', '%f', '%s', '%d', '%s', '%s', '%d', '%d', '%f', '%f', '%f', '%s', '%s']
+        ['%d', '%s', '%s', '%s', '%s', '%f', '%s', '%d', '%s', '%s', '%s', '%d', '%d', '%f', '%f', '%f', '%s', '%s']
     );
 
     return (bool) $sale_inserted;
@@ -1329,7 +1353,5 @@ function kobutsu_ledger_admin_delete_item(int $item_id): void
 
 function kobutsu_ledger_admin_date_or_null($value): ?string
 {
-    $date = sanitize_text_field((string) wp_unslash($value));
-
-    return preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) ? $date : null;
+    return kobutsu_ledger_date_or_null(wp_unslash($value));
 }

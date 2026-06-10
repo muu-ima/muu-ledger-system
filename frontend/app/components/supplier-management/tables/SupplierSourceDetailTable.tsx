@@ -11,6 +11,8 @@ export function SupplierSourceDetailTable({
         <col className="rowNoCol" />
         <col className="skuCol" />
         <col className="sourceCol" />
+        <col className="verifyCol" />
+        <col className="dateCol" />
         <col className="buyerCol" />
         <col className="typeCol" />
         <col className="moneyCol" />
@@ -22,6 +24,8 @@ export function SupplierSourceDetailTable({
           <th>No</th>
           <th>SKU</th>
           <th>アカウント</th>
+          <th>Order no.</th>
+          <th>販売日</th>
           <th>国</th>
           <th>MAG</th>
           <th>ポイント</th>
@@ -35,6 +39,8 @@ export function SupplierSourceDetailTable({
             <td>{source.rowNo}</td>
             <td className="selectedCell">{source.sku}</td>
             <td>{source.account}</td>
+            <td>{source.orderNo}</td>
+            <td>{source.soldAt}</td>
             <td>{source.country}</td>
             <td>{source.mag}</td>
             <td className="numberCell">{source.points}</td>

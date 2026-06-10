@@ -25,10 +25,15 @@ export const supplierSourceSample = {
   length: "32.5",
   width: "28",
   height: "4",
+  shippingChatAt: "",
   itemName: "Canon PowerShot SX620 HS Black 20.2MP 25x Zoom Compact digital camera Tested",
   supplier: "メルカリショップ",
   firstMailAt: "12/2",
   receiptPrintedAt: "",
+  domesticTrackingNo: "",
+  slsTrackingNo: "",
+  yamatoSlipFlag: "FALSE",
+  balanceCheckedFlag: "FALSE",
 } satisfies SupplierSource;
 
 export function createSupplierSourceDraft(
@@ -95,10 +100,15 @@ export function supplierSourceFromApi(row: SupplierSourceApiRow): SupplierSource
     length: String(row.package_length_cm || ""),
     width: String(row.package_width_cm || ""),
     height: String(row.package_height_cm || ""),
+    shippingChatAt: String(row.shipping_chat_at_raw || ""),
     itemName: String(row.item_name || ""),
     supplier: String(row.supplier_name_raw || ""),
     firstMailAt: String(row.first_mail_at_raw || ""),
     receiptPrintedAt: String(row.receipt_printed_at_raw || ""),
+    domesticTrackingNo: String(row.domestic_tracking_no || ""),
+    slsTrackingNo: String(row.sls_tracking_no || ""),
+    yamatoSlipFlag: String(row.yamato_slip_flag || ""),
+    balanceCheckedFlag: String(row.balance_checked_flag || ""),
   };
 }
 
@@ -126,10 +136,15 @@ export function supplierSourceToSubmitPayload(
     package_length_cm: source.length,
     package_width_cm: source.width,
     package_height_cm: source.height,
+    shipping_chat_at: source.shippingChatAt,
     item_name: source.itemName,
     acquired_from: source.supplier,
     first_mail_at: source.firstMailAt,
     receipt_printed_at: source.receiptPrintedAt,
+    domestic_tracking_no: source.domesticTrackingNo,
+    sls_tracking_no: source.slsTrackingNo,
+    yamato_slip_flag: source.yamatoSlipFlag,
+    balance_checked_flag: source.balanceCheckedFlag,
     sold_to: "ebay",
     status: source.soldAt ? "sold" : "in_stock",
   };

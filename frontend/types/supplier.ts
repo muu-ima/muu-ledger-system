@@ -25,10 +25,15 @@ export type SupplierSource = {
   length: string;
   width: string;
   height: string;
+  shippingChatAt: string;
   itemName: string;
   supplier: string;
   firstMailAt: string;
   receiptPrintedAt: string;
+  domesticTrackingNo: string;
+  slsTrackingNo: string;
+  yamatoSlipFlag: string;
+  balanceCheckedFlag: string;
 };
 
 type ApiValue = string | number | null | undefined;
@@ -58,10 +63,15 @@ export type SupplierSourceApiRow = {
   package_length_cm?: ApiValue;
   package_width_cm?: ApiValue;
   package_height_cm?: ApiValue;
+  shipping_chat_at_raw?: ApiValue;
   item_name?: ApiValue;
   supplier_name_raw?: ApiValue;
   first_mail_at_raw?: ApiValue;
   receipt_printed_at_raw?: ApiValue;
+  domestic_tracking_no?: ApiValue;
+  sls_tracking_no?: ApiValue;
+  yamato_slip_flag?: ApiValue;
+  balance_checked_flag?: ApiValue;
 };
 
 export type SupplierSourceSubmitPayload = {
@@ -85,10 +95,15 @@ export type SupplierSourceSubmitPayload = {
   package_length_cm: string;
   package_width_cm: string;
   package_height_cm: string;
+  shipping_chat_at: string;
   item_name: string;
   acquired_from: string;
   first_mail_at: string;
   receipt_printed_at: string;
+  domestic_tracking_no: string;
+  sls_tracking_no: string;
+  yamato_slip_flag: string;
+  balance_checked_flag: string;
   sold_to: string;
   status: "in_stock" | "sold";
 };

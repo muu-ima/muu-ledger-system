@@ -289,7 +289,7 @@ function kobutsu_ledger_ec_sales_select_sql(): string
         s.dimensional_weight_g, s.package_length_cm, s.package_width_cm,
         s.package_height_cm, COALESCE(s.notes, "") AS sale_notes,
         COALESCE(i.sku, "") AS sku, COALESCE(i.item_name, "") AS item_name,
-        COALESCE(p.purchase_date, "") AS purchase_date,
+        COALESCE(CAST(p.purchase_date AS CHAR), ssr.acquired_at_raw, "") AS purchase_date,
         COALESCE(p.purchase_price_jpy, 0) AS purchase_price_jpy,
         COALESCE(ss.id, 0) AS settlement_id,
         COALESCE(ss.payout_date, "") AS payout_date,
@@ -310,6 +310,7 @@ function kobutsu_ledger_ec_sales_select_sql(): string
     FROM ' . kobutsu_ledger_table('sales') . ' s
     LEFT JOIN ' . kobutsu_ledger_table('items') . ' i ON i.id = s.item_id
     LEFT JOIN ' . kobutsu_ledger_table('purchases') . ' p ON p.item_id = s.item_id
+    LEFT JOIN ' . kobutsu_ledger_table('supplier_sources') . ' ssr ON ssr.item_id = s.item_id
     LEFT JOIN ' . kobutsu_ledger_table('sales_settlements') . ' ss ON ss.sale_id = s.id';
 }
 
@@ -651,8 +652,41 @@ function kobutsu_ledger_admin_format_rate(float $rate): string
     return number_format($rate, 2) . '%';
 }
 
+function kobutsu_ledger_ec_sales_fallback_days_to_sell(array $row): string
+{
+    $purchase_date = (string) ($row['purchase_date'] ?? '');
+    $sale_date = (string) ($row['sale_date'] ?? '');
+
+    if (
+        !preg_match('/^\d{4}-\d{2}-\d{2}$/', $purchase_date) ||
+        !preg_match('/^\d{4}-\d{2}-\d{2}$/', $sale_date)
+    ) {
+        return '';
+    }
+
+    $purchase_ts = strtotime($purchase_date);
+    $sale_ts = strtotime($sale_date);
+    if ($purchase_ts === false || $sale_ts === false) {
+        return '';
+    }
+
+    $diff_days = (int) round(($sale_ts - $purchase_ts) / 86400);
+    if ($diff_days < 0) {
+        return '';
+    }
+
+    return (string) $diff_days;
+}
+
 function kobutsu_ledger_format_ec_sale_row(array $row): array
 {
+    $days_to_sell = '';
+    if (!empty($row['settlement_id'])) {
+        $days_to_sell = (string) ((int) $row['days_to_sell']);
+    } else {
+        $days_to_sell = kobutsu_ledger_ec_sales_fallback_days_to_sell($row);
+    }
+
     return [
         'sale_id' => (int) $row['sale_id'],
         'bundled_flag' => '',
@@ -678,7 +712,7 @@ function kobutsu_ledger_format_ec_sale_row(array $row): array
         'purchase_tax_refund_jpy' => (int) $row['consumption_tax_refund_jpy'],
         'profit_jpy' => (int) $row['profit_jpy'],
         'profit_rate' => (float) $row['profit_rate'],
-        'days_to_sell' => (int) $row['days_to_sell'],
+        'days_to_sell' => $days_to_sell,
         'domestic_tracking_no' => (string) $row['tracking_no'],
         'sls_tracking_no' => (string) $row['shipping_site'],
         'settlement_note' => (string) $row['sale_notes'],
