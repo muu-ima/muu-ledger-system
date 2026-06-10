@@ -19,6 +19,7 @@ WordPress を台帳データと管理権限のバックエンド、Next.js を�
 詳細は `docs/ui-reference.md` を参照してください。
 フロントエンドの責務分離と型整理の進め方は `docs/frontend-refactor.md` を参照してください。
 Shopee系データのモデル設計メモは `docs/shopee-data-model.md` を参照してください。
+WordPress 側のファイル責務ルールは `docs/wordpress-structure.md` を参照してください。
 
 ## 参考プラグイン
 
