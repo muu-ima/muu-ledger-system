@@ -13,6 +13,8 @@ if (!defined('ABSPATH')) {
 require_once __DIR__ . '/admin-supplier-sources.php';
 require_once __DIR__ . '/admin-ec-sales.php';
 require_once __DIR__ . '/admin-launch-settings.php';
+require_once __DIR__ . '/includes/admin-menu.php';
+require_once __DIR__ . '/includes/bootstrap.php';
 require_once __DIR__ . '/includes/database.php';
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/includes/rest.php';
@@ -20,14 +22,7 @@ require_once __DIR__ . '/includes/sync/supplier-sources.php';
 
 const KOBUTSU_LEDGER_DB_VERSION = '0.3.2';
 
-register_activation_hook(__FILE__, 'kobutsu_ledger_activate');
-add_action('plugins_loaded', 'kobutsu_ledger_maybe_upgrade');
-add_action('rest_api_init', 'kobutsu_ledger_register_routes');
-add_action('admin_menu', 'kobutsu_ledger_register_admin_menu');
-add_action('admin_init', 'kobutsu_ledger_handle_admin_action');
-add_action('admin_init', 'kobutsu_ledger_handle_supplier_sources_admin_action');
-add_action('admin_init', 'kobutsu_ledger_handle_ec_sales_admin_action');
-add_filter('rest_pre_serve_request', 'kobutsu_ledger_local_rest_headers', 10, 4);
+kobutsu_ledger_register_hooks(__FILE__);
 
 
 function kobutsu_ledger_get_items(WP_REST_Request $request): WP_REST_Response
@@ -360,41 +355,6 @@ function kobutsu_ledger_get_schema(): WP_REST_Response
             ],
         ],
     ]);
-}
-
-function kobutsu_ledger_register_admin_menu(): void
-{
-    add_menu_page(
-        '古物台帳',
-        '古物台帳',
-        'edit_posts',
-        'kobutsu-ledger',
-        'kobutsu_ledger_render_admin_page',
-        'dashicons-clipboard',
-        26
-    );
-
-    add_menu_page(
-        '仕入れ管理',
-        '仕入れ管理',
-        'edit_posts',
-        'kobutsu-supplier-sources',
-        'kobutsu_ledger_render_supplier_sources_admin_page',
-        'dashicons-cart',
-        27
-    );
-
-    add_menu_page(
-        'EC販売',
-        'EC販売',
-        'edit_posts',
-        'kobutsu-ec-sales',
-        'kobutsu_ledger_render_ec_sales_admin_page',
-        'dashicons-chart-line',
-        28
-    );
-
-    kobutsu_ledger_register_launch_settings_menu();
 }
 
 function kobutsu_ledger_render_admin_page(): void
