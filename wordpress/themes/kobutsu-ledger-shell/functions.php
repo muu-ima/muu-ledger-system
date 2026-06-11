@@ -29,3 +29,26 @@ function kobutsu_ledger_shell_frontend_url(): string
 
     return esc_url($url);
 }
+
+function kobutsu_ledger_shell_origin(string $url): string
+{
+    $scheme = wp_parse_url($url, PHP_URL_SCHEME);
+    $host = wp_parse_url($url, PHP_URL_HOST);
+    $port = wp_parse_url($url, PHP_URL_PORT);
+
+    if (!$scheme || !$host) {
+        return '';
+    }
+
+    return $scheme . '://' . $host . ($port ? ':' . $port : '');
+}
+
+function kobutsu_ledger_shell_auth_payload(): array
+{
+    return [
+        'restBaseUrl' => esc_url_raw(home_url('/')),
+        'restNonce' => is_user_logged_in() ? wp_create_nonce('wp_rest') : '',
+        'wordpressOrigin' => kobutsu_ledger_shell_origin(home_url('/')),
+        'canWrite' => current_user_can('edit_posts'),
+    ];
+}

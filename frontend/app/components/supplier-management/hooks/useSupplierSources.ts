@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import {
+  createWordpressJsonHeaders,
   createSupplierSourceDraft,
+  resolveWordpressBaseUrl,
   supplierSourceFromApi,
   supplierSourceToSubmitPayload,
   supplierSourceToUpdatePayload,
@@ -22,7 +24,9 @@ export function useSupplierSources() {
   const [supplierSubmitStatus, setSupplierSubmitStatus] = useState("");
 
   useEffect(() => {
-    const baseUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
+    const baseUrl = resolveWordpressBaseUrl(
+      process.env.NEXT_PUBLIC_WORDPRESS_URL || "",
+    );
     let cancelled = false;
 
     async function loadSupplierSources() {
@@ -71,7 +75,9 @@ export function useSupplierSources() {
   ): Promise<SaveSupplierSourceResult> {
     setSupplierSubmitStatus("保存中");
 
-    const baseUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
+    const baseUrl = resolveWordpressBaseUrl(
+      process.env.NEXT_PUBLIC_WORDPRESS_URL || "",
+    );
     const payload = supplierSourceToSubmitPayload(source);
 
     try {
@@ -80,9 +86,7 @@ export function useSupplierSources() {
         {
           method: "POST",
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: createWordpressJsonHeaders(),
           body: JSON.stringify(payload),
         },
       );
@@ -116,7 +120,9 @@ export function useSupplierSources() {
 
     setSupplierSubmitStatus(`${source.sku} を保存中`);
 
-    const baseUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
+    const baseUrl = resolveWordpressBaseUrl(
+      process.env.NEXT_PUBLIC_WORDPRESS_URL || "",
+    );
     const payload = supplierSourceToUpdatePayload(source);
 
     try {
@@ -125,9 +131,7 @@ export function useSupplierSources() {
         {
           method: "POST",
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: createWordpressJsonHeaders(),
           body: JSON.stringify(payload),
         },
       );

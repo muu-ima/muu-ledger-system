@@ -8,6 +8,8 @@ if (!defined('ABSPATH')) {
 }
 
 $frontend_url = kobutsu_ledger_shell_frontend_url();
+$frontend_origin = kobutsu_ledger_shell_origin($frontend_url);
+$auth_payload = kobutsu_ledger_shell_auth_payload();
 $launch_settings_url = current_user_can('edit_posts')
     ? admin_url('admin.php?page=kobutsu-launch-settings')
     : '';
@@ -41,11 +43,49 @@ $launch_settings_url = current_user_can('edit_posts')
 <?php wp_body_open(); ?>
     <?php if ($frontend_url) : ?>
         <iframe
+            id="kobutsu-shell-frame"
             class="kobutsu-shell"
             src="<?php echo $frontend_url; ?>"
             title="<?php echo esc_attr__('Kobutsu Ledger', 'kobutsu-ledger-shell'); ?>"
             allow="clipboard-read; clipboard-write"
         ></iframe>
+        <script>
+            (() => {
+                const frame = document.getElementById("kobutsu-shell-frame");
+                const targetOrigin = <?php echo wp_json_encode($frontend_origin); ?>;
+                const authPayload = <?php echo wp_json_encode($auth_payload); ?>;
+
+                if (!frame || !targetOrigin) {
+                    return;
+                }
+
+                const postAuthPayload = () => {
+                    if (!frame.contentWindow) {
+                        return;
+                    }
+
+                    frame.contentWindow.postMessage(
+                        {
+                            type: "kobutsu-ledger-shell-auth",
+                            payload: authPayload,
+                        },
+                        targetOrigin,
+                    );
+                };
+
+                frame.addEventListener("load", postAuthPayload);
+
+                window.addEventListener("message", (event) => {
+                    if (event.origin !== targetOrigin) {
+                        return;
+                    }
+
+                    if (event.data?.type === "kobutsu-ledger-auth-request") {
+                        postAuthPayload();
+                    }
+                });
+            })();
+        </script>
     <?php else : ?>
         <main class="kobutsu-shell-fallback">
             <h1><?php echo esc_html__('Kobutsu Ledger', 'kobutsu-ledger-shell'); ?></h1>

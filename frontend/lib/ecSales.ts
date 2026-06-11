@@ -14,6 +14,10 @@ import type {
   ShopeeSupplier,
   ShopeeSupplierApiRow,
 } from "@/types/ecSales";
+export {
+  createWordpressJsonHeaders,
+  resolveWordpressBaseUrl,
+} from "@/lib/wordpressShellAuth";
 
 type ApiValue = string | number | null | undefined;
 
