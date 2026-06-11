@@ -5,6 +5,10 @@ import type {
   SupplierSourceApiRow,
   SupplierSourceSubmitPayload,
 } from "@/types/supplier";
+export {
+  createWordpressJsonHeaders,
+  resolveWordpressBaseUrl,
+} from "@/lib/wordpressShellAuth";
 
 export const supplierSourceSample = {
   id: "",

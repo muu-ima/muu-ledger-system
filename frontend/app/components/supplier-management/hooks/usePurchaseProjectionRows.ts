@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import {
+  createWordpressJsonHeaders,
   mergePurchaseProjectionRows,
   purchaseProjectionFromApi,
   purchaseProjectionToUpdatePayload,
+  resolveWordpressBaseUrl,
   upsertPurchaseProjectionRow,
   wordpressRestUrl,
 } from "@/lib/supplierSources";
@@ -21,7 +23,9 @@ export function usePurchaseProjectionRows(sources: SupplierSource[]) {
   const [updateStatus, setUpdateStatus] = useState("");
 
   useEffect(() => {
-    const baseUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
+    const baseUrl = resolveWordpressBaseUrl(
+      process.env.NEXT_PUBLIC_WORDPRESS_URL || "",
+    );
     let cancelled = false;
 
     async function loadItems() {
@@ -71,7 +75,9 @@ export function usePurchaseProjectionRows(sources: SupplierSource[]) {
     }
 
     setUpdateStatus(`${row.sku} を保存中`);
-    const baseUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
+    const baseUrl = resolveWordpressBaseUrl(
+      process.env.NEXT_PUBLIC_WORDPRESS_URL || "",
+    );
 
     try {
       const response = await fetch(
@@ -79,9 +85,7 @@ export function usePurchaseProjectionRows(sources: SupplierSource[]) {
         {
           method: "POST",
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: createWordpressJsonHeaders(),
           body: JSON.stringify(purchaseProjectionToUpdatePayload(row)),
         },
       );

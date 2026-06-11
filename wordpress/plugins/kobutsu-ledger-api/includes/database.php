@@ -26,15 +26,12 @@ function kobutsu_ledger_table(string $name): string
 
 function kobutsu_ledger_local_rest_headers($served, $result, $request, $server)
 {
-    if (!defined('WP_DEBUG') || !WP_DEBUG) {
-        return $served;
-    }
-
     $origin = get_http_origin();
     $allowed_origins = kobutsu_ledger_allowed_rest_origins();
 
     if ($origin && in_array($origin, $allowed_origins, true)) {
         header('Access-Control-Allow-Origin: ' . esc_url_raw($origin));
+        header('Vary: Origin');
         header('Access-Control-Allow-Credentials: true');
         header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WP-Nonce');
         header('Access-Control-Allow-Methods: GET, POST, OPTIONS');

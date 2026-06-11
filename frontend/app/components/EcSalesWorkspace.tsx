@@ -5,9 +5,11 @@ import { EcSalesSummaryTabs } from "@/app/components/ec-sales/EcSalesSummaryTabs
 import { EcSalesTabs } from "@/app/components/ec-sales/EcSalesTabs";
 import { EcSalesTable } from "@/app/components/ec-sales/EcSalesTable";
 import {
+  createWordpressJsonHeaders,
   normalizeCurrency,
   normalizeEcSalesRecord,
   parseNumberLike,
+  resolveWordpressBaseUrl,
 } from "@/lib/ecSales";
 import { ecSalesSampleRecords } from "@/lib/ecSalesSamples";
 import { wordpressRestUrl } from "@/lib/supplierSources";
@@ -91,7 +93,9 @@ export default function EcSalesWorkspace() {
   );
 
   useEffect(() => {
-    const baseUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
+    const baseUrl = resolveWordpressBaseUrl(
+      process.env.NEXT_PUBLIC_WORDPRESS_URL || "",
+    );
     let cancelled = false;
 
     async function loadEcSales() {
@@ -143,7 +147,9 @@ export default function EcSalesWorkspace() {
     }
 
     setUpdateStatus(`${record.sku || record.orderNo} を保存中`);
-    const baseUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || "";
+    const baseUrl = resolveWordpressBaseUrl(
+      process.env.NEXT_PUBLIC_WORDPRESS_URL || "",
+    );
 
     try {
       const response = await fetch(
@@ -151,9 +157,7 @@ export default function EcSalesWorkspace() {
         {
           method: "POST",
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: createWordpressJsonHeaders(),
           body: JSON.stringify(ecSalesRecordToUpdatePayload(record)),
         },
       );
