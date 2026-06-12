@@ -95,7 +95,8 @@ export default function EcSalesWorkspace() {
   const [summaryView, setSummaryView] = useState<EcSalesSummaryView>("全体");
   const [statusView, setStatusView] = useState<EcSalesStatusView>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [records, setRecords] = useState<EcSalesRecord[]>(ecSalesSampleRecords);
+  const [records, setRecords] = useState<EcSalesRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [updateStatus, setUpdateStatus] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const deferredSearchQuery = useDeferredValue(searchQuery);
@@ -130,14 +131,24 @@ export default function EcSalesWorkspace() {
           wordpressRestUrl(baseUrl, "/kobutsu/v1/ec-sales"),
           { credentials: "include" },
         );
-        if (!response.ok) return;
+        if (!response.ok) {
+          if (!cancelled) {
+            setRecords(ecSalesSampleRecords);
+            setIsLoading(false);
+          }
+          return;
+        }
 
         const data = (await response.json()) as EcSalesRecordApiRow[];
-        if (!cancelled && data.length) {
+        if (!cancelled) {
           setRecords(data.map(normalizeEcSalesRecord));
+          setIsLoading(false);
         }
       } catch {
-        // Keep sample records available when WordPress is unavailable.
+        if (!cancelled) {
+          setRecords(ecSalesSampleRecords);
+          setIsLoading(false);
+        }
       }
     }
 
@@ -233,7 +244,9 @@ export default function EcSalesWorkspace() {
         </div>
         <div className="ledgerTopActions">
           <div className="resultCount">
-            該当 {filteredRecords.length} / {records.length} 件
+            {isLoading
+              ? "読込中"
+              : `該当 ${filteredRecords.length} / ${records.length} 件`}
           </div>
         </div>
       </section>
