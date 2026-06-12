@@ -1,6 +1,7 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { DragScrollArea } from "@/app/components/common/DragScrollArea";
 import { PaginationControls } from "@/app/components/common/PaginationControls";
 import { EcSalesSummaryTabs } from "@/app/components/ec-sales/EcSalesSummaryTabs";
 import { EcSalesTabs } from "@/app/components/ec-sales/EcSalesTabs";
@@ -264,12 +265,14 @@ export default function EcSalesWorkspace() {
                   activeView={summaryView}
                   onViewChange={setSummaryView}
                 />
-                <EcSalesTable
-                  records={paginatedRecords}
-                  summaryView={summaryView}
-                  onRecordChange={updateRecord}
-                  onRecordUpdate={markRecordUpdated}
-                />
+                <DragScrollArea className="ecSalesTableFrame">
+                  <EcSalesTable
+                    records={paginatedRecords}
+                    summaryView={summaryView}
+                    onRecordChange={updateRecord}
+                    onRecordUpdate={markRecordUpdated}
+                  />
+                </DragScrollArea>
                 <PaginationControls
                   currentPage={currentPage}
                   pageSize={PAGE_SIZE}

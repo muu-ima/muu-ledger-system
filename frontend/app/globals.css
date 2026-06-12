@@ -637,6 +637,19 @@ fieldset input:not([type="checkbox"]) {
   overflow: auto;
 }
 
+.ecSalesTableFrame {
+  overflow: auto;
+}
+
+.dragScrollArea {
+  cursor: grab;
+  user-select: none;
+}
+
+.dragScrollArea.dragging {
+  cursor: grabbing;
+}
+
 .ecSalesListCard {
   border: 1px solid rgba(31, 27, 24, 0.28);
   border-radius: 13px;

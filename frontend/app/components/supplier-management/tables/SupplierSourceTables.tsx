@@ -1,3 +1,4 @@
+import { DragScrollArea } from "@/app/components/common/DragScrollArea";
 import { PurchaseProjectionTable } from "@/app/components/supplier-management/tables/PurchaseProjectionTable";
 import { SupplierSourceDetailTable } from "@/app/components/supplier-management/tables/SupplierSourceDetailTable";
 import { SupplierSourceShippingTable } from "@/app/components/supplier-management/tables/SupplierSourceShippingTable";
@@ -43,7 +44,7 @@ export function SupplierSourceTables({
   onSourceRowSave,
 }: SupplierSourceTablesProps) {
   return (
-    <div className="ledgerTableFrame">
+    <DragScrollArea>
       {dataView === "仕入れ元データ" && sourceView === "要約" ? (
         <SupplierSourceSummaryTable
           sources={sources}
@@ -76,6 +77,6 @@ export function SupplierSourceTables({
           onRowUpdate={onPurchaseProjectionRowSave}
         />
       ) : null}
-    </div>
+    </DragScrollArea>
   );
 }

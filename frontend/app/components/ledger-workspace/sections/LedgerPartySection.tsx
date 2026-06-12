@@ -1,3 +1,4 @@
+import { DragScrollArea } from "@/app/components/common/DragScrollArea";
 import type { LedgerItem } from "@/types/ledger";
 
 function isSold(item: LedgerItem) {
@@ -15,7 +16,7 @@ export function LedgerPartySection({
         <h2>相手方・確認</h2>
         <span>本人確認・買主情報</span>
       </div>
-      <div className="ledgerTableFrame">
+      <DragScrollArea>
         <table className="ledgerGrid partyGrid">
           <colgroup>
             <col className="skuCol" />
@@ -48,7 +49,7 @@ export function LedgerPartySection({
             })}
           </tbody>
         </table>
-      </div>
+      </DragScrollArea>
     </section>
   );
 }

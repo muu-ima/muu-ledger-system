@@ -1,3 +1,4 @@
+import { DragScrollArea } from "@/app/components/common/DragScrollArea";
 import type { LedgerItem, LedgerStatus } from "@/types/ledger";
 
 const statusLabel: Record<LedgerStatus, string> = {
@@ -33,7 +34,7 @@ export function LedgerPayoutSection({
         <h2>払出し</h2>
         <span>販売・ステータス</span>
       </div>
-      <div className="ledgerTableFrame">
+      <DragScrollArea>
         <table className="ledgerGrid payoutGrid">
           <colgroup>
             <col className="skuCol" />
@@ -71,7 +72,7 @@ export function LedgerPayoutSection({
             })}
           </tbody>
         </table>
-      </div>
+      </DragScrollArea>
     </section>
   );
 }

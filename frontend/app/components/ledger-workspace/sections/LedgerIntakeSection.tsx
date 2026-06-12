@@ -1,3 +1,4 @@
+import { DragScrollArea } from "@/app/components/common/DragScrollArea";
 import type { LedgerItem } from "@/types/ledger";
 
 function formatYen(value: number) {
@@ -16,7 +17,7 @@ export function LedgerIntakeSection({
         <h2>受入れ</h2>
         <span>仕入れ・古物情報</span>
       </div>
-      <div className="ledgerTableFrame">
+      <DragScrollArea>
         <table className="ledgerGrid intakeGrid">
           <colgroup>
             <col className="dateCol" />
@@ -55,7 +56,7 @@ export function LedgerIntakeSection({
             ))}
           </tbody>
         </table>
-      </div>
+      </DragScrollArea>
     </section>
   );
 }
