@@ -76,15 +76,20 @@ export function LedgerRecordSections({
               </button>
             ))}
           </div>
-          <label className="ecSalesSearch">
-            <span>検索</span>
-            <input
-              placeholder="SKU / 商品名 / 仕入先 / 販売先"
-              type="search"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-            />
-          </label>
+          <div className="listToolbarMeta">
+            <div className="resultCount">
+              該当 {filteredItems.length} / {items.length} 件
+            </div>
+            <label className="ecSalesSearch">
+              <span>検索</span>
+              <input
+                placeholder="SKU / 商品名 / 仕入先 / 販売先"
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+              />
+            </label>
+          </div>
         </div>
 
         <div className="tableTabs primaryTabs" role="tablist" aria-label="古物台帳表示">

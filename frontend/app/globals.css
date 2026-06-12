@@ -636,6 +636,14 @@ fieldset input:not([type="checkbox"]) {
   padding: 12px;
 }
 
+.listToolbarMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 .ecSalesStatusTabs {
   display: flex;
   flex-wrap: wrap;
