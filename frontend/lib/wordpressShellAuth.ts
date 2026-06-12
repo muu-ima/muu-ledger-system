@@ -26,7 +26,7 @@ export function createWordpressJsonHeaders() {
 
   const nonce = wordpressShellAuth?.restNonce?.trim();
   if (nonce) {
-    headers["X-WP-Nonce"] = nonce;
+    headers["X-Kobutsu-Nonce"] = nonce;
   }
 
   return headers;

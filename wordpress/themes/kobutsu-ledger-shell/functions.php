@@ -47,7 +47,7 @@ function kobutsu_ledger_shell_auth_payload(): array
 {
     return [
         'restBaseUrl' => esc_url_raw(home_url('/')),
-        'restNonce' => is_user_logged_in() ? wp_create_nonce('wp_rest') : '',
+        'restNonce' => is_user_logged_in() ? wp_create_nonce('kobutsu_shell') : '',
         'wordpressOrigin' => kobutsu_ledger_shell_origin(home_url('/')),
         'canWrite' => current_user_can('edit_posts'),
     ];

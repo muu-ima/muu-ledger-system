@@ -33,7 +33,7 @@ function kobutsu_ledger_local_rest_headers($served, $result, $request, $server)
         header('Access-Control-Allow-Origin: ' . esc_url_raw($origin));
         header('Vary: Origin');
         header('Access-Control-Allow-Credentials: true');
-        header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WP-Nonce');
+        header('Access-Control-Allow-Headers: Authorization, Content-Type, X-WP-Nonce, X-Kobutsu-Nonce');
         header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     }
 
