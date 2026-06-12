@@ -77,13 +77,33 @@ function kobutsu_ledger_can_read(): bool
     return true;
 }
 
-function kobutsu_ledger_can_write(): bool
+function kobutsu_ledger_request_nonce(WP_REST_Request $request): string
+{
+    $nonce = $request->get_header('X-Kobutsu-Nonce');
+    if (is_string($nonce) && $nonce !== '') {
+        return $nonce;
+    }
+
+    $server_nonce = $_SERVER['HTTP_X_KOBUTSU_NONCE'] ?? '';
+    return is_string($server_nonce) ? $server_nonce : '';
+}
+
+function kobutsu_ledger_can_write(WP_REST_Request $request)
 {
     if (defined('WP_DEBUG') && WP_DEBUG) {
         return true;
     }
 
-    return current_user_can('edit_posts');
+    $nonce = kobutsu_ledger_request_nonce($request);
+    if ($nonce !== '' && wp_verify_nonce($nonce, 'kobutsu_shell')) {
+        return true;
+    }
+
+    return new WP_Error(
+        'kobutsu_rest_invalid_nonce',
+        'その操作を実行する権限がありません。',
+        ['status' => 401]
+    );
 }
 
 function kobutsu_ledger_rest_args(): array
