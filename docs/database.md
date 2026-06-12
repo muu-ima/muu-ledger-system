@@ -48,7 +48,9 @@ eBay/Payoneerの支払明細を原票として保存します。CSVの列が多�
 
 ### `wp_kobutsu_exchange_rates`
 
-日付と通貨ごとの円換算レートです。`rate_date` と `currency_code` の組み合わせを一意にします。
+日付、通貨ペア、取得元ごとの換算レートです。みずほ、ExchangeRate-API、手入力補正を同じ日付・通貨ペアで併存できるように、`rate_date`, `base_currency`, `quote_currency`, `source` の組み合わせを一意にします。
+
+既存の円換算用途との互換性のため、`currency_code` と `rate_jpy` も保持します。新規処理では `base_currency`, `quote_currency`, `rate` を優先して参照します。手入力で固定したレートは `is_manual_override` を立て、自動取得では上書きしない運用にします。
 
 ### `wp_kobutsu_import_batches`
 
