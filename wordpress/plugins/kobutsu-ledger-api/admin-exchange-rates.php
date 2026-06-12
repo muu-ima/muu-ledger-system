@@ -6,6 +6,7 @@ if (!defined('ABSPATH')) {
 
 const KOBUTSU_LEDGER_EXCHANGE_RATE_API_KEY_OPTION = 'kobutsu_ledger_exchange_rate_api_key';
 const KOBUTSU_LEDGER_EXCHANGE_RATE_API_SOURCE = 'exchangerate_api';
+const KOBUTSU_LEDGER_EXCHANGE_RATE_MANUAL_SOURCE = 'manual';
 
 add_action('admin_init', 'kobutsu_ledger_handle_exchange_rates_admin_action');
 
@@ -53,6 +54,12 @@ function kobutsu_ledger_handle_exchange_rates_admin_action(): void
     if ($action === 'fetch_today') {
         check_admin_referer('kobutsu_exchange_rate_fetch_today');
         $result = kobutsu_ledger_fetch_exchange_rates_for_date(current_time('Y-m-d'));
+        kobutsu_ledger_exchange_rates_admin_redirect(kobutsu_ledger_exchange_rate_result_args($result));
+    }
+
+    if ($action === 'save_manual_rate') {
+        check_admin_referer('kobutsu_exchange_rate_manual');
+        $result = kobutsu_ledger_save_manual_exchange_rate();
         kobutsu_ledger_exchange_rates_admin_redirect(kobutsu_ledger_exchange_rate_result_args($result));
     }
 }
@@ -147,7 +154,9 @@ function kobutsu_ledger_fetch_exchange_rates_for_date(string $rate_date): array
             'JPY',
             $rate_jpy,
             KOBUTSU_LEDGER_EXCHANGE_RATE_API_SOURCE,
-            current_time('mysql')
+            current_time('mysql'),
+            false,
+            ''
         )) {
             $saved++;
         } else {
@@ -170,7 +179,9 @@ function kobutsu_ledger_upsert_exchange_rate(
     string $quote_currency,
     float $rate,
     string $source,
-    string $fetched_at
+    string $fetched_at,
+    bool $is_manual_override = false,
+    string $notes = ''
 ): bool {
     global $wpdb;
 
@@ -192,7 +203,7 @@ function kobutsu_ledger_upsert_exchange_rate(
         ARRAY_A
     );
 
-    if ($existing && (int) $existing['is_manual_override'] === 1) {
+    if ($existing && (int) $existing['is_manual_override'] === 1 && !$is_manual_override) {
         return false;
     }
 
@@ -204,8 +215,9 @@ function kobutsu_ledger_upsert_exchange_rate(
         'quote_currency' => $quote_currency,
         'rate' => $rate,
         'source' => $source,
-        'is_manual_override' => 0,
+        'is_manual_override' => $is_manual_override ? 1 : 0,
         'fetched_at' => $fetched_at,
+        'notes' => $notes,
         'updated_at' => $now,
     ];
 
@@ -214,7 +226,7 @@ function kobutsu_ledger_upsert_exchange_rate(
             $table,
             $data,
             ['id' => (int) $existing['id']],
-            ['%s', '%s', '%f', '%s', '%s', '%f', '%s', '%d', '%s', '%s'],
+            ['%s', '%s', '%f', '%s', '%s', '%f', '%s', '%d', '%s', '%s', '%s'],
             ['%d']
         ) !== false;
     }
@@ -224,8 +236,67 @@ function kobutsu_ledger_upsert_exchange_rate(
     return $wpdb->insert(
         $table,
         $data,
-        ['%s', '%s', '%f', '%s', '%s', '%f', '%s', '%d', '%s', '%s', '%s']
+        ['%s', '%s', '%f', '%s', '%s', '%f', '%s', '%d', '%s', '%s', '%s', '%s']
     ) !== false;
+}
+
+function kobutsu_ledger_save_manual_exchange_rate(): array
+{
+    $rate_date = isset($_POST['rate_date']) ? sanitize_text_field((string) wp_unslash($_POST['rate_date'])) : '';
+    $base_currency = isset($_POST['base_currency'])
+        ? strtoupper(substr(sanitize_text_field((string) wp_unslash($_POST['base_currency'])), 0, 3))
+        : '';
+    $quote_currency = isset($_POST['quote_currency'])
+        ? strtoupper(substr(sanitize_text_field((string) wp_unslash($_POST['quote_currency'])), 0, 3))
+        : 'JPY';
+    $rate = isset($_POST['rate']) ? (float) wp_unslash($_POST['rate']) : 0.0;
+    $notes = isset($_POST['notes']) ? sanitize_textarea_field((string) wp_unslash($_POST['notes'])) : '';
+
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $rate_date)) {
+        return [
+            'ok' => false,
+            'message' => '日付は YYYY-MM-DD 形式で入力してください。',
+            'saved' => 0,
+            'skipped' => 0,
+        ];
+    }
+
+    if (!preg_match('/^[A-Z]{3}$/', $base_currency) || !preg_match('/^[A-Z]{3}$/', $quote_currency)) {
+        return [
+            'ok' => false,
+            'message' => '通貨コードは3文字で入力してください。',
+            'saved' => 0,
+            'skipped' => 0,
+        ];
+    }
+
+    if ($rate <= 0) {
+        return [
+            'ok' => false,
+            'message' => 'レートは0より大きい値を入力してください。',
+            'saved' => 0,
+            'skipped' => 0,
+        ];
+    }
+
+    $saved = kobutsu_ledger_upsert_exchange_rate(
+        $rate_date,
+        $base_currency,
+        $quote_currency,
+        $rate,
+        KOBUTSU_LEDGER_EXCHANGE_RATE_MANUAL_SOURCE,
+        current_time('mysql'),
+        true,
+        $notes
+    );
+
+    return [
+        'ok' => $saved,
+        'date' => $rate_date,
+        'message' => $saved ? '' : '手入力レートを保存できませんでした。',
+        'saved' => $saved ? 1 : 0,
+        'skipped' => $saved ? 0 : 1,
+    ];
 }
 
 function kobutsu_ledger_exchange_rate_result_args(array $result): array
@@ -285,7 +356,7 @@ function kobutsu_ledger_render_exchange_rates_admin_page(): void
         <?php elseif ($message === 'fetch_success') : ?>
             <div class="notice notice-success is-dismissible">
                 <p>
-                    <?php echo esc_html((string) ($_GET['rate_date'] ?? '')); ?> の為替を取得しました。
+                    <?php echo esc_html((string) ($_GET['rate_date'] ?? '')); ?> の為替を保存しました。
                     保存 <?php echo esc_html((string) absint($_GET['saved'] ?? 0)); ?> 件、
                     スキップ <?php echo esc_html((string) absint($_GET['skipped'] ?? 0)); ?> 件。
                 </p>
@@ -331,6 +402,39 @@ function kobutsu_ledger_render_exchange_rates_admin_page(): void
             <input type="hidden" name="kobutsu_exchange_rate_action" value="fetch_today">
             <p>取得対象: <?php echo esc_html(implode(', ', kobutsu_ledger_exchange_rate_target_currencies())); ?> / JPY</p>
             <?php submit_button('今日の為替を取得', 'primary', 'submit', false, $fetch_button_attrs); ?>
+        </form>
+
+        <h2>手入力補完</h2>
+        <form method="post" style="max-width: 960px; margin-bottom: 24px;">
+            <?php wp_nonce_field('kobutsu_exchange_rate_manual'); ?>
+            <input type="hidden" name="kobutsu_exchange_rate_action" value="save_manual_rate">
+            <table class="form-table" role="presentation">
+                <tbody>
+                    <tr>
+                        <th scope="row"><label for="kobutsu_manual_rate_date">日付</label></th>
+                        <td><input id="kobutsu_manual_rate_date" name="rate_date" type="date" value="<?php echo esc_attr(current_time('Y-m-d')); ?>" required></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="kobutsu_manual_base_currency">通貨ペア</label></th>
+                        <td>
+                            <input id="kobutsu_manual_base_currency" name="base_currency" type="text" maxlength="3" size="4" value="USD" required>
+                            /
+                            <input name="quote_currency" type="text" maxlength="3" size="4" value="JPY" required>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="kobutsu_manual_rate">レート</label></th>
+                        <td><input id="kobutsu_manual_rate" name="rate" type="number" step="0.000001" min="0" required></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="kobutsu_manual_notes">メモ</label></th>
+                        <td>
+                            <textarea id="kobutsu_manual_notes" name="notes" rows="2" class="large-text" placeholder="例: みずほCSVから補完、月末確認など"></textarea>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <?php submit_button('手入力レートを保存'); ?>
         </form>
 
         <h2>直近の保存レート</h2>
