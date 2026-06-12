@@ -1,6 +1,13 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState, type FormEvent } from "react";
+import {
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+} from "react";
+import { PaginationControls } from "@/app/components/common/PaginationControls";
 import { SupplierSourceForm } from "@/app/components/supplier-management/form/SupplierSourceForm";
 import { usePurchaseProjectionRows } from "@/app/components/supplier-management/hooks/usePurchaseProjectionRows";
 import { useSupplierSourceForm } from "@/app/components/supplier-management/hooks/useSupplierSourceForm";
@@ -32,6 +39,7 @@ const supplierManagementStatusViews: {
   { label: "売却済み", value: "sold" },
   { label: "配送あり", value: "shipped" },
 ];
+const PAGE_SIZE = 20;
 
 function matchesSupplierStatus(
   source: SupplierSource,
@@ -102,6 +110,7 @@ export default function SupplierManagement() {
   const [statusView, setStatusView] =
     useState<SupplierManagementStatusView>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const deferredSearchQuery = useDeferredValue(searchQuery);
 
   const filteredSupplierSources = useMemo(
@@ -129,6 +138,33 @@ export default function SupplierManagement() {
     supplierDataView === "仕入れ表への反映"
       ? purchaseProjectionRows.length
       : supplierSources.length;
+  const totalPages = Math.max(1, Math.ceil(resultCount / PAGE_SIZE));
+  const paginatedSupplierSources = useMemo(
+    () =>
+      filteredSupplierSources.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE,
+      ),
+    [currentPage, filteredSupplierSources],
+  );
+  const paginatedPurchaseProjectionRows = useMemo(
+    () =>
+      filteredPurchaseProjectionRows.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE,
+      ),
+    [currentPage, filteredPurchaseProjectionRows],
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [deferredSearchQuery, statusView, supplierDataView, supplierSourceView]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   function openSupplierSourceModal() {
     resetSupplierForm();
@@ -176,7 +212,11 @@ export default function SupplierManagement() {
               <span>フォーム入力とテーブル更新を切り替えながら管理するビュー</span>
             </div>
             <div className="ledgerTopActions compact">
-              <button type="button" onClick={openSupplierSourceModal}>
+              <button
+                className="primaryActionButton"
+                type="button"
+                onClick={openSupplierSourceModal}
+              >
                 新規仕入れ
               </button>
               <div className="resultCount">
@@ -232,15 +272,21 @@ export default function SupplierManagement() {
             ) : null}
             <SupplierSourceTables
               dataView={supplierDataView}
-              purchaseProjectionRows={filteredPurchaseProjectionRows}
+              purchaseProjectionRows={paginatedPurchaseProjectionRows}
               purchaseProjectionStatus={purchaseProjectionStatus}
               onPurchaseProjectionRowChange={updatePurchaseProjectionRow}
               onPurchaseProjectionRowSave={savePurchaseProjectionRow}
               sourceView={supplierSourceView}
-              sources={filteredSupplierSources}
+              sources={paginatedSupplierSources}
               onSourceRowChange={updateSupplierSourceField}
               onSourceRowSave={updateSupplierSource}
               sourceStatusMessage={supplierSubmitStatus}
+            />
+            <PaginationControls
+              currentPage={currentPage}
+              pageSize={PAGE_SIZE}
+              totalItems={resultCount}
+              onPageChange={setCurrentPage}
             />
           </div>
         </section>

@@ -2,17 +2,10 @@ import {
   tabs,
   type WorkspaceTab,
 } from "@/app/components/ledger-workspace/ledgerWorkspaceConfig";
-import { LedgerWorkspaceSidebarFilters } from "@/app/components/ledger-workspace/layout/sidebar/LedgerWorkspaceSidebarFilters";
-import {
-  sidebarBasicInputs,
-  sidebarCheckboxSections,
-} from "@/app/components/ledger-workspace/layout/sidebar/ledgerWorkspaceSidebarConfig";
 
 type LedgerWorkspaceSidebarProps = {
   activeTab: WorkspaceTab;
   isOpen: boolean;
-  query: string;
-  onQueryChange: (value: string) => void;
   onTabChange: (tab: WorkspaceTab) => void;
   onToggle: () => void;
 };
@@ -20,8 +13,6 @@ type LedgerWorkspaceSidebarProps = {
 export function LedgerWorkspaceSidebar({
   activeTab,
   isOpen,
-  query,
-  onQueryChange,
   onTabChange,
   onToggle,
 }: LedgerWorkspaceSidebarProps) {
@@ -32,11 +23,11 @@ export function LedgerWorkspaceSidebar({
           className="iconButton"
           type="button"
           onClick={onToggle}
-          aria-label={isOpen ? "フィルターを閉じる" : "フィルターを開く"}
+          aria-label={isOpen ? "メニューを閉じる" : "メニューを開く"}
         >
           {isOpen ? "‹" : "›"}
         </button>
-        <span>フィルター</span>
+        <span className="sidebarHeaderTitle">メニュー</span>
         <span className="sidebarSpacer" />
       </div>
 
@@ -53,17 +44,6 @@ export function LedgerWorkspaceSidebar({
             </button>
           ))}
         </div>
-
-        <LedgerWorkspaceSidebarFilters
-          checkboxSections={sidebarCheckboxSections}
-          inputConfigs={sidebarBasicInputs}
-          query={query}
-          onQueryChange={onQueryChange}
-        />
-
-        <button className="filterButton" type="button">
-          絞り込む
-        </button>
       </div>
     </aside>
   );

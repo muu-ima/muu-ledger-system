@@ -22,7 +22,9 @@ export function SupplierSourceForm({
       />
 
       <div className="formActions">
-        <button type="submit">保存</button>
+        <button className="primaryActionButton" type="submit">
+          保存
+        </button>
         <span>{submitStatus}</span>
       </div>
     </>

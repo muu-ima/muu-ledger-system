@@ -1,6 +1,8 @@
 "use client";
 
-import { useDeferredValue, useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { DragScrollArea } from "@/app/components/common/DragScrollArea";
+import { PaginationControls } from "@/app/components/common/PaginationControls";
 import { EcSalesSummaryTabs } from "@/app/components/ec-sales/EcSalesSummaryTabs";
 import { EcSalesTabs } from "@/app/components/ec-sales/EcSalesTabs";
 import { EcSalesTable } from "@/app/components/ec-sales/EcSalesTable";
@@ -29,6 +31,7 @@ const ecSalesStatusViews: { label: string; value: EcSalesStatusView }[] = [
   { label: "赤字", value: "loss" },
   { label: "配送あり", value: "shipped" },
 ];
+const PAGE_SIZE = 20;
 
 function matchesStatus(record: EcSalesRecord, statusView: EcSalesStatusView) {
   if (statusView === "unsettled") return record.receivedAmountJpy === "";
@@ -85,11 +88,25 @@ export default function EcSalesWorkspace() {
   const [searchQuery, setSearchQuery] = useState("");
   const [records, setRecords] = useState<EcSalesRecord[]>(ecSalesSampleRecords);
   const [updateStatus, setUpdateStatus] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const deferredSearchQuery = useDeferredValue(searchQuery);
-  const filteredRecords = records.filter(
-    (record) =>
-      matchesStatus(record, statusView) &&
-      matchesSearch(record, deferredSearchQuery),
+  const filteredRecords = useMemo(
+    () =>
+      records.filter(
+        (record) =>
+          matchesStatus(record, statusView) &&
+          matchesSearch(record, deferredSearchQuery),
+      ),
+    [deferredSearchQuery, records, statusView],
+  );
+  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / PAGE_SIZE));
+  const paginatedRecords = useMemo(
+    () =>
+      filteredRecords.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE,
+      ),
+    [currentPage, filteredRecords],
   );
 
   useEffect(() => {
@@ -121,6 +138,16 @@ export default function EcSalesWorkspace() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeView, deferredSearchQuery, statusView]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const updateRecord = (
     sku: string,
@@ -163,9 +190,9 @@ export default function EcSalesWorkspace() {
       );
 
       if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as
-          | { message?: string }
-          | null;
+        const data = (await response.json().catch(() => null)) as {
+          message?: string;
+        } | null;
         setUpdateStatus(data?.message || "保存できませんでした");
         return;
       }
@@ -180,7 +207,9 @@ export default function EcSalesWorkspace() {
             : currentRecord,
         ),
       );
-      setUpdateStatus(`${savedRecord.sku || savedRecord.orderNo} を保存しました`);
+      setUpdateStatus(
+        `${savedRecord.sku || savedRecord.orderNo} を保存しました`,
+      );
     } catch {
       setUpdateStatus("WordPressに接続できませんでした");
     }
@@ -202,16 +231,15 @@ export default function EcSalesWorkspace() {
 
       <div className="ledgerSections">
         <section className="ledgerSection">
-          <div className="sectionTitle">
-            <h2>EC販売集計</h2>
-            <span>仕入れ表、仕入れ元データ、ペイメント、為替の合成ビュー</span>
-          </div>
           <EcSalesTabs activeView={activeView} onViewChange={setActiveView} />
           {activeView === "集計ビュー" ? (
             <>
               <div className="ecSalesListCard">
                 <div className="ecSalesListToolbar">
-                  <div className="ecSalesStatusTabs" aria-label="EC販売ステータス">
+                  <div
+                    className="ecSalesStatusTabs"
+                    aria-label="EC販売ステータス"
+                  >
                     {ecSalesStatusViews.map((view) => (
                       <button
                         className={statusView === view.value ? "active" : ""}
@@ -237,11 +265,19 @@ export default function EcSalesWorkspace() {
                   activeView={summaryView}
                   onViewChange={setSummaryView}
                 />
-                <EcSalesTable
-                  records={filteredRecords}
-                  summaryView={summaryView}
-                  onRecordChange={updateRecord}
-                  onRecordUpdate={markRecordUpdated}
+                <DragScrollArea className="ecSalesTableFrame">
+                  <EcSalesTable
+                    records={paginatedRecords}
+                    summaryView={summaryView}
+                    onRecordChange={updateRecord}
+                    onRecordUpdate={markRecordUpdated}
+                  />
+                </DragScrollArea>
+                <PaginationControls
+                  currentPage={currentPage}
+                  pageSize={PAGE_SIZE}
+                  totalItems={filteredRecords.length}
+                  onPageChange={setCurrentPage}
                 />
                 {updateStatus ? (
                   <div className="ecSalesUpdateStatus">{updateStatus}</div>
