@@ -211,6 +211,10 @@ button {
   transform: translateX(0);
 }
 
+.sidebar:not(.open) .sidebarBody {
+  display: none;
+}
+
 .sheetList {
   display: flex;
   flex-direction: column;
