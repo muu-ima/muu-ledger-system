@@ -26,10 +26,7 @@ body {
 }
 
 body {
-  background:
-    linear-gradient(112deg, rgba(160, 91, 58, 0.42) 0 20%, transparent 20% 34%),
-    radial-gradient(circle at 18% 8%, rgba(255, 255, 255, 0.82), transparent 14%),
-    linear-gradient(100deg, #d4a78e 0 16%, #efe2dc 16% 100%);
+  background: var(--bg);
   color: var(--text);
   font-family:
     Arial,
@@ -58,20 +55,24 @@ button {
   position: sticky;
   top: 0;
   z-index: 30;
-  min-height: 70px;
+  min-height: 64px;
   border-bottom: 1px solid rgba(120, 92, 79, 0.28);
-  background: rgba(255, 255, 255, 0.24);
-  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 14px clamp(18px, 4vw, 42px);
+  padding: 12px clamp(18px, 4vw, 32px);
+}
+
+.appHeaderBrand {
+  min-width: 0;
 }
 
 .brand {
   color: var(--brand);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
 }
 
@@ -81,38 +82,29 @@ button {
   font-size: 12px;
 }
 
-.topNav {
+.appHeaderCurrent {
   display: flex;
-  align-items: center;
-  gap: 20px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
   white-space: nowrap;
 }
 
-.topNav button {
-  position: relative;
-  border: 0;
-  background: transparent;
-  color: #595250;
-  padding: 8px 0;
+.appHeaderLabel {
+  color: var(--muted);
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
-.topNav button.active {
-  color: #0b63ff;
-}
-
-.topNav button.active::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 2px;
-  background: #0b63ff;
+.appHeaderCurrent strong {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
 }
 
 .workArea {
-  min-height: calc(100vh - 70px);
+  min-height: calc(100vh - 64px);
   display: flex;
 }
 
