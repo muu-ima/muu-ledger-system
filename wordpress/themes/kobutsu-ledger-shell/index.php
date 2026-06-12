@@ -10,6 +10,7 @@ if (!defined('ABSPATH')) {
 $frontend_url = kobutsu_ledger_shell_frontend_url();
 $frontend_origin = kobutsu_ledger_shell_origin($frontend_url);
 $auth_payload = kobutsu_ledger_shell_auth_payload();
+$auth_refresh_url = admin_url('admin-ajax.php?action=kobutsu_ledger_shell_auth');
 $launch_settings_url = current_user_can('edit_posts')
     ? admin_url('admin.php?page=kobutsu-launch-settings')
     : '';
@@ -53,7 +54,8 @@ $launch_settings_url = current_user_can('edit_posts')
             (() => {
                 const frame = document.getElementById("kobutsu-shell-frame");
                 const targetOrigin = <?php echo wp_json_encode($frontend_origin); ?>;
-                const authPayload = <?php echo wp_json_encode($auth_payload); ?>;
+                let authPayload = <?php echo wp_json_encode($auth_payload); ?>;
+                const authRefreshUrl = <?php echo wp_json_encode($auth_refresh_url); ?>;
 
                 if (!frame || !targetOrigin) {
                     return;
@@ -73,6 +75,21 @@ $launch_settings_url = current_user_can('edit_posts')
                     );
                 };
 
+                const refreshAuthPayload = async () => {
+                    try {
+                        const response = await fetch(authRefreshUrl, {
+                            credentials: "same-origin",
+                        });
+                        const data = await response.json();
+
+                        if (response.ok && data?.success && data?.data) {
+                            authPayload = data.data;
+                        }
+                    } catch (error) {
+                        // Fall back to the current payload; the iframe handles a second 401.
+                    }
+                };
+
                 frame.addEventListener("load", postAuthPayload);
 
                 window.addEventListener("message", (event) => {
@@ -81,7 +98,7 @@ $launch_settings_url = current_user_can('edit_posts')
                     }
 
                     if (event.data?.type === "kobutsu-ledger-auth-request") {
-                        postAuthPayload();
+                        refreshAuthPayload().finally(postAuthPayload);
                     }
                 });
             })();

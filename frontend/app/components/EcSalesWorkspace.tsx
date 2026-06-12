@@ -8,6 +8,7 @@ import { EcSalesTabs } from "@/app/components/ec-sales/EcSalesTabs";
 import { EcSalesTable } from "@/app/components/ec-sales/EcSalesTable";
 import {
   createWordpressJsonHeaders,
+  fetchWithWordpressNonceRetry,
   normalizeCurrency,
   normalizeEcSalesRecord,
   parseNumberLike,
@@ -199,7 +200,7 @@ export default function EcSalesWorkspace() {
     );
 
     try {
-      const response = await fetch(
+      const response = await fetchWithWordpressNonceRetry(
         wordpressRestUrl(baseUrl, `/kobutsu/v1/ec-sales/${record.saleId}`),
         {
           method: "POST",

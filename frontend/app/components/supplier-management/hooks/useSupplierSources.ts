@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   createWordpressJsonHeaders,
   createSupplierSourceDraft,
+  fetchWithWordpressNonceRetry,
   resolveWordpressBaseUrl,
   supplierSourceFromApi,
   supplierSourceToSubmitPayload,
@@ -81,7 +82,7 @@ export function useSupplierSources() {
     const payload = supplierSourceToSubmitPayload(source);
 
     try {
-      const response = await fetch(
+      const response = await fetchWithWordpressNonceRetry(
         wordpressRestUrl(baseUrl, "/kobutsu/v1/supplier-sources"),
         {
           method: "POST",
@@ -126,7 +127,7 @@ export function useSupplierSources() {
     const payload = supplierSourceToUpdatePayload(source);
 
     try {
-      const response = await fetch(
+      const response = await fetchWithWordpressNonceRetry(
         wordpressRestUrl(baseUrl, `/kobutsu/v1/supplier-sources/${source.id}`),
         {
           method: "POST",

@@ -7,6 +7,7 @@ import type {
 } from "@/types/supplier";
 export {
   createWordpressJsonHeaders,
+  fetchWithWordpressNonceRetry,
   resolveWordpressBaseUrl,
 } from "@/lib/wordpressShellAuth";
 

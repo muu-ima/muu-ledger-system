@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   createWordpressJsonHeaders,
+  fetchWithWordpressNonceRetry,
   mergePurchaseProjectionRows,
   purchaseProjectionFromApi,
   purchaseProjectionToUpdatePayload,
@@ -80,7 +81,7 @@ export function usePurchaseProjectionRows(sources: SupplierSource[]) {
     );
 
     try {
-      const response = await fetch(
+      const response = await fetchWithWordpressNonceRetry(
         wordpressRestUrl(baseUrl, `/kobutsu/v1/items/${row.itemId}`),
         {
           method: "POST",
