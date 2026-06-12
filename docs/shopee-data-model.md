@@ -206,6 +206,54 @@ Shopee 系の入力では、正本と表示・補助テーブルを明確に分�
 - `EC販売` の行更新で触る項目は、将来的に「どの正本テーブルへ書き戻すか」を項目ごとに分ける
 - `売れるまでの日数` は `販売日 - 出品日` を基本計算値にしつつ、必要に応じて手動上書き値を保存できるようにする
 
+### 現在の EC販売 UI 更新方針
+
+2026-06 時点の UI では、`EC販売` 一覧から見える列をそのまま全部更新可能にはしない。
+
+理由:
+
+- `EC販売` は合成ビューであり、`supplier_sources` や `purchases` を正本に持つ列が混ざっている
+- ここで全部を書き換え可能にすると、`仕入れ元データ` 起点の同期方針と矛盾しやすい
+- どの画面でどの値を直すべきかが曖昧になる
+
+#### EC販売 UI で更新可能にする列
+
+- `orderNo`
+- `soldAt`
+- `payoutAt`
+- `saleAmountRaw`
+- `adFeeRaw`
+- `marketplaceFeeRaw`
+- `payoutAmountRaw`
+- `saleExchangeRate`
+- `payoutExchangeRate`
+- `receivedAmountJpy`
+- `overseasShippingYen`
+- `feeTaxRefundJpy`
+- `purchaseTaxRefundJpy`
+- `profitJpy`
+- `profitRate`
+- `daysToSell`
+- `domesticTrackingNo`
+- `slsTrackingNo`
+
+#### EC販売 UI で更新しない列
+
+- `sku`
+- `itemName`
+- `purchaseDate`
+- `listedAt`
+- `purchasePriceJpy`
+- `saleAmountJpy`
+- `totalFeesRaw`
+- その他、`supplier_sources` / `purchases` / 計算結果をそのまま表示している列
+
+#### 運用上の考え方
+
+- `仕入れ元データ` を正本にする列は、原則として `仕入れ管理` 側で直す
+- `EC販売` 側では、販売・精算・補正値として意味がある列を中心に更新する
+- 将来的に列ごとの書き戻し先を整理できたら、更新対象を段階的に広げる
+
 ### supplier_sources から EC販売 への反映ルール
 
 `EC販売` が `仕入れ元データ` の影響を強く受けるため、`supplier_sources` 保存後に `EC販売` 側へ反映される構造を前提にする。
