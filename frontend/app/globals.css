@@ -690,6 +690,65 @@ fieldset input:not([type="checkbox"]) {
   padding: 10px 12px;
 }
 
+.paginationBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-top: 1px solid rgba(31, 27, 24, 0.18);
+  padding: 10px 12px;
+}
+
+.paginationSummary {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.paginationPageGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.paginationEllipsis {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.paginationControls button {
+  min-width: 34px;
+  min-height: 32px;
+  border: 1px solid rgba(31, 27, 24, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 0 10px;
+  color: #2a2420;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.paginationControls button.active {
+  border-color: #2f66d2;
+  background: #2f66d2;
+  color: #fff;
+}
+
+.paginationControls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .supplierListCard .tableTabs {
   padding-top: 12px;
 }

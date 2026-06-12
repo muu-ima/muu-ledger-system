@@ -1,6 +1,7 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { PaginationControls } from "@/app/components/common/PaginationControls";
 import { LedgerIntakeSection } from "@/app/components/ledger-workspace/sections/LedgerIntakeSection";
 import { LedgerPartySection } from "@/app/components/ledger-workspace/sections/LedgerPartySection";
 import { LedgerPayoutSection } from "@/app/components/ledger-workspace/sections/LedgerPayoutSection";
@@ -14,6 +15,7 @@ const ledgerStatusViews = [
   { label: "返品", value: "returned" },
   { label: "処分", value: "disposed" },
 ] as const;
+const PAGE_SIZE = 20;
 
 type LedgerRecordView = (typeof ledgerRecordViews)[number];
 type LedgerStatusView = "all" | LedgerStatus;
@@ -48,6 +50,7 @@ export function LedgerRecordSections({
   const [activeView, setActiveView] = useState<LedgerRecordView>("受入れ");
   const [statusView, setStatusView] = useState<LedgerStatusView>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const deferredSearchQuery = useDeferredValue(searchQuery);
 
   const filteredItems = useMemo(
@@ -59,6 +62,25 @@ export function LedgerRecordSections({
       ),
     [deferredSearchQuery, items, statusView],
   );
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
+  const paginatedItems = useMemo(
+    () =>
+      filteredItems.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE,
+      ),
+    [currentPage, filteredItems],
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeView, deferredSearchQuery, statusView]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   return (
     <div className="ledgerSections">
@@ -107,11 +129,18 @@ export function LedgerRecordSections({
           ))}
         </div>
 
-        {activeView === "受入れ" ? <LedgerIntakeSection items={filteredItems} /> : null}
-        {activeView === "払出し" ? <LedgerPayoutSection items={filteredItems} /> : null}
+        {activeView === "受入れ" ? <LedgerIntakeSection items={paginatedItems} /> : null}
+        {activeView === "払出し" ? <LedgerPayoutSection items={paginatedItems} /> : null}
         {activeView === "相手方・確認" ? (
-          <LedgerPartySection items={filteredItems} />
+          <LedgerPartySection items={paginatedItems} />
         ) : null}
+
+        <PaginationControls
+          currentPage={currentPage}
+          pageSize={PAGE_SIZE}
+          totalItems={filteredItems.length}
+          onPageChange={setCurrentPage}
+        />
 
         {filteredItems.length === 0 ? (
           <div className="ecSalesUpdateStatus">条件に一致するデータはありません</div>

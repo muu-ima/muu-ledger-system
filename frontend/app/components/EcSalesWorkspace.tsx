@@ -1,6 +1,7 @@
 "use client";
 
-import { useDeferredValue, useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { PaginationControls } from "@/app/components/common/PaginationControls";
 import { EcSalesSummaryTabs } from "@/app/components/ec-sales/EcSalesSummaryTabs";
 import { EcSalesTabs } from "@/app/components/ec-sales/EcSalesTabs";
 import { EcSalesTable } from "@/app/components/ec-sales/EcSalesTable";
@@ -29,6 +30,7 @@ const ecSalesStatusViews: { label: string; value: EcSalesStatusView }[] = [
   { label: "赤字", value: "loss" },
   { label: "配送あり", value: "shipped" },
 ];
+const PAGE_SIZE = 20;
 
 function matchesStatus(record: EcSalesRecord, statusView: EcSalesStatusView) {
   if (statusView === "unsettled") return record.receivedAmountJpy === "";
@@ -85,11 +87,25 @@ export default function EcSalesWorkspace() {
   const [searchQuery, setSearchQuery] = useState("");
   const [records, setRecords] = useState<EcSalesRecord[]>(ecSalesSampleRecords);
   const [updateStatus, setUpdateStatus] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const deferredSearchQuery = useDeferredValue(searchQuery);
-  const filteredRecords = records.filter(
-    (record) =>
-      matchesStatus(record, statusView) &&
-      matchesSearch(record, deferredSearchQuery),
+  const filteredRecords = useMemo(
+    () =>
+      records.filter(
+        (record) =>
+          matchesStatus(record, statusView) &&
+          matchesSearch(record, deferredSearchQuery),
+      ),
+    [deferredSearchQuery, records, statusView],
+  );
+  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / PAGE_SIZE));
+  const paginatedRecords = useMemo(
+    () =>
+      filteredRecords.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE,
+      ),
+    [currentPage, filteredRecords],
   );
 
   useEffect(() => {
@@ -121,6 +137,16 @@ export default function EcSalesWorkspace() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeView, deferredSearchQuery, statusView]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const updateRecord = (
     sku: string,
@@ -239,10 +265,16 @@ export default function EcSalesWorkspace() {
                   onViewChange={setSummaryView}
                 />
                 <EcSalesTable
-                  records={filteredRecords}
+                  records={paginatedRecords}
                   summaryView={summaryView}
                   onRecordChange={updateRecord}
                   onRecordUpdate={markRecordUpdated}
+                />
+                <PaginationControls
+                  currentPage={currentPage}
+                  pageSize={PAGE_SIZE}
+                  totalItems={filteredRecords.length}
+                  onPageChange={setCurrentPage}
                 />
                 {updateStatus ? (
                   <div className="ecSalesUpdateStatus">{updateStatus}</div>
