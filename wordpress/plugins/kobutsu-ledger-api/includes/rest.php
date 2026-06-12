@@ -88,6 +88,25 @@ function kobutsu_ledger_request_nonce(WP_REST_Request $request): string
     return is_string($server_nonce) ? $server_nonce : '';
 }
 
+if (!function_exists('kobutsu_ledger_shell_token_key')) {
+    function kobutsu_ledger_shell_token_key(string $token): string
+    {
+        return 'kobutsu_shell_token_' . hash('sha256', $token);
+    }
+}
+
+if (!function_exists('kobutsu_ledger_verify_shell_token')) {
+    function kobutsu_ledger_verify_shell_token(string $token): bool
+    {
+        if ($token === '') {
+            return false;
+        }
+
+        $payload = get_transient(kobutsu_ledger_shell_token_key($token));
+        return is_array($payload) && !empty($payload['issued_at']);
+    }
+}
+
 function kobutsu_ledger_can_write(WP_REST_Request $request)
 {
     if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -95,7 +114,7 @@ function kobutsu_ledger_can_write(WP_REST_Request $request)
     }
 
     $nonce = kobutsu_ledger_request_nonce($request);
-    if ($nonce !== '' && wp_verify_nonce($nonce, 'kobutsu_shell')) {
+    if (kobutsu_ledger_verify_shell_token($nonce)) {
         return true;
     }
 
