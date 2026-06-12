@@ -157,12 +157,76 @@ function kobutsu_ledger_handle_supplier_sources_admin_action(): void
         kobutsu_ledger_admin_delete_supplier_source($source_id);
         kobutsu_ledger_supplier_sources_admin_redirect(['kobutsu_message' => 'deleted']);
     }
+
+    if ($action === 'save') {
+        check_admin_referer('kobutsu_supplier_source_save_' . $source_id);
+
+        $request = new WP_REST_Request('POST', '/kobutsu/v1/supplier-sources/' . $source_id);
+        $request->set_param('id', $source_id);
+        foreach (kobutsu_ledger_supplier_sources_admin_request_keys() as $key) {
+            if (!array_key_exists($key, $_POST)) {
+                continue;
+            }
+
+            $request->set_param($key, wp_unslash($_POST[$key]));
+        }
+
+        $result = kobutsu_ledger_update_supplier_source($request);
+        if (is_wp_error($result)) {
+            kobutsu_ledger_supplier_sources_admin_redirect([
+                'kobutsu_message' => 'update_failed',
+                'edit' => $source_id,
+            ]);
+        }
+
+        kobutsu_ledger_supplier_sources_admin_redirect([
+            'kobutsu_message' => 'saved',
+            'edit' => $source_id,
+        ]);
+    }
 }
 
 function kobutsu_ledger_supplier_sources_admin_redirect(array $args): void
 {
     wp_safe_redirect(add_query_arg(array_merge(['page' => 'kobutsu-supplier-sources'], $args), admin_url('admin.php')));
     exit;
+}
+
+function kobutsu_ledger_supplier_sources_admin_request_keys(): array
+{
+    return [
+        'sku',
+        'order_no',
+        'account_name',
+        'sold_at',
+        'acquired_at',
+        'buyer_country',
+        'mag',
+        'sale_amount',
+        'purchased_flag',
+        'purchase_price',
+        'shipping_cost',
+        'points',
+        'shipping_note',
+        'packer',
+        'shipping_site',
+        'actual_weight_g',
+        'dimensional_weight_g',
+        'package_length_cm',
+        'package_width_cm',
+        'package_height_cm',
+        'size_memo',
+        'shipping_chat_at',
+        'item_name',
+        'acquired_from',
+        'first_mail_at',
+        'receipt_printed_at',
+        'domestic_tracking_no',
+        'sls_tracking_no',
+        'yamato_slip_flag',
+        'balance_checked_flag',
+        'status',
+    ];
 }
 
 function kobutsu_ledger_admin_delete_supplier_source(int $source_id): void
