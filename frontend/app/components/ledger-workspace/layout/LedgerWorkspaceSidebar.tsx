@@ -27,7 +27,7 @@ export function LedgerWorkspaceSidebar({
         >
           {isOpen ? "‹" : "›"}
         </button>
-        <span>メニュー</span>
+        <span className="sidebarHeaderTitle">メニュー</span>
         <span className="sidebarSpacer" />
       </div>
 

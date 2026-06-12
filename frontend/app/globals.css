@@ -109,83 +109,126 @@ button {
 }
 
 .sidebar {
-  width: 54px;
+  width: 58px;
   flex: 0 0 auto;
-  border-right: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
+  border-right: 1px solid rgba(31, 27, 24, 0.12);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(10px);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.24);
   overflow: hidden auto;
-  transition: width 180ms ease;
+  transition:
+    width 180ms ease,
+    background 180ms ease;
 }
 
 .sidebar.open {
-  width: 296px;
+  width: 264px;
 }
 
 .sidebarHeader {
-  height: 44px;
-  border-bottom: 1px solid var(--line);
+  height: 52px;
+  border-bottom: 1px solid rgba(31, 27, 24, 0.1);
   display: grid;
   grid-template-columns: 44px 1fr 44px;
   align-items: center;
-  padding: 0 8px;
+  padding: 0 10px;
 }
 
 .sidebarHeader span {
   text-align: center;
   font-weight: 800;
-  font-size: 14px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.sidebarHeaderTitle,
+.sidebarSpacer {
+  transition:
+    opacity 120ms ease,
+    visibility 120ms ease;
+}
+
+.sidebar:not(.open) .sidebarHeader {
+  grid-template-columns: 38px 0 0;
+  justify-content: start;
+}
+
+.sidebar:not(.open) .sidebarHeaderTitle,
+.sidebar:not(.open) .sidebarSpacer {
+  opacity: 0;
+  visibility: hidden;
 }
 
 .iconButton {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border: 0;
-  border-radius: 6px;
-  background: transparent;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.56);
   color: #111;
-  font-size: 24px;
+  font-size: 22px;
   line-height: 1;
+  box-shadow: 0 1px 0 rgba(31, 27, 24, 0.08);
 }
 
 .iconButton:hover {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(31, 27, 24, 0.1);
 }
 
 .sidebarBody {
-  width: 296px;
+  width: 264px;
   opacity: 0;
   pointer-events: none;
-  padding: 24px 54px 36px;
-  transition: opacity 120ms ease;
+  padding: 18px 16px 28px;
+  transition:
+    opacity 120ms ease,
+    transform 160ms ease;
+  transform: translateX(-6px);
 }
 
 .sidebar.open .sidebarBody {
   opacity: 1;
   pointer-events: auto;
+  transform: translateX(0);
 }
 
 .sheetList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 28px;
+  gap: 6px;
+  margin-bottom: 20px;
 }
 
 .sheetList button {
-  min-height: 38px;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
+  min-height: 42px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.32);
   color: #333;
   padding: 0 14px;
   text-align: left;
   font-weight: 700;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.sheetList button:hover {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(31, 27, 24, 0.08);
+  transform: translateX(2px);
 }
 
 .sheetList button.selected {
-  background: #000;
+  background: #2f66d2;
   color: #fff;
+  border-color: #2f66d2;
+  box-shadow:
+    inset 3px 0 0 var(--brand),
+    0 10px 20px rgba(47, 102, 210, 0.22);
 }
 
 fieldset {
@@ -268,6 +311,31 @@ fieldset input:not([type="checkbox"]) {
 .resultCount {
   color: #5d5855;
   font-size: 14px;
+}
+
+.primaryActionButton {
+  min-width: 92px;
+  min-height: 38px;
+  border: 1px solid #2f66d2;
+  border-radius: 10px;
+  background: #2f66d2;
+  padding: 0 18px;
+  color: #fff;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 10px 20px rgba(47, 102, 210, 0.2);
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease;
+}
+
+.primaryActionButton:hover {
+  background: #2557bb;
+  border-color: #2557bb;
+  box-shadow: 0 12px 24px rgba(47, 102, 210, 0.28);
+  transform: translateY(-1px);
 }
 
 .ledgerTopActions {
@@ -491,20 +559,6 @@ fieldset input:not([type="checkbox"]) {
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-}
-
-.formActions button {
-  min-width: 92px;
-  min-height: 34px;
-  border: 0;
-  border-radius: 6px;
-  background: #000;
-  color: white;
-  font-weight: 800;
-}
-
-.formActions button[type="button"] {
-  background: #2f66d2;
 }
 
 .formActions span {

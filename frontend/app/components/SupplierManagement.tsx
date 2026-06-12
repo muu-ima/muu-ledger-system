@@ -176,7 +176,11 @@ export default function SupplierManagement() {
               <span>フォーム入力とテーブル更新を切り替えながら管理するビュー</span>
             </div>
             <div className="ledgerTopActions compact">
-              <button type="button" onClick={openSupplierSourceModal}>
+              <button
+                className="primaryActionButton"
+                type="button"
+                onClick={openSupplierSourceModal}
+              >
                 新規仕入れ
               </button>
               <div className="resultCount">
