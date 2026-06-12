@@ -16,6 +16,17 @@ import type { LedgerItem } from "@/types/ledger";
 export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<WorkspaceTab>("古物台帳");
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const syncLayout = () => setIsCompactLayout(mediaQuery.matches);
+
+    syncLayout();
+    mediaQuery.addEventListener("change", syncLayout);
+
+    return () => mediaQuery.removeEventListener("change", syncLayout);
+  }, []);
 
   useEffect(() => {
     const saved = window.localStorage.getItem("kobutsu:sidebar-open");
@@ -26,19 +37,41 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
     window.localStorage.setItem("kobutsu:sidebar-open", sidebarOpen ? "1" : "0");
   }, [sidebarOpen]);
 
+  useEffect(() => {
+    if (isCompactLayout) {
+      setSidebarOpen(false);
+    }
+  }, [isCompactLayout]);
+
   const resultCount = items.length;
+  const handleTabChange = (tab: WorkspaceTab) => {
+    setActiveTab(tab);
+    if (isCompactLayout) {
+      setSidebarOpen(false);
+    }
+  };
 
   return (
     <div className="workspace">
       <LedgerWorkspaceHeader
         activeTab={activeTab}
+        onMenuToggle={() => setSidebarOpen((value) => !value)}
       />
 
       <div className="workArea">
+        {isCompactLayout && sidebarOpen ? (
+          <button
+            className="sidebarBackdrop"
+            type="button"
+            aria-label="メニューを閉じる"
+            onClick={() => setSidebarOpen(false)}
+          />
+        ) : null}
+
         <LedgerWorkspaceSidebar
           activeTab={activeTab}
           isOpen={sidebarOpen}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           onToggle={() => setSidebarOpen((value) => !value)}
         />
 

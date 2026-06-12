@@ -66,6 +66,19 @@ button {
   padding: 12px clamp(18px, 4vw, 32px);
 }
 
+.mobileMenuButton {
+  display: none;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(31, 27, 24, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #1f1b18;
+  font-size: 18px;
+  font-weight: 800;
+}
+
 .appHeaderBrand {
   min-width: 0;
 }
@@ -106,6 +119,11 @@ button {
 .workArea {
   min-height: calc(100vh - 64px);
   display: flex;
+  position: relative;
+}
+
+.sidebarBackdrop {
+  display: none;
 }
 
 .sidebar {
@@ -969,16 +987,99 @@ fieldset input:not([type="checkbox"]) {
     min-height: auto;
   }
 
+  .ledgerMain {
+    padding: 18px 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .appHeader {
+    align-items: center;
+    flex-direction: row;
+    gap: 12px;
+    padding: 10px 16px;
+  }
+
+  .mobileMenuButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .appHeaderBrand {
+    flex: 1;
+  }
+
+  .appHeaderCurrent strong {
+    font-size: 13px;
+  }
+
+  .workArea {
+    min-height: calc(100vh - 60px);
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    bottom: 0;
+    z-index: 40;
+    width: 0;
+    overflow: hidden;
+    box-shadow: 18px 0 40px rgba(31, 27, 24, 0.18);
+  }
+
   .sidebar.open {
-    width: 260px;
+    width: min(284px, calc(100vw - 32px));
   }
 
   .sidebarBody {
-    width: 260px;
-    padding-inline: 32px;
+    width: min(284px, calc(100vw - 32px));
+    padding-inline: 16px;
+  }
+
+  .sidebarBackdrop {
+    display: block;
+    position: fixed;
+    inset: 64px 0 0;
+    z-index: 35;
+    border: 0;
+    background: rgba(31, 27, 24, 0.2);
   }
 
   .ledgerMain {
-    padding: 18px 12px;
+    width: 100%;
+    padding: 20px 16px 24px;
+  }
+
+  .ledgerTop,
+  .sectionTitle,
+  .supplierSectionTitle,
+  .ecSalesListToolbar,
+  .listToolbarMeta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ledgerTopActions,
+  .ledgerTopActions.compact,
+  .ecSalesSearch,
+  .listToolbarMeta,
+  .paginationControls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .ecSalesSearch input {
+    width: 100%;
+  }
+
+  .supplierModal {
+    width: 100%;
+    max-height: calc(100vh - 32px);
+  }
+
+  .modalOverlay {
+    padding: 16px;
   }
 }
