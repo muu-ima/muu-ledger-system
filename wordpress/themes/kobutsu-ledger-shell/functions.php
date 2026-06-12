@@ -92,3 +92,14 @@ function kobutsu_ledger_shell_auth_payload(): array
         'canWrite' => current_user_can('edit_posts'),
     ];
 }
+
+function kobutsu_ledger_shell_ajax_auth(): void
+{
+    if (!is_user_logged_in() || !current_user_can('edit_posts')) {
+        wp_send_json_error(['message' => 'Forbidden'], 403);
+    }
+
+    wp_send_json_success(kobutsu_ledger_shell_auth_payload());
+}
+
+add_action('wp_ajax_kobutsu_ledger_shell_auth', 'kobutsu_ledger_shell_ajax_auth');

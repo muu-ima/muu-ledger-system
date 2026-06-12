@@ -16,6 +16,7 @@ import type {
 } from "@/types/ecSales";
 export {
   createWordpressJsonHeaders,
+  fetchWithWordpressNonceRetry,
   resolveWordpressBaseUrl,
 } from "@/lib/wordpressShellAuth";
 

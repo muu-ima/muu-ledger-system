@@ -7,6 +7,7 @@ if (!defined('ABSPATH')) {
 const KOBUTSU_LEDGER_FRONTEND_URL_OPTION = 'kobutsu_ledger_frontend_url';
 
 add_action('admin_init', 'kobutsu_ledger_register_launch_settings');
+add_action('admin_init', 'kobutsu_ledger_maybe_redirect_to_shell');
 add_filter('kobutsu_ledger_shell_frontend_url', 'kobutsu_ledger_filter_shell_frontend_url');
 
 function kobutsu_ledger_default_frontend_url(): string
@@ -79,7 +80,7 @@ function kobutsu_ledger_register_launch_settings_menu(): void
         'Web起動',
         'edit_posts',
         'kobutsu-launch',
-        'kobutsu_ledger_redirect_to_shell'
+        'kobutsu_ledger_render_launch_redirect_page'
     );
 
     add_submenu_page(
@@ -141,6 +142,38 @@ function kobutsu_ledger_redirect_to_shell(): void
 
     wp_safe_redirect(kobutsu_ledger_shell_launch_url());
     exit;
+}
+
+function kobutsu_ledger_maybe_redirect_to_shell(): void
+{
+    if (!is_admin()) {
+        return;
+    }
+
+    $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+    if ($page !== 'kobutsu-launch') {
+        return;
+    }
+
+    kobutsu_ledger_redirect_to_shell();
+}
+
+function kobutsu_ledger_render_launch_redirect_page(): void
+{
+    if (!current_user_can('edit_posts')) {
+        wp_die(esc_html__('このページにアクセスする権限がありません。', 'kobutsu-ledger'));
+    }
+
+    ?>
+    <div class="wrap kobutsu-ledger-admin">
+        <h1>Web起動</h1>
+        <p>
+            <a class="button button-primary" href="<?php echo esc_url(kobutsu_ledger_shell_launch_url()); ?>">
+                Web起動
+            </a>
+        </p>
+    </div>
+    <?php
 }
 
 function kobutsu_ledger_render_launch_settings_page(): void
