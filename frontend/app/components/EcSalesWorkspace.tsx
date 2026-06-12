@@ -163,9 +163,9 @@ export default function EcSalesWorkspace() {
       );
 
       if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as
-          | { message?: string }
-          | null;
+        const data = (await response.json().catch(() => null)) as {
+          message?: string;
+        } | null;
         setUpdateStatus(data?.message || "保存できませんでした");
         return;
       }
@@ -180,7 +180,9 @@ export default function EcSalesWorkspace() {
             : currentRecord,
         ),
       );
-      setUpdateStatus(`${savedRecord.sku || savedRecord.orderNo} を保存しました`);
+      setUpdateStatus(
+        `${savedRecord.sku || savedRecord.orderNo} を保存しました`,
+      );
     } catch {
       setUpdateStatus("WordPressに接続できませんでした");
     }
@@ -202,16 +204,15 @@ export default function EcSalesWorkspace() {
 
       <div className="ledgerSections">
         <section className="ledgerSection">
-          <div className="sectionTitle">
-            <h2>EC販売集計</h2>
-            <span>仕入れ表、仕入れ元データ、ペイメント、為替の合成ビュー</span>
-          </div>
           <EcSalesTabs activeView={activeView} onViewChange={setActiveView} />
           {activeView === "集計ビュー" ? (
             <>
               <div className="ecSalesListCard">
                 <div className="ecSalesListToolbar">
-                  <div className="ecSalesStatusTabs" aria-label="EC販売ステータス">
+                  <div
+                    className="ecSalesStatusTabs"
+                    aria-label="EC販売ステータス"
+                  >
                     {ecSalesStatusViews.map((view) => (
                       <button
                         className={statusView === view.value ? "active" : ""}
