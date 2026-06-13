@@ -106,6 +106,7 @@ CREATE TABLE IF NOT EXISTS wp_kobutsu_sales_settlements (
   ad_fee decimal(14,2) NOT NULL DEFAULT 0,
   ebay_fee decimal(14,2) NOT NULL DEFAULT 0,
   payout_amount decimal(14,2) NOT NULL DEFAULT 0,
+  payout_currency char(3) NOT NULL DEFAULT '',
   sale_exchange_rate decimal(10,4) NOT NULL DEFAULT 0,
   payout_exchange_rate decimal(10,4) NOT NULL DEFAULT 0,
   received_amount_jpy int NOT NULL DEFAULT 0,

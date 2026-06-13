@@ -23,6 +23,6 @@ require_once __DIR__ . '/includes/ledger-rest-crud.php';
 require_once __DIR__ . '/includes/rest.php';
 require_once __DIR__ . '/includes/sync/supplier-sources.php';
 
-const KOBUTSU_LEDGER_DB_VERSION = '0.3.3';
+const KOBUTSU_LEDGER_DB_VERSION = '0.3.4';
 
 kobutsu_ledger_register_hooks(__FILE__);

@@ -40,7 +40,7 @@ SKU単位の商品マスタです。1 SKU = 1台帳対象を基本にします�
 
 EC販売表の損益計算部分です。
 
-主な項目: `order_no`, `payout_date`, `total_fees`, `ad_fee`, `ebay_fee`, `payout_amount`, `sale_exchange_rate`, `payout_exchange_rate`, `received_amount_jpy`, `overseas_shipping_jpy`, `profit_jpy`, `profit_rate`
+主な項目: `order_no`, `payout_date`, `total_fees`, `ad_fee`, `ebay_fee`, `payout_amount`, `payout_currency`, `sale_exchange_rate`, `payout_exchange_rate`, `received_amount_jpy`, `overseas_shipping_jpy`, `profit_jpy`, `profit_rate`
 
 ### `wp_kobutsu_payment_transactions`
 

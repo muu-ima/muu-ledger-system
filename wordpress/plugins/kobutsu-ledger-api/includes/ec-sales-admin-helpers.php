@@ -77,6 +77,7 @@ function kobutsu_ledger_format_ec_sale_row(array $row): array
         'ad_fee_raw' => (float) $row['ad_fee'],
         'marketplace_fee_raw' => (float) $row['ebay_fee'],
         'payout_amount_raw' => (float) $row['payout_amount'],
+        'payout_currency' => (string) $row['payout_currency'],
         'sale_exchange_rate' => (float) $row['sale_exchange_rate'],
         'payout_exchange_rate' => (float) $row['payout_exchange_rate'],
         'received_amount_jpy' => (int) $row['received_amount_jpy'],
