@@ -376,6 +376,53 @@ function kobutsu_ledger_admin_get_recent_exchange_rates(): array
     ) ?: [];
 }
 
+function kobutsu_ledger_find_exchange_rate(
+    string $rate_date,
+    string $base_currency,
+    string $quote_currency = 'JPY'
+): float {
+    global $wpdb;
+
+    if ($rate_date === '') {
+        return 0.0;
+    }
+
+    $base_currency = strtoupper(substr($base_currency, 0, 3));
+    $quote_currency = strtoupper(substr($quote_currency, 0, 3));
+    if (!preg_match('/^[A-Z]{3}$/', $base_currency) || !preg_match('/^[A-Z]{3}$/', $quote_currency)) {
+        return 0.0;
+    }
+
+    if ($base_currency === $quote_currency) {
+        return 1.0;
+    }
+
+    $rate = $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT rate FROM " . kobutsu_ledger_table('exchange_rates') . "
+            WHERE rate_date = %s
+                AND base_currency = %s
+                AND quote_currency = %s
+            ORDER BY
+                CASE source
+                    WHEN %s THEN 1
+                    WHEN %s THEN 2
+                    WHEN 'mizuho' THEN 3
+                    ELSE 9
+                END,
+                updated_at DESC
+            LIMIT 1",
+            $rate_date,
+            $base_currency,
+            $quote_currency,
+            KOBUTSU_LEDGER_EXCHANGE_RATE_MANUAL_SOURCE,
+            KOBUTSU_LEDGER_EXCHANGE_RATE_API_SOURCE
+        )
+    );
+
+    return $rate !== null ? (float) $rate : 0.0;
+}
+
 function kobutsu_ledger_exchange_rate_last_fetch(): array
 {
     $last_fetch = get_option('kobutsu_ledger_exchange_rate_last_fetch', []);
