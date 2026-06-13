@@ -7,8 +7,11 @@ if (!defined('ABSPATH')) {
 const KOBUTSU_LEDGER_EXCHANGE_RATE_API_KEY_OPTION = 'kobutsu_ledger_exchange_rate_api_key';
 const KOBUTSU_LEDGER_EXCHANGE_RATE_API_SOURCE = 'exchangerate_api';
 const KOBUTSU_LEDGER_EXCHANGE_RATE_MANUAL_SOURCE = 'manual';
+const KOBUTSU_LEDGER_EXCHANGE_RATE_DAILY_HOOK = 'kobutsu_ledger_daily_exchange_rate_fetch';
 
 add_action('admin_init', 'kobutsu_ledger_handle_exchange_rates_admin_action');
+add_action('init', 'kobutsu_ledger_schedule_exchange_rate_fetch');
+add_action(KOBUTSU_LEDGER_EXCHANGE_RATE_DAILY_HOOK, 'kobutsu_ledger_run_daily_exchange_rate_fetch');
 
 function kobutsu_ledger_exchange_rate_target_currencies(): array
 {
@@ -31,6 +34,44 @@ function kobutsu_ledger_register_exchange_rates_admin_menu(): void
         'dashicons-money-alt',
         29
     );
+}
+
+function kobutsu_ledger_schedule_exchange_rate_fetch(): void
+{
+    if (wp_next_scheduled(KOBUTSU_LEDGER_EXCHANGE_RATE_DAILY_HOOK)) {
+        return;
+    }
+
+    wp_schedule_event(
+        kobutsu_ledger_next_exchange_rate_fetch_timestamp(),
+        'daily',
+        KOBUTSU_LEDGER_EXCHANGE_RATE_DAILY_HOOK
+    );
+}
+
+function kobutsu_ledger_next_exchange_rate_fetch_timestamp(): int
+{
+    $next_fetch = new DateTimeImmutable('tomorrow 03:15', wp_timezone());
+
+    return $next_fetch->getTimestamp();
+}
+
+function kobutsu_ledger_unschedule_exchange_rate_fetch(): void
+{
+    wp_clear_scheduled_hook(KOBUTSU_LEDGER_EXCHANGE_RATE_DAILY_HOOK);
+}
+
+function kobutsu_ledger_run_daily_exchange_rate_fetch(): void
+{
+    $result = kobutsu_ledger_fetch_exchange_rates_for_date(current_time('Y-m-d'));
+    update_option('kobutsu_ledger_exchange_rate_last_fetch', [
+        'ran_at' => current_time('mysql'),
+        'ok' => !empty($result['ok']),
+        'date' => (string) ($result['date'] ?? ''),
+        'message' => (string) ($result['message'] ?? ''),
+        'saved' => (int) ($result['saved'] ?? 0),
+        'skipped' => (int) ($result['skipped'] ?? 0),
+    ], false);
 }
 
 function kobutsu_ledger_handle_exchange_rates_admin_action(): void
@@ -335,6 +376,23 @@ function kobutsu_ledger_admin_get_recent_exchange_rates(): array
     ) ?: [];
 }
 
+function kobutsu_ledger_exchange_rate_last_fetch(): array
+{
+    $last_fetch = get_option('kobutsu_ledger_exchange_rate_last_fetch', []);
+
+    return is_array($last_fetch) ? $last_fetch : [];
+}
+
+function kobutsu_ledger_exchange_rate_next_fetch_label(): string
+{
+    $next_timestamp = wp_next_scheduled(KOBUTSU_LEDGER_EXCHANGE_RATE_DAILY_HOOK);
+    if (!$next_timestamp) {
+        return '未登録';
+    }
+
+    return wp_date('Y-m-d H:i:s', (int) $next_timestamp);
+}
+
 function kobutsu_ledger_render_exchange_rates_admin_page(): void
 {
     if (!current_user_can('edit_posts')) {
@@ -346,6 +404,7 @@ function kobutsu_ledger_render_exchange_rates_admin_page(): void
     $api_key_is_set = kobutsu_ledger_exchange_rate_api_key() !== '';
     $rows = kobutsu_ledger_admin_get_recent_exchange_rates();
     $fetch_button_attrs = $api_key_is_set ? [] : ['disabled' => 'disabled'];
+    $last_fetch = kobutsu_ledger_exchange_rate_last_fetch();
     ?>
     <div class="wrap kobutsu-ledger-admin">
         <h1>為替レート</h1>
@@ -397,6 +456,30 @@ function kobutsu_ledger_render_exchange_rates_admin_page(): void
         </form>
 
         <h2>手動取得</h2>
+        <table class="widefat striped" style="max-width: 760px; margin-bottom: 16px;">
+            <tbody>
+                <tr>
+                    <th style="width: 160px;">次回自動取得</th>
+                    <td><?php echo esc_html(kobutsu_ledger_exchange_rate_next_fetch_label()); ?></td>
+                </tr>
+                <tr>
+                    <th>最終自動取得</th>
+                    <td>
+                        <?php if ($last_fetch) : ?>
+                            <?php echo esc_html((string) ($last_fetch['ran_at'] ?? '')); ?>
+                            / <?php echo !empty($last_fetch['ok']) ? '成功' : '失敗'; ?>
+                            / 保存 <?php echo esc_html((string) (int) ($last_fetch['saved'] ?? 0)); ?> 件
+                            / スキップ <?php echo esc_html((string) (int) ($last_fetch['skipped'] ?? 0)); ?> 件
+                            <?php if (!empty($last_fetch['message'])) : ?>
+                                / <?php echo esc_html((string) $last_fetch['message']); ?>
+                            <?php endif; ?>
+                        <?php else : ?>
+                            まだ実行されていません。
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
         <form method="post" style="margin-bottom: 24px;">
             <?php wp_nonce_field('kobutsu_exchange_rate_fetch_today'); ?>
             <input type="hidden" name="kobutsu_exchange_rate_action" value="fetch_today">

@@ -7,6 +7,7 @@ if (!defined('ABSPATH')) {
 function kobutsu_ledger_activate(): void
 {
     kobutsu_ledger_create_tables();
+    kobutsu_ledger_schedule_exchange_rate_fetch();
     update_option('kobutsu_ledger_db_version', KOBUTSU_LEDGER_DB_VERSION);
 }
 
