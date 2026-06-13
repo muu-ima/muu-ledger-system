@@ -91,6 +91,40 @@ Shopee 連携でも、まず安定して扱いたいのは次の2系統です。
 - Payout、各種手数料、返金、物流控除の原票
 - `orderId` 単位で結合するが、返金やキャンセルの負値行を許容する
 
+#### Shopee payments CSV の扱い
+
+`docs/shopee-sample/payments.csv` は Shopee の支払・精算明細として扱う。
+
+- 1行目は集計行のため、明細ヘッダーとしては使わない
+- 2行目の `Order ID` から始まる行をヘッダーとして扱う
+- 3行目以降を注文単位の精算明細として取り込む
+- 将来の列追加や先頭行の揺れに備え、固定行番号ではなく `Order ID` を含むヘッダー行を検出する
+
+主に使う列:
+
+- `Order ID`
+- `Username (Buyer)`
+- `Order Creation Date`
+- `Buyer Payment Method`
+- `Payout Completed Date支払い完了日`
+- `Original Product Price`
+- `Refund Amount`
+- `Shipping Fee Rebate From Shopee Shopeeの配送料還元について`
+- `3rd Party Logistics - Defined Shipping Fee3PL（サードパーティ・ロジスティクス） - 固定配送料`
+- `Commission fee手数料`
+- `Service Feeサービス料`
+- `Transaction Fee取引手数料`
+- `Total Released Amount (₱)払出済総額（₱補助金や融資などの文脈で、実際に支払われた金額の合計を指します＝N列のペイアウト`
+- `Cash refund to buyer amount購入者への現金返金額`
+
+考察:
+
+- Shopee payments CSV は、既存の `EC販売` シートより原票としての役割が明確で、表崩れしにくい
+- 金額列には `-₱48.00`、`₱0.00`、`-5.27E+04` のような表記揺れがあるため、取り込み時に通貨記号、カンマ、指数表記を正規化する
+- `Total Released Amount` は出金・払出額の基礎値として使えるが、すぐに `received_amount_jpy` へ直結せず、まず原票保存を優先する
+- `Commission fee`、`Service Fee`、`Transaction Fee` は損益計算へ接続できるが、初期段階では保存だけ行い、後続ステップで `sales_settlements` に補完する
+- 返金やキャンセルは負値行を許容し、通常販売行と同じ `orderId` で結合できるようにする
+
 ### exchange_rates
 
 - 日付 x 通貨の換算レート
