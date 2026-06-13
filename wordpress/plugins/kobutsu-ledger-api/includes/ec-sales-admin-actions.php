@@ -99,6 +99,11 @@ function kobutsu_ledger_admin_update_ec_sale(int $sale_id): void
         $sale_date,
         $sale_currency
     );
+    $sale_amount_jpy = kobutsu_ledger_calculate_sale_amount_jpy(
+        $sale_amount,
+        $sale_currency,
+        $sale_exchange_rate
+    );
     $payout_date = kobutsu_ledger_admin_date_or_null($_POST['payout_date'] ?? '');
     $payout_currency = strtoupper(substr(sanitize_text_field((string) wp_unslash($_POST['payout_currency'] ?? '')), 0, 3));
     $payout_exchange_rate = (float) ($_POST['payout_exchange_rate'] ?? 0);
@@ -117,7 +122,7 @@ function kobutsu_ledger_admin_update_ec_sale(int $sale_id): void
         'sale_date' => $sale_date,
         'sale_amount' => $sale_amount,
         'sale_currency' => $sale_currency ?: 'USD',
-        'sale_amount_jpy' => $sale_currency === 'JPY' ? (int) round($sale_amount) : 0,
+        'sale_amount_jpy' => $sale_amount_jpy,
         'buyer_country' => sanitize_text_field((string) wp_unslash($_POST['buyer_country'] ?? '')),
         'tracking_no' => sanitize_text_field((string) wp_unslash($_POST['tracking_no'] ?? '')),
         'shipping_site' => sanitize_text_field((string) wp_unslash($_POST['shipping_site'] ?? '')),
@@ -185,6 +190,11 @@ function kobutsu_ledger_admin_quick_update_ec_sale(int $sale_id): void
         $sale_date,
         $sale_currency
     );
+    $sale_amount_jpy = kobutsu_ledger_calculate_sale_amount_jpy(
+        $sale_amount,
+        $sale_currency,
+        $sale_exchange_rate
+    );
     $payout_date = kobutsu_ledger_admin_date_or_null($_POST['payout_date'] ?? $sale['payout_date']);
     $payout_currency = strtoupper(substr((string) ($sale['payout_currency'] ?? ''), 0, 3));
     $payout_exchange_rate = kobutsu_ledger_resolve_payout_exchange_rate(
@@ -200,7 +210,7 @@ function kobutsu_ledger_admin_quick_update_ec_sale(int $sale_id): void
         'sale_date' => $sale_date,
         'sale_amount' => $sale_amount,
         'sale_currency' => $sale_currency ?: 'USD',
-        'sale_amount_jpy' => $sale_currency === 'JPY' ? (int) round($sale_amount) : 0,
+        'sale_amount_jpy' => $sale_amount_jpy,
         'updated_at' => $now,
     ], ['id' => $sale_id], ['%s', '%s', '%f', '%s', '%d', '%s'], ['%d']);
 
@@ -263,6 +273,11 @@ function kobutsu_ledger_update_ec_sale_from_payload(
         $sale_date,
         $sale_currency
     );
+    $sale_amount_jpy = kobutsu_ledger_calculate_sale_amount_jpy(
+        $sale_amount,
+        $sale_currency,
+        $sale_exchange_rate
+    );
     $payout_date = kobutsu_ledger_admin_date_or_null($payload['payout_date'] ?? $sale['payout_date']);
     $payout_currency = strtoupper(substr(kobutsu_ledger_payload_text($payload, 'payout_currency', (string) ($sale['payout_currency'] ?? '')), 0, 3));
     $payout_exchange_rate = kobutsu_ledger_payload_float($payload, 'payout_exchange_rate', (float) $sale['payout_exchange_rate']);
@@ -279,7 +294,7 @@ function kobutsu_ledger_update_ec_sale_from_payload(
         'sale_date' => $sale_date,
         'sale_amount' => $sale_amount,
         'sale_currency' => $sale_currency ?: 'USD',
-        'sale_amount_jpy' => $sale_currency === 'JPY' ? (int) round($sale_amount) : 0,
+        'sale_amount_jpy' => $sale_amount_jpy,
         'tracking_no' => kobutsu_ledger_payload_text($payload, 'domestic_tracking_no', (string) $sale['tracking_no']),
         'shipping_site' => kobutsu_ledger_payload_text($payload, 'sls_tracking_no', (string) $sale['shipping_site']),
         'updated_at' => $now,
@@ -341,6 +356,26 @@ function kobutsu_ledger_resolve_sale_exchange_rate(
     }
 
     return kobutsu_ledger_find_exchange_rate($sale_date, $sale_currency, 'JPY');
+}
+
+function kobutsu_ledger_calculate_sale_amount_jpy(
+    float $sale_amount,
+    string $sale_currency,
+    float $sale_exchange_rate
+): int {
+    if ($sale_amount === 0.0) {
+        return 0;
+    }
+
+    if ($sale_currency === 'JPY') {
+        return (int) round($sale_amount);
+    }
+
+    if ($sale_exchange_rate <= 0) {
+        return 0;
+    }
+
+    return (int) round($sale_amount * $sale_exchange_rate);
 }
 
 function kobutsu_ledger_resolve_payout_exchange_rate(
