@@ -41,6 +41,11 @@ function kobutsu_ledger_handle_payments_admin_action(): void
         'kobutsu_message' => !empty($result['ok']) ? 'import_success' : 'import_failed',
         'imported' => (string) (int) ($result['imported'] ?? 0),
         'skipped' => (string) (int) ($result['skipped'] ?? 0),
+        'skip_header' => (string) (int) ($result['skip_reasons']['header'] ?? 0),
+        'skip_empty' => (string) (int) ($result['skip_reasons']['empty'] ?? 0),
+        'skip_missing_order' => (string) (int) ($result['skip_reasons']['missing_order_id'] ?? 0),
+        'skip_duplicate' => (string) (int) ($result['skip_reasons']['duplicate'] ?? 0),
+        'skip_db_error' => (string) (int) ($result['skip_reasons']['db_error'] ?? 0),
         'error' => (string) ($result['message'] ?? ''),
     ]);
 }
@@ -93,7 +98,7 @@ function kobutsu_ledger_import_shopee_payments_csv(string $file_path): array
 
     $headers = [];
     $imported = 0;
-    $skipped = 0;
+    $skip_reasons = kobutsu_ledger_empty_payment_skip_reasons();
     $line_number = 0;
 
     while (($row = fgetcsv($handle)) !== false) {
@@ -105,21 +110,29 @@ function kobutsu_ledger_import_shopee_payments_csv(string $file_path): array
             continue;
         }
 
-        if (kobutsu_ledger_is_shopee_payments_header($row) || kobutsu_ledger_csv_row_is_empty($row)) {
-            $skipped++;
+        if (kobutsu_ledger_is_shopee_payments_header($row)) {
+            $skip_reasons['header']++;
+            continue;
+        }
+
+        if (kobutsu_ledger_csv_row_is_empty($row)) {
+            $skip_reasons['empty']++;
             continue;
         }
 
         $record = kobutsu_ledger_map_shopee_payment_row($headers, $row, $line_number);
         if ($record === null) {
-            $skipped++;
+            $skip_reasons['missing_order_id']++;
             continue;
         }
 
-        if (kobutsu_ledger_insert_payment_transaction($record)) {
+        $insert_result = kobutsu_ledger_insert_payment_transaction($record);
+        if ($insert_result === 'inserted') {
             $imported++;
+        } elseif ($insert_result === 'duplicate') {
+            $skip_reasons['duplicate']++;
         } else {
-            $skipped++;
+            $skip_reasons['db_error']++;
         }
     }
 
@@ -130,7 +143,8 @@ function kobutsu_ledger_import_shopee_payments_csv(string $file_path): array
             'ok' => false,
             'message' => 'Shopee payments CSV のヘッダー行を検出できませんでした。',
             'imported' => 0,
-            'skipped' => $skipped,
+            'skipped' => kobutsu_ledger_total_payment_skips($skip_reasons),
+            'skip_reasons' => $skip_reasons,
         ];
     }
 
@@ -138,8 +152,25 @@ function kobutsu_ledger_import_shopee_payments_csv(string $file_path): array
         'ok' => true,
         'message' => '',
         'imported' => $imported,
-        'skipped' => $skipped,
+        'skipped' => kobutsu_ledger_total_payment_skips($skip_reasons),
+        'skip_reasons' => $skip_reasons,
     ];
+}
+
+function kobutsu_ledger_empty_payment_skip_reasons(): array
+{
+    return [
+        'header' => 0,
+        'empty' => 0,
+        'missing_order_id' => 0,
+        'duplicate' => 0,
+        'db_error' => 0,
+    ];
+}
+
+function kobutsu_ledger_total_payment_skips(array $skip_reasons): int
+{
+    return array_sum(array_map('intval', $skip_reasons));
 }
 
 function kobutsu_ledger_is_shopee_payments_header(array $row): bool
@@ -222,7 +253,7 @@ function kobutsu_ledger_csv_value(array $headers, array $row, string $label): st
     $target = kobutsu_ledger_normalize_csv_header($label);
     foreach ($headers as $index => $header) {
         $normalized = kobutsu_ledger_normalize_csv_header((string) $header);
-        if ($normalized === $target || str_starts_with($normalized, $target)) {
+        if ($normalized === $target || strpos($normalized, $target) === 0) {
             return trim((string) ($row[$index] ?? ''));
         }
     }
@@ -264,7 +295,7 @@ function kobutsu_ledger_parse_csv_decimal(string $value): float
     return is_numeric($value) ? (float) $value : 0.0;
 }
 
-function kobutsu_ledger_insert_payment_transaction(array $record): bool
+function kobutsu_ledger_insert_payment_transaction(array $record): string
 {
     global $wpdb;
 
@@ -274,7 +305,7 @@ function kobutsu_ledger_insert_payment_transaction(array $record): bool
         $record['reference_id']
     ));
     if ($exists > 0) {
-        return false;
+        return 'duplicate';
     }
 
     $result = $wpdb->insert(
@@ -306,7 +337,7 @@ function kobutsu_ledger_insert_payment_transaction(array $record): bool
         ]
     );
 
-    return $result !== false;
+    return $result !== false ? 'inserted' : 'db_error';
 }
 
 function kobutsu_ledger_get_recent_payment_transactions(int $limit = 50): array
@@ -394,9 +425,15 @@ function kobutsu_ledger_render_payments_admin_notice(): void
     if ($message === 'import_success') {
         $imported = isset($_GET['imported']) ? (int) $_GET['imported'] : 0;
         $skipped = isset($_GET['skipped']) ? (int) $_GET['skipped'] : 0;
+        $skip_details = kobutsu_ledger_payment_skip_details_from_request();
         printf(
             '<div class="notice notice-success is-dismissible"><p>%s</p></div>',
-            esc_html(sprintf('Shopee payments CSV を取り込みました。保存 %d 件、スキップ %d 件。', $imported, $skipped))
+            esc_html(sprintf(
+                'Shopee payments CSV を取り込みました。保存 %d 件、スキップ %d 件。%s',
+                $imported,
+                $skipped,
+                $skip_details !== '' ? ' 内訳: ' . $skip_details : ''
+            ))
         );
         return;
     }
@@ -408,6 +445,26 @@ function kobutsu_ledger_render_payments_admin_notice(): void
             esc_html($error)
         );
     }
+}
+
+function kobutsu_ledger_payment_skip_details_from_request(): string
+{
+    $details = [
+        'ヘッダー行' => isset($_GET['skip_header']) ? (int) $_GET['skip_header'] : 0,
+        '空行' => isset($_GET['skip_empty']) ? (int) $_GET['skip_empty'] : 0,
+        '注文IDなし' => isset($_GET['skip_missing_order']) ? (int) $_GET['skip_missing_order'] : 0,
+        '重複' => isset($_GET['skip_duplicate']) ? (int) $_GET['skip_duplicate'] : 0,
+        'DB保存失敗' => isset($_GET['skip_db_error']) ? (int) $_GET['skip_db_error'] : 0,
+    ];
+
+    $parts = [];
+    foreach ($details as $label => $count) {
+        if ($count > 0) {
+            $parts[] = sprintf('%s %d 件', $label, $count);
+        }
+    }
+
+    return implode('、', $parts);
 }
 
 function kobutsu_ledger_payments_admin_redirect(array $args = []): void
