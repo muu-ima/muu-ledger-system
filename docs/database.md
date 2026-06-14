@@ -65,5 +65,9 @@ Shopee payments CSV では `source_name = shopee_payments` として、保存件
 - `GET /wp-json/kobutsu/v1/items`: 商品、仕入、販売を結合した一覧
 - `GET /wp-json/kobutsu/v1/items/{id}`: 1件取得
 - `POST /wp-json/kobutsu/v1/items`: 1件登録
+- `GET /wp-json/kobutsu/v1/ec-sales`: EC販売の合成ビュー
+- `POST /wp-json/kobutsu/v1/ec-sales/{id}`: EC販売の販売・精算補助列を更新
+- `GET /wp-json/kobutsu/v1/payments`: Shopee ペイメント原票と取り込み履歴
+- `GET /wp-json/kobutsu/v1/exchange-rates`: 保存済み為替レートと取得状況
 
 次の段階ではCSVインポートAPIを追加し、サンプルCSVの先頭数行にある注釈行をスキップして、実ヘッダー行から読み込めるようにします。

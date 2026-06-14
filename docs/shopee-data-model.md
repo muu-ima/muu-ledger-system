@@ -130,6 +130,45 @@ Shopee 連携でも、まず安定して扱いたいのは次の2系統です。
 - 日付 x 通貨の換算レート
 - 販売時点レートと出金時点レートを別用途で参照する
 
+#### 為替レートの扱い
+
+`exchange_rates` は、Shopee 系の損益計算で使う換算レートの原票として扱う。既存シートでは `販売時の為替` と `出金時の為替` が同じ一覧に混ざっているが、実装では次の2用途に分けて参照する。
+
+- `saleExchangeRate`
+  - 販売日 + 販売通貨から参照する
+  - `saleAmountJpy` の自動計算に使う
+- `payoutExchangeRate`
+  - 出金日 + 出金通貨がある場合だけ参照する
+  - Payoneer/Shopee 明細が揃うまで、`receivedAmountJpy` へ過度に直結しない
+
+同じ日付・通貨ペアに複数の取得元がある場合は、次の優先順位で参照する。
+
+1. `manual`
+2. `exchangerate_api`
+3. `mizuho` などその他の取得元
+
+`manual` は手入力補完・確定値として扱い、自動取得で上書きしない。`exchangerate_api` は日次自動取得の主取得元として扱う。`mizuho` などのその他取得元は、過去データ補完や照合用途として後から追加できる余地を残す。
+
+#### 現在できていること
+
+- ExchangeRate-API の API key を WordPress 管理画面で保存できる
+- 当日分を手動取得できる
+- WP-Cron で日次自動取得できる
+- 手入力レートを `manual` として保存できる
+- 自動取得は手入力固定行を上書きしない
+- `sales_settlements.sale_exchange_rate` は、販売日 + 販売通貨から空欄時に補完する
+- `sales_settlements.payout_exchange_rate` は、出金日 + 出金通貨がある場合だけ空欄時に補完する
+- `sale_amount_jpy` は販売額と販売時為替から自動計算する
+- Web UI で保存済みレート、取得状況、優先順位、最新レート日、取得元内訳を確認できる
+
+#### これからの候補
+
+- 過去日付範囲を指定して ExchangeRate-API から補完取得する
+- みずほCSVなど、API以外の取得元を `source` 別に取り込めるようにする
+- 同一日付・通貨ペアで実際にEC販売へ適用される行を UI 上で分かりやすくする
+- `payments` の出金日・出金通貨と接続した後、`payoutExchangeRate` の補完範囲を広げる
+- `receivedAmountJpy`、Payout、手数料、損益計算への接続は、Payoneer/Shopee 明細の取り込みが安定してから段階的に行う
+
 ## ec_sales の位置づけ
 
 `ec_sales` は入力元ではなく、次のデータから組み立てるビューとして扱います。
