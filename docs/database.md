@@ -55,6 +55,7 @@ ECモールの支払明細を原票として保存します。Shopee payments CS
 ### `wp_kobutsu_import_batches`
 
 CSV取込履歴です。どのCSVをいつ何行取り込んだか、何行エラーになったかを残します。
+Shopee payments CSV では `source_name = shopee_payments` として、保存件数、スキップ件数、スキップ内訳を `notes` に保持します。
 
 ## API
 

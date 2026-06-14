@@ -81,7 +81,10 @@ function kobutsu_ledger_import_shopee_payments_upload(): array
         ];
     }
 
-    return kobutsu_ledger_import_shopee_payments_csv($tmp_name);
+    $result = kobutsu_ledger_import_shopee_payments_csv($tmp_name);
+    kobutsu_ledger_save_payment_import_batch($result, (string) ($file['name'] ?? ''));
+
+    return $result;
 }
 
 function kobutsu_ledger_import_shopee_payments_csv(string $file_path): array
@@ -353,6 +356,63 @@ function kobutsu_ledger_get_recent_payment_transactions(int $limit = 50): array
     ), ARRAY_A);
 }
 
+function kobutsu_ledger_save_payment_import_batch(array $result, string $filename): void
+{
+    global $wpdb;
+
+    $table = kobutsu_ledger_table('import_batches');
+    $notes = wp_json_encode([
+        'source' => 'shopee_payments_csv',
+        'message' => (string) ($result['message'] ?? ''),
+        'skip_reasons' => is_array($result['skip_reasons'] ?? null) ? $result['skip_reasons'] : [],
+    ], JSON_UNESCAPED_UNICODE);
+
+    $wpdb->insert(
+        $table,
+        [
+            'source_name' => 'shopee_payments',
+            'original_filename' => sanitize_file_name($filename),
+            'status' => !empty($result['ok']) ? 'completed' : 'failed',
+            'imported_rows' => (int) ($result['imported'] ?? 0),
+            'error_rows' => (int) ($result['skipped'] ?? 0),
+            'notes' => $notes !== false ? $notes : '',
+            'completed_at' => current_time('mysql'),
+        ],
+        [
+            '%s',
+            '%s',
+            '%s',
+            '%d',
+            '%d',
+            '%s',
+            '%s',
+        ]
+    );
+}
+
+function kobutsu_ledger_get_recent_payment_import_batches(int $limit = 10): array
+{
+    global $wpdb;
+
+    $table = kobutsu_ledger_table('import_batches');
+
+    return $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $table WHERE source_name = %s ORDER BY id DESC LIMIT %d",
+        'shopee_payments',
+        $limit
+    ), ARRAY_A);
+}
+
+function kobutsu_ledger_payment_import_batch_skip_details(array $batch): string
+{
+    $notes = json_decode((string) ($batch['notes'] ?? ''), true);
+    if (!is_array($notes) || !is_array($notes['skip_reasons'] ?? null)) {
+        return '';
+    }
+
+    return kobutsu_ledger_format_payment_skip_details($notes['skip_reasons']);
+}
+
 function kobutsu_ledger_render_payments_admin_page(): void
 {
     if (!current_user_can('edit_posts')) {
@@ -360,6 +420,7 @@ function kobutsu_ledger_render_payments_admin_page(): void
     }
 
     $rows = kobutsu_ledger_get_recent_payment_transactions();
+    $batches = kobutsu_ledger_get_recent_payment_import_batches();
     ?>
     <div class="wrap">
         <h1>ペイメント</h1>
@@ -411,6 +472,38 @@ function kobutsu_ledger_render_payments_admin_page(): void
                 <?php endif; ?>
             </tbody>
         </table>
+
+        <h2>取り込み履歴</h2>
+        <table class="widefat striped" style="max-width: 1200px;">
+            <thead>
+                <tr>
+                    <th>実行日時</th>
+                    <th>ファイル名</th>
+                    <th>状態</th>
+                    <th>保存件数</th>
+                    <th>スキップ件数</th>
+                    <th>スキップ内訳</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if ($batches === []) : ?>
+                    <tr>
+                        <td colspan="6">取り込み履歴はまだありません。</td>
+                    </tr>
+                <?php else : ?>
+                    <?php foreach ($batches as $batch) : ?>
+                        <tr>
+                            <td><?php echo esc_html((string) ($batch['completed_at'] ?: $batch['created_at'])); ?></td>
+                            <td><?php echo esc_html((string) $batch['original_filename']); ?></td>
+                            <td><?php echo esc_html((string) $batch['status']); ?></td>
+                            <td><?php echo esc_html(number_format((int) $batch['imported_rows'])); ?></td>
+                            <td><?php echo esc_html(number_format((int) $batch['error_rows'])); ?></td>
+                            <td><?php echo esc_html(kobutsu_ledger_payment_import_batch_skip_details($batch)); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
     </div>
     <?php
 }
@@ -450,15 +543,28 @@ function kobutsu_ledger_render_payments_admin_notice(): void
 function kobutsu_ledger_payment_skip_details_from_request(): string
 {
     $details = [
-        'ヘッダー行' => isset($_GET['skip_header']) ? (int) $_GET['skip_header'] : 0,
-        '空行' => isset($_GET['skip_empty']) ? (int) $_GET['skip_empty'] : 0,
-        '注文IDなし' => isset($_GET['skip_missing_order']) ? (int) $_GET['skip_missing_order'] : 0,
-        '重複' => isset($_GET['skip_duplicate']) ? (int) $_GET['skip_duplicate'] : 0,
-        'DB保存失敗' => isset($_GET['skip_db_error']) ? (int) $_GET['skip_db_error'] : 0,
+        'header' => isset($_GET['skip_header']) ? (int) $_GET['skip_header'] : 0,
+        'empty' => isset($_GET['skip_empty']) ? (int) $_GET['skip_empty'] : 0,
+        'missing_order_id' => isset($_GET['skip_missing_order']) ? (int) $_GET['skip_missing_order'] : 0,
+        'duplicate' => isset($_GET['skip_duplicate']) ? (int) $_GET['skip_duplicate'] : 0,
+        'db_error' => isset($_GET['skip_db_error']) ? (int) $_GET['skip_db_error'] : 0,
     ];
 
+    return kobutsu_ledger_format_payment_skip_details($details);
+}
+
+function kobutsu_ledger_format_payment_skip_details(array $details): string
+{
+    $labels = [
+        'header' => 'ヘッダー行',
+        'empty' => '空行',
+        'missing_order_id' => '注文IDなし',
+        'duplicate' => '重複',
+        'db_error' => 'DB保存失敗',
+    ];
     $parts = [];
-    foreach ($details as $label => $count) {
+    foreach ($labels as $key => $label) {
+        $count = (int) ($details[$key] ?? 0);
         if ($count > 0) {
             $parts[] = sprintf('%s %d 件', $label, $count);
         }
