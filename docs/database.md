@@ -44,7 +44,7 @@ EC販売表の損益計算部分です。
 
 ### `wp_kobutsu_payment_transactions`
 
-eBay/Payoneerの支払明細を原票として保存します。CSVの列が多く変化しやすいため、主要列に加えて `raw_payload` も持ちます。
+ECモールの支払明細を原票として保存します。Shopee payments CSV は `transaction_type = shopee_payment` として取り込み、主要列に加えて `raw_payload` に元行を保持します。CSVの列が多く変化しやすいため、初期段階では計算へ直結せず、原票保存と一覧確認を優先します。
 
 ### `wp_kobutsu_exchange_rates`
 

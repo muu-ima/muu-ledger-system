@@ -13,6 +13,7 @@ if (!defined('ABSPATH')) {
 require_once __DIR__ . '/admin-supplier-sources.php';
 require_once __DIR__ . '/admin-ec-sales.php';
 require_once __DIR__ . '/admin-exchange-rates.php';
+require_once __DIR__ . '/admin-payments.php';
 require_once __DIR__ . '/admin-launch-settings.php';
 require_once __DIR__ . '/admin-ledger.php';
 require_once __DIR__ . '/includes/admin-menu.php';
