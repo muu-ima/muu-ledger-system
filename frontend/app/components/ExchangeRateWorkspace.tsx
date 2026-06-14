@@ -12,6 +12,13 @@ import {
 } from "@/types/exchangeRates";
 
 type ExchangeRateSourceView = "all" | "manual" | "api" | "other";
+type ExchangeRateStats = {
+  apiCount: number;
+  latestRateDate: string;
+  manualCount: number;
+  otherCount: number;
+  totalCount: number;
+};
 
 const exchangeRateSourceViews: {
   label: string;
@@ -42,6 +49,47 @@ function matchesSearch(row: ExchangeRateRow, searchQuery: string) {
     .join(" ")
     .toLowerCase()
     .includes(query);
+}
+
+function buildExchangeRateStats(rates: ExchangeRateRow[]): ExchangeRateStats {
+  return rates.reduce<ExchangeRateStats>(
+    (stats, row) => {
+      const latestRateDate =
+        row.rateDate > stats.latestRateDate ? row.rateDate : stats.latestRateDate;
+
+      if (row.isManualOverride) {
+        return {
+          ...stats,
+          latestRateDate,
+          manualCount: stats.manualCount + 1,
+          totalCount: stats.totalCount + 1,
+        };
+      }
+
+      if (row.source === "exchangerate_api") {
+        return {
+          ...stats,
+          apiCount: stats.apiCount + 1,
+          latestRateDate,
+          totalCount: stats.totalCount + 1,
+        };
+      }
+
+      return {
+        ...stats,
+        latestRateDate,
+        otherCount: stats.otherCount + 1,
+        totalCount: stats.totalCount + 1,
+      };
+    },
+    {
+      apiCount: 0,
+      latestRateDate: "",
+      manualCount: 0,
+      otherCount: 0,
+      totalCount: 0,
+    },
+  );
 }
 
 export default function ExchangeRateWorkspace() {
@@ -76,6 +124,7 @@ export default function ExchangeRateWorkspace() {
       ),
     [currentPage, filteredRates],
   );
+  const stats = useMemo(() => buildExchangeRateStats(rates), [rates]);
 
   useEffect(() => {
     let cancelled = false;
@@ -196,6 +245,7 @@ export default function ExchangeRateWorkspace() {
               <ExchangeRateFetchStatusPanel
                 lastFetch={lastFetch}
                 nextFetchAt={nextFetchAt}
+                stats={stats}
               />
             )}
 
@@ -251,13 +301,35 @@ function ExchangeRateTable({ rates }: { rates: ExchangeRateRow[] }) {
 function ExchangeRateFetchStatusPanel({
   lastFetch,
   nextFetchAt,
+  stats,
 }: {
   lastFetch: ExchangeRateFetchStatus | null;
   nextFetchAt: string;
+  stats: ExchangeRateStats;
 }) {
   return (
     <div className="exchangeRateStatusPanel">
       <dl>
+        <div>
+          <dt>適用優先順位</dt>
+          <dd>手入力 &gt; API取得 &gt; その他</dd>
+        </div>
+        <div>
+          <dt>最新レート日</dt>
+          <dd>{stats.latestRateDate || "未保存"}</dd>
+        </div>
+        <div>
+          <dt>保存済みレート</dt>
+          <dd>{stats.totalCount.toLocaleString("ja-JP")} 件</dd>
+        </div>
+        <div>
+          <dt>取得元内訳</dt>
+          <dd>
+            手入力 {stats.manualCount.toLocaleString("ja-JP")} / API{" "}
+            {stats.apiCount.toLocaleString("ja-JP")} / その他{" "}
+            {stats.otherCount.toLocaleString("ja-JP")}
+          </dd>
+        </div>
         <div>
           <dt>次回自動取得</dt>
           <dd>{nextFetchAt || "未登録"}</dd>
