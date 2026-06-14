@@ -333,3 +333,53 @@ function kobutsu_ledger_get_schema(): WP_REST_Response
         ],
     ]);
 }
+
+function kobutsu_ledger_get_payments(WP_REST_Request $request): WP_REST_Response
+{
+    global $wpdb;
+
+    $payment_transactions = kobutsu_ledger_table('payment_transactions');
+    $import_batches = kobutsu_ledger_table('import_batches');
+
+    $transactions = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT id, transaction_date, order_no, buyer_username, net_amount, payout_currency,
+                payout_date, payout_method, payout_status, gross_transaction_amount,
+                transaction_currency, reference_id, created_at
+            FROM $payment_transactions
+            WHERE transaction_type = %s
+            ORDER BY id DESC
+            LIMIT 500",
+            'shopee_payment'
+        ),
+        ARRAY_A
+    );
+
+    $batches = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT id, source_name, original_filename, status, imported_rows, error_rows,
+                notes, created_at, completed_at
+            FROM $import_batches
+            WHERE source_name = %s
+            ORDER BY id DESC
+            LIMIT 100",
+            'shopee_payments'
+        ),
+        ARRAY_A
+    );
+
+    return rest_ensure_response([
+        'transactions' => array_map('kobutsu_ledger_format_payment_api_row', $transactions),
+        'batches' => array_map('kobutsu_ledger_format_payment_api_row', $batches),
+    ]);
+}
+
+function kobutsu_ledger_format_payment_api_row(array $row): array
+{
+    $formatted = [];
+    foreach ($row as $key => $value) {
+        $formatted[$key] = $value === null ? '' : $value;
+    }
+
+    return $formatted;
+}

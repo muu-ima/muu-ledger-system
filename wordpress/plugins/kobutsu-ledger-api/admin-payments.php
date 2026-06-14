@@ -39,6 +39,7 @@ function kobutsu_ledger_handle_payments_admin_action(): void
     $result = kobutsu_ledger_import_shopee_payments_upload();
     kobutsu_ledger_payments_admin_redirect([
         'kobutsu_message' => !empty($result['ok']) ? 'import_success' : 'import_failed',
+        'payment_tab' => 'history',
         'imported' => (string) (int) ($result['imported'] ?? 0),
         'skipped' => (string) (int) ($result['skipped'] ?? 0),
         'skip_header' => (string) (int) ($result['skip_reasons']['header'] ?? 0),
@@ -419,92 +420,147 @@ function kobutsu_ledger_render_payments_admin_page(): void
         wp_die(esc_html__('このページを表示する権限がありません。', 'kobutsu-ledger'));
     }
 
-    $rows = kobutsu_ledger_get_recent_payment_transactions();
-    $batches = kobutsu_ledger_get_recent_payment_import_batches();
+    $active_tab = kobutsu_ledger_current_payment_tab();
     ?>
     <div class="wrap">
         <h1>ペイメント</h1>
 
         <?php kobutsu_ledger_render_payments_admin_notice(); ?>
 
-        <p>Shopee payments CSV を原票として取り込み、後続の精算補完で参照できる形で保存します。</p>
+        <?php kobutsu_ledger_render_payments_admin_tabs($active_tab); ?>
 
-        <h2>Shopee payments CSV 取り込み</h2>
-        <form method="post" enctype="multipart/form-data">
-            <?php wp_nonce_field('kobutsu_import_shopee_payments'); ?>
-            <input type="hidden" name="kobutsu_payments_action" value="import_shopee_payments">
-            <input type="file" name="shopee_payments_csv" accept=".csv,text/csv" required>
-            <?php submit_button('CSVを取り込む', 'primary', 'submit', false); ?>
-        </form>
-
-        <h2>直近の Shopee ペイメント原票</h2>
-        <table class="widefat striped" style="max-width: 1200px;">
-            <thead>
-                <tr>
-                    <th>注文ID</th>
-                    <th>注文日</th>
-                    <th>支払い完了日</th>
-                    <th>購入者</th>
-                    <th>販売額(PHP)</th>
-                    <th>払出額(PHP)</th>
-                    <th>支払方法</th>
-                    <th>取込日時</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if ($rows === []) : ?>
-                    <tr>
-                        <td colspan="8">Shopee ペイメント原票はまだ取り込まれていません。</td>
-                    </tr>
-                <?php else : ?>
-                    <?php foreach ($rows as $row) : ?>
-                        <tr>
-                            <td><?php echo esc_html((string) $row['order_no']); ?></td>
-                            <td><?php echo esc_html((string) $row['transaction_date']); ?></td>
-                            <td><?php echo esc_html((string) $row['payout_date']); ?></td>
-                            <td><?php echo esc_html((string) $row['buyer_username']); ?></td>
-                            <td><?php echo esc_html(number_format((float) $row['gross_transaction_amount'], 2)); ?></td>
-                            <td><?php echo esc_html(number_format((float) $row['net_amount'], 2)); ?></td>
-                            <td><?php echo esc_html((string) $row['payout_method']); ?></td>
-                            <td><?php echo esc_html((string) $row['created_at']); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
-
-        <h2>取り込み履歴</h2>
-        <table class="widefat striped" style="max-width: 1200px;">
-            <thead>
-                <tr>
-                    <th>実行日時</th>
-                    <th>ファイル名</th>
-                    <th>状態</th>
-                    <th>保存件数</th>
-                    <th>スキップ件数</th>
-                    <th>スキップ内訳</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if ($batches === []) : ?>
-                    <tr>
-                        <td colspan="6">取り込み履歴はまだありません。</td>
-                    </tr>
-                <?php else : ?>
-                    <?php foreach ($batches as $batch) : ?>
-                        <tr>
-                            <td><?php echo esc_html((string) ($batch['completed_at'] ?: $batch['created_at'])); ?></td>
-                            <td><?php echo esc_html((string) $batch['original_filename']); ?></td>
-                            <td><?php echo esc_html((string) $batch['status']); ?></td>
-                            <td><?php echo esc_html(number_format((int) $batch['imported_rows'])); ?></td>
-                            <td><?php echo esc_html(number_format((int) $batch['error_rows'])); ?></td>
-                            <td><?php echo esc_html(kobutsu_ledger_payment_import_batch_skip_details($batch)); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
+        <?php if ($active_tab === 'import') : ?>
+            <?php kobutsu_ledger_render_payment_import_panel(); ?>
+        <?php elseif ($active_tab === 'history') : ?>
+            <?php kobutsu_ledger_render_payment_history_panel(); ?>
+        <?php else : ?>
+            <?php kobutsu_ledger_render_payment_records_panel(); ?>
+        <?php endif; ?>
     </div>
+    <?php
+}
+
+function kobutsu_ledger_current_payment_tab(): string
+{
+    $tab = isset($_GET['payment_tab']) ? sanitize_key((string) wp_unslash($_GET['payment_tab'])) : 'import';
+    $allowed_tabs = ['import', 'records', 'history'];
+
+    return in_array($tab, $allowed_tabs, true) ? $tab : 'import';
+}
+
+function kobutsu_ledger_render_payments_admin_tabs(string $active_tab): void
+{
+    $tabs = [
+        'import' => 'CSV取り込み',
+        'records' => 'ペイメント原票',
+        'history' => '取り込み履歴',
+    ];
+    ?>
+    <nav class="nav-tab-wrapper" aria-label="ペイメント表示">
+        <?php foreach ($tabs as $tab => $label) : ?>
+            <a
+                class="nav-tab <?php echo $active_tab === $tab ? 'nav-tab-active' : ''; ?>"
+                href="<?php echo esc_url(add_query_arg(['page' => 'kobutsu-payments', 'payment_tab' => $tab], admin_url('admin.php'))); ?>"
+            >
+                <?php echo esc_html($label); ?>
+            </a>
+        <?php endforeach; ?>
+    </nav>
+    <?php
+}
+
+function kobutsu_ledger_render_payment_import_panel(): void
+{
+    ?>
+    <p>Shopee payments CSV を原票として取り込み、後続の精算補完で参照できる形で保存します。</p>
+
+    <h2>Shopee payments CSV 取り込み</h2>
+    <form method="post" enctype="multipart/form-data">
+        <?php wp_nonce_field('kobutsu_import_shopee_payments'); ?>
+        <input type="hidden" name="kobutsu_payments_action" value="import_shopee_payments">
+        <input type="file" name="shopee_payments_csv" accept=".csv,text/csv" required>
+        <?php submit_button('CSVを取り込む', 'primary', 'submit', false); ?>
+    </form>
+    <?php
+}
+
+function kobutsu_ledger_render_payment_records_panel(): void
+{
+    $rows = kobutsu_ledger_get_recent_payment_transactions();
+    ?>
+    <h2>直近の Shopee ペイメント原票</h2>
+    <table class="widefat striped" style="max-width: 1200px;">
+        <thead>
+            <tr>
+                <th>注文ID</th>
+                <th>注文日</th>
+                <th>支払い完了日</th>
+                <th>購入者</th>
+                <th>販売額(PHP)</th>
+                <th>払出額(PHP)</th>
+                <th>支払方法</th>
+                <th>取込日時</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if ($rows === []) : ?>
+                <tr>
+                    <td colspan="8">Shopee ペイメント原票はまだ取り込まれていません。</td>
+                </tr>
+            <?php else : ?>
+                <?php foreach ($rows as $row) : ?>
+                    <tr>
+                        <td><?php echo esc_html((string) $row['order_no']); ?></td>
+                        <td><?php echo esc_html((string) $row['transaction_date']); ?></td>
+                        <td><?php echo esc_html((string) $row['payout_date']); ?></td>
+                        <td><?php echo esc_html((string) $row['buyer_username']); ?></td>
+                        <td><?php echo esc_html(number_format((float) $row['gross_transaction_amount'], 2)); ?></td>
+                        <td><?php echo esc_html(number_format((float) $row['net_amount'], 2)); ?></td>
+                        <td><?php echo esc_html((string) $row['payout_method']); ?></td>
+                        <td><?php echo esc_html((string) $row['created_at']); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
+    <?php
+}
+
+function kobutsu_ledger_render_payment_history_panel(): void
+{
+    $batches = kobutsu_ledger_get_recent_payment_import_batches();
+    ?>
+    <h2>取り込み履歴</h2>
+    <table class="widefat striped" style="max-width: 1200px;">
+        <thead>
+            <tr>
+                <th>実行日時</th>
+                <th>ファイル名</th>
+                <th>状態</th>
+                <th>保存件数</th>
+                <th>スキップ件数</th>
+                <th>スキップ内訳</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if ($batches === []) : ?>
+                <tr>
+                    <td colspan="6">取り込み履歴はまだありません。</td>
+                </tr>
+            <?php else : ?>
+                <?php foreach ($batches as $batch) : ?>
+                    <tr>
+                        <td><?php echo esc_html((string) ($batch['completed_at'] ?: $batch['created_at'])); ?></td>
+                        <td><?php echo esc_html((string) $batch['original_filename']); ?></td>
+                        <td><?php echo esc_html((string) $batch['status']); ?></td>
+                        <td><?php echo esc_html(number_format((int) $batch['imported_rows'])); ?></td>
+                        <td><?php echo esc_html(number_format((int) $batch['error_rows'])); ?></td>
+                        <td><?php echo esc_html(kobutsu_ledger_payment_import_batch_skip_details($batch)); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
     <?php
 }
 

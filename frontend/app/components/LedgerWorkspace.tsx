@@ -10,6 +10,7 @@ import {
 } from "@/app/components/ledger-workspace/ledgerWorkspaceConfig";
 import { LedgerRecordSections } from "@/app/components/ledger-workspace/sections/LedgerRecordSections";
 import EcSalesWorkspace from "@/app/components/EcSalesWorkspace";
+import PaymentWorkspace from "@/app/components/PaymentWorkspace";
 import SupplierManagement from "@/app/components/SupplierManagement";
 import type { LedgerItem } from "@/types/ledger";
 
@@ -80,6 +81,8 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
             <SupplierManagement />
           ) : activeTab === "EC販売" ? (
             <EcSalesWorkspace />
+          ) : activeTab === "ペイメント" ? (
+            <PaymentWorkspace />
           ) : (
             <>
               <LedgerWorkspaceTop

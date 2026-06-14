@@ -886,6 +886,7 @@ fieldset input:not([type="checkbox"]) {
 .payoutGrid .headerRow th,
 .partyGrid .headerRow th,
 .ecSalesGrid .headerRow th,
+.paymentGrid .headerRow th,
 .supplierSourceGrid .headerRow th,
 .purchaseProjectionGrid .headerRow th {
   background: #c2b4df;
@@ -902,6 +903,7 @@ fieldset input:not([type="checkbox"]) {
 .payoutGrid tbody td,
 .partyGrid tbody td,
 .ecSalesGrid tbody td,
+.paymentGrid tbody td,
 .supplierSourceGrid tbody td,
 .purchaseProjectionGrid tbody td {
   background: rgba(255, 228, 199, 0.78);
