@@ -887,6 +887,7 @@ fieldset input:not([type="checkbox"]) {
 .payoutGrid .headerRow th,
 .partyGrid .headerRow th,
 .ecSalesGrid .headerRow th,
+.exchangeRateGrid .headerRow th,
 .paymentGrid .headerRow th,
 .supplierSourceGrid .headerRow th,
 .purchaseProjectionGrid .headerRow th {
@@ -904,10 +905,44 @@ fieldset input:not([type="checkbox"]) {
 .payoutGrid tbody td,
 .partyGrid tbody td,
 .ecSalesGrid tbody td,
+.exchangeRateGrid tbody td,
 .paymentGrid tbody td,
 .supplierSourceGrid tbody td,
 .purchaseProjectionGrid tbody td {
   background: rgba(255, 228, 199, 0.78);
+}
+
+.exchangeRateStatusPanel {
+  padding: 14px 12px 18px;
+}
+
+.exchangeRateStatusPanel dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.exchangeRateStatusPanel dl > div {
+  min-height: 58px;
+  border: 1px solid rgba(31, 27, 24, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.56);
+  padding: 10px 12px;
+}
+
+.exchangeRateStatusPanel dt {
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.exchangeRateStatusPanel dd {
+  margin: 0;
+  color: #171310;
+  font-size: 14px;
+  font-weight: 800;
 }
 
 .numberCell {
