@@ -1,3 +1,4 @@
+import { CopyableText } from "@/app/components/common/CopyableText";
 import type { SupplierSource } from "@/types/supplier";
 
 type SupplierSourceShippingTableProps = {
@@ -99,7 +100,9 @@ export function SupplierSourceShippingTable({
         <tbody>
           {sources.map((source) => (
             <tr key={source.sku}>
-              <td className="selectedCell">{source.sku}</td>
+              <td className="selectedCell">
+                <CopyableText value={source.sku} />
+              </td>
               {editableCell(source, "shippingSite", onRowChange)}
               {editableCell(source, "packer", onRowChange)}
               {editableCell(source, "actualWeight", onRowChange, "numberCell")}

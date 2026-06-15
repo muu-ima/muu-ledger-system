@@ -808,6 +808,54 @@ fieldset input:not([type="checkbox"]) {
   font-size: 12px;
 }
 
+.copyableText,
+.copyableInputGroup {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-width: 0;
+  gap: 4px;
+  vertical-align: middle;
+}
+
+.copyableInputGroup {
+  width: 100%;
+}
+
+.copyableInputGroup .ecSalesCellInput {
+  min-width: 0;
+}
+
+.copyableTextValue {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.copyIconButton {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border: 1px solid rgba(31, 27, 24, 0.22);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 0;
+  color: #2a2420;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.copyIconButton:hover {
+  border-color: rgba(47, 102, 210, 0.42);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.copyIconButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .numberCell .ecSalesCellInput {
   text-align: right;
 }

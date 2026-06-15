@@ -1,3 +1,4 @@
+import { CopyableText } from "@/app/components/common/CopyableText";
 import type { SupplierSource } from "@/types/supplier";
 
 type SupplierSourceDetailTableProps = {
@@ -17,14 +18,25 @@ function editableCell(
   onRowChange: SupplierSourceDetailTableProps["onRowChange"],
   className?: string,
 ) {
+  const input = (
+    <input
+      className="ecSalesCellInput"
+      type="text"
+      value={source[field]}
+      onChange={(event) => onRowChange(source.sku, field, event.target.value)}
+    />
+  );
+
   return (
     <td className={className}>
-      <input
-        className="ecSalesCellInput"
-        type="text"
-        value={source[field]}
-        onChange={(event) => onRowChange(source.sku, field, event.target.value)}
-      />
+      {field === "orderNo" ? (
+        <span className="copyableInputGroup">
+          {input}
+          <CopyableText value={source.orderNo} showValue={false} />
+        </span>
+      ) : (
+        input
+      )}
     </td>
   );
 }
@@ -70,7 +82,9 @@ export function SupplierSourceDetailTable({
           {sources.map((source) => (
             <tr key={source.sku}>
               <td>{source.rowNo}</td>
-              <td className="selectedCell">{source.sku}</td>
+              <td className="selectedCell">
+                <CopyableText value={source.sku} />
+              </td>
               {editableCell(source, "account", onRowChange)}
               {editableCell(source, "orderNo", onRowChange)}
               {editableCell(source, "soldAt", onRowChange)}

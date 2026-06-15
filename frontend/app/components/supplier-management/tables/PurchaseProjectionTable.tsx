@@ -1,3 +1,4 @@
+import { CopyableText } from "@/app/components/common/CopyableText";
 import type { PurchaseProjectionRow } from "@/types/supplier";
 
 type PurchaseProjectionColumn = {
@@ -83,6 +84,8 @@ export function PurchaseProjectionTable({
                         onRowChange(row.sku, column.key, event.target.value)
                       }
                     />
+                  ) : column.key === "sku" || column.key === "orderNo" ? (
+                    <CopyableText value={row[column.key]} />
                   ) : (
                     row[column.key]
                   )}

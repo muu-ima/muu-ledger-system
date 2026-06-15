@@ -1,3 +1,4 @@
+import { CopyableText } from "@/app/components/common/CopyableText";
 import type { SupplierSource } from "@/types/supplier";
 
 type SupplierSourceSummaryTableProps = {
@@ -72,16 +73,21 @@ export function SupplierSourceSummaryTable({
           {sources.map((source) => (
             <tr key={source.sku}>
               <td>{source.rowNo}</td>
-              <td className="selectedCell">{source.sku}</td>
+              <td className="selectedCell">
+                <CopyableText value={source.sku} />
+              </td>
               <td>
-                <input
-                  className="ecSalesCellInput"
-                  type="text"
-                  value={source.orderNo}
-                  onChange={(event) =>
-                    onRowChange(source.sku, "orderNo", event.target.value)
-                  }
-                />
+                <span className="copyableInputGroup">
+                  <input
+                    className="ecSalesCellInput"
+                    type="text"
+                    value={source.orderNo}
+                    onChange={(event) =>
+                      onRowChange(source.sku, "orderNo", event.target.value)
+                    }
+                  />
+                  <CopyableText value={source.orderNo} showValue={false} />
+                </span>
               </td>
               <td>{booleanSelect(source, "purchasedFlag", onRowChange)}</td>
               <td>
