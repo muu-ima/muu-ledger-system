@@ -12,6 +12,8 @@ if (!defined('ABSPATH')) {
 
 require_once __DIR__ . '/admin-supplier-sources.php';
 require_once __DIR__ . '/admin-ec-sales.php';
+require_once __DIR__ . '/admin-exchange-rates.php';
+require_once __DIR__ . '/admin-payments.php';
 require_once __DIR__ . '/admin-launch-settings.php';
 require_once __DIR__ . '/admin-ledger.php';
 require_once __DIR__ . '/includes/admin-menu.php';
@@ -22,6 +24,6 @@ require_once __DIR__ . '/includes/ledger-rest-crud.php';
 require_once __DIR__ . '/includes/rest.php';
 require_once __DIR__ . '/includes/sync/supplier-sources.php';
 
-const KOBUTSU_LEDGER_DB_VERSION = '0.3.2';
+const KOBUTSU_LEDGER_DB_VERSION = '0.3.4';
 
 kobutsu_ledger_register_hooks(__FILE__);

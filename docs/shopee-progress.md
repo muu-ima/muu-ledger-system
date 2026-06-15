@@ -80,6 +80,48 @@ Shopee 系データモデルと管理画面実装の進捗メモです。
 - `写真`
 - `販売先`
 
+### 6. 為替レート
+
+販売時/出金時の為替補完に向けて、`exchange_rates` を取得元つきの原票として扱う形に整理しました。
+
+- `wp_kobutsu_exchange_rates`
+  - `rate_date`, `base_currency`, `quote_currency`, `source` の組み合わせで保存
+  - `manual`, `exchangerate_api`, 将来の `mizuho` などを併存できる
+  - 既存互換の `currency_code`, `rate_jpy` は残しつつ、新規処理では `base_currency`, `quote_currency`, `rate` を優先
+- WordPress 管理画面
+  - ExchangeRate-API key の保存
+  - 当日分の手動取得
+  - WP-Cron による日次自動取得
+  - 手入力レートの保存
+  - 手入力固定行を自動取得で上書きしない運用
+- EC販売補完
+  - `sale_exchange_rate` は販売日 + 販売通貨から空欄時に補完
+  - `payout_exchange_rate` は出金日 + 出金通貨がある場合だけ空欄時に補完
+  - `sale_amount_jpy` は販売額と販売時為替から自動計算
+  - `received_amount_jpy` は Payoneer/Shopee 明細が入るまで過度に自動計算しない
+- Web UI
+  - `為替レート` 画面で保存済みレートを表示
+  - `レート一覧` / `取得状況` のタブを追加
+  - 取得元フィルタ、検索、ページネーションを追加
+  - 適用優先順位、最新レート日、保存済み件数、取得元内訳を表示
+
+適用優先順位は `manual > exchangerate_api > その他` とします。
+
+### 7. ペイメント原票
+
+Shopee payments CSV は、まず原票として取り込み保存し、損益計算への接続は後段に分ける方針です。
+
+- WordPress 管理画面
+  - Shopee payments CSV 取り込み
+  - ヘッダー行検出
+  - 金額表記の正規化
+  - 重複スキップ
+  - スキップ理由の内訳表示
+  - `import_batches` への取り込み履歴保存
+- Web UI
+  - `ペイメント` 画面で原票と取り込み履歴を表示
+  - タブ、フィルタ、検索、ページネーションを追加
+
 ## 運用上の整理
 
 ### 入力の主な流れ
@@ -100,4 +142,6 @@ Shopee 系データモデルと管理画面実装の進捗メモです。
 - `出品日` の正本をどこに置くか決めて保存対応する
 - `仕入れ表` の未対応手動列をどこまで UI テーブル編集に寄せるか決める
 - 実データ投入を進めて round-trip を確認する
-- `payments` と `exchange_rates` の実データ接続を進める
+- `payments` の手数料、Payout、出金日を `sales_settlements` へ段階的に補完する
+- 過去分の為替レート補完取得を追加する
+- `received_amount_jpy`、Payout、損益計算への接続を進める

@@ -214,6 +214,7 @@ function kobutsu_ledger_render_ec_sale_edit_form(array $sale): void
                         <label>広告費 <input name="ad_fee" type="number" step="0.01" value="<?php echo esc_attr((string) $sale['ad_fee']); ?>"></label>
                         <label>Shopee手数料 <input name="ebay_fee" type="number" step="0.01" value="<?php echo esc_attr((string) $sale['ebay_fee']); ?>"></label>
                         <label>Payout金額 <input name="payout_amount" type="number" step="0.01" value="<?php echo esc_attr((string) $sale['payout_amount']); ?>"></label>
+                        <label>Payout通貨 <input name="payout_currency" type="text" maxlength="3" size="4" value="<?php echo esc_attr((string) $sale['payout_currency']); ?>"></label>
                     </td>
                 </tr>
                 <tr>

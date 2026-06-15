@@ -38,6 +38,18 @@ function kobutsu_ledger_register_routes(): void
         'permission_callback' => 'kobutsu_ledger_can_write',
     ]);
 
+    register_rest_route('kobutsu/v1', '/payments', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'kobutsu_ledger_get_payments',
+        'permission_callback' => 'kobutsu_ledger_can_read',
+    ]);
+
+    register_rest_route('kobutsu/v1', '/exchange-rates', [
+        'methods' => WP_REST_Server::READABLE,
+        'callback' => 'kobutsu_ledger_get_exchange_rates',
+        'permission_callback' => 'kobutsu_ledger_can_read',
+    ]);
+
     register_rest_route('kobutsu/v1', '/items', [
         [
             'methods' => WP_REST_Server::READABLE,

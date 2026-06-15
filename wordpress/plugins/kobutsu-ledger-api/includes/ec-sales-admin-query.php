@@ -73,6 +73,7 @@ function kobutsu_ledger_ec_sales_select_sql(): string
         COALESCE(ss.ad_fee, 0) AS ad_fee,
         COALESCE(ss.ebay_fee, 0) AS ebay_fee,
         COALESCE(ss.payout_amount, 0) AS payout_amount,
+        COALESCE(ss.payout_currency, "") AS payout_currency,
         COALESCE(ss.sale_exchange_rate, 0) AS sale_exchange_rate,
         COALESCE(ss.payout_exchange_rate, 0) AS payout_exchange_rate,
         COALESCE(ss.received_amount_jpy, 0) AS received_amount_jpy,

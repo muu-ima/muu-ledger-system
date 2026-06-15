@@ -40,19 +40,22 @@ SKU単位の商品マスタです。1 SKU = 1台帳対象を基本にします�
 
 EC販売表の損益計算部分です。
 
-主な項目: `order_no`, `payout_date`, `total_fees`, `ad_fee`, `ebay_fee`, `payout_amount`, `sale_exchange_rate`, `payout_exchange_rate`, `received_amount_jpy`, `overseas_shipping_jpy`, `profit_jpy`, `profit_rate`
+主な項目: `order_no`, `payout_date`, `total_fees`, `ad_fee`, `ebay_fee`, `payout_amount`, `payout_currency`, `sale_exchange_rate`, `payout_exchange_rate`, `received_amount_jpy`, `overseas_shipping_jpy`, `profit_jpy`, `profit_rate`
 
 ### `wp_kobutsu_payment_transactions`
 
-eBay/Payoneerの支払明細を原票として保存します。CSVの列が多く変化しやすいため、主要列に加えて `raw_payload` も持ちます。
+ECモールの支払明細を原票として保存します。Shopee payments CSV は `transaction_type = shopee_payment` として取り込み、主要列に加えて `raw_payload` に元行を保持します。CSVの列が多く変化しやすいため、初期段階では計算へ直結せず、原票保存と一覧確認を優先します。
 
 ### `wp_kobutsu_exchange_rates`
 
-日付と通貨ごとの円換算レートです。`rate_date` と `currency_code` の組み合わせを一意にします。
+日付、通貨ペア、取得元ごとの換算レートです。みずほ、ExchangeRate-API、手入力補正を同じ日付・通貨ペアで併存できるように、`rate_date`, `base_currency`, `quote_currency`, `source` の組み合わせを一意にします。
+
+既存の円換算用途との互換性のため、`currency_code` と `rate_jpy` も保持します。新規処理では `base_currency`, `quote_currency`, `rate` を優先して参照します。手入力で固定したレートは `is_manual_override` を立て、自動取得では上書きしない運用にします。
 
 ### `wp_kobutsu_import_batches`
 
 CSV取込履歴です。どのCSVをいつ何行取り込んだか、何行エラーになったかを残します。
+Shopee payments CSV では `source_name = shopee_payments` として、保存件数、スキップ件数、スキップ内訳を `notes` に保持します。
 
 ## API
 
@@ -62,5 +65,9 @@ CSV取込履歴です。どのCSVをいつ何行取り込んだか、何行エ�
 - `GET /wp-json/kobutsu/v1/items`: 商品、仕入、販売を結合した一覧
 - `GET /wp-json/kobutsu/v1/items/{id}`: 1件取得
 - `POST /wp-json/kobutsu/v1/items`: 1件登録
+- `GET /wp-json/kobutsu/v1/ec-sales`: EC販売の合成ビュー
+- `POST /wp-json/kobutsu/v1/ec-sales/{id}`: EC販売の販売・精算補助列を更新
+- `GET /wp-json/kobutsu/v1/payments`: Shopee ペイメント原票と取り込み履歴
+- `GET /wp-json/kobutsu/v1/exchange-rates`: 保存済み為替レートと取得状況
 
 次の段階ではCSVインポートAPIを追加し、サンプルCSVの先頭数行にある注釈行をスキップして、実ヘッダー行から読み込めるようにします。

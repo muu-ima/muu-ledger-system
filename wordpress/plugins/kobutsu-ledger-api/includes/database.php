@@ -7,6 +7,7 @@ if (!defined('ABSPATH')) {
 function kobutsu_ledger_activate(): void
 {
     kobutsu_ledger_create_tables();
+    kobutsu_ledger_schedule_exchange_rate_fetch();
     update_option('kobutsu_ledger_db_version', KOBUTSU_LEDGER_DB_VERSION);
 }
 
@@ -212,6 +213,7 @@ function kobutsu_ledger_create_tables(): void
         ad_fee decimal(14,2) NOT NULL DEFAULT 0,
         ebay_fee decimal(14,2) NOT NULL DEFAULT 0,
         payout_amount decimal(14,2) NOT NULL DEFAULT 0,
+        payout_currency char(3) NOT NULL DEFAULT '',
         sale_exchange_rate decimal(10,4) NOT NULL DEFAULT 0,
         payout_exchange_rate decimal(10,4) NOT NULL DEFAULT 0,
         received_amount_jpy int NOT NULL DEFAULT 0,
@@ -268,13 +270,23 @@ function kobutsu_ledger_create_tables(): void
         rate_date date NOT NULL,
         currency_code char(3) NOT NULL,
         rate_jpy decimal(10,4) NOT NULL,
+        base_currency char(3) NOT NULL DEFAULT '',
+        quote_currency char(3) NOT NULL DEFAULT 'JPY',
+        rate decimal(14,8) NOT NULL DEFAULT 0,
         source varchar(191) NOT NULL DEFAULT 'mizuho',
+        is_manual_override tinyint(1) unsigned NOT NULL DEFAULT 0,
+        fetched_at datetime NULL,
+        notes text NULL,
         created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY  (id),
-        UNIQUE KEY rate_date_currency (rate_date,currency_code),
-        KEY currency_code (currency_code)
+        UNIQUE KEY rate_pair_source (rate_date,base_currency,quote_currency,source),
+        KEY currency_code (currency_code),
+        KEY base_quote_date (base_currency,quote_currency,rate_date),
+        KEY source (source)
     ) $charset_collate;");
+
+    kobutsu_ledger_upgrade_exchange_rates_table($exchange_rates);
 
     dbDelta("CREATE TABLE $import_batches (
         id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -290,4 +302,28 @@ function kobutsu_ledger_create_tables(): void
         KEY source_name (source_name),
         KEY status (status)
     ) $charset_collate;");
+}
+
+function kobutsu_ledger_upgrade_exchange_rates_table(string $exchange_rates): void
+{
+    global $wpdb;
+
+    $wpdb->query(
+        "UPDATE $exchange_rates
+        SET base_currency = currency_code,
+            quote_currency = 'JPY',
+            rate = rate_jpy
+        WHERE base_currency = '' OR rate = 0"
+    );
+
+    $old_index = $wpdb->get_var(
+        $wpdb->prepare(
+            "SHOW INDEX FROM $exchange_rates WHERE Key_name = %s",
+            'rate_date_currency'
+        )
+    );
+
+    if ($old_index !== null) {
+        $wpdb->query("ALTER TABLE $exchange_rates DROP INDEX rate_date_currency");
+    }
 }

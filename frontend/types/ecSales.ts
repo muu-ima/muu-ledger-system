@@ -397,6 +397,7 @@ export type EcSalesRecordApiRow = {
   ad_fee_raw?: ApiValue;
   marketplace_fee_raw?: ApiValue;
   payout_amount_raw?: ApiValue;
+  payout_currency?: ApiValue;
   sale_exchange_rate?: ApiValue;
   payout_exchange_rate?: ApiValue;
   received_amount_jpy?: ApiValue;

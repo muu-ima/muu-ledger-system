@@ -36,5 +36,7 @@ function kobutsu_ledger_register_admin_menu(): void
         28
     );
 
+    kobutsu_ledger_register_exchange_rates_admin_menu();
+    kobutsu_ledger_register_payments_admin_menu();
     kobutsu_ledger_register_launch_settings_menu();
 }
