@@ -1,3 +1,4 @@
+import { CopyableText } from "@/app/components/common/CopyableText";
 import { DragScrollArea } from "@/app/components/common/DragScrollArea";
 import type { LedgerItem } from "@/types/ledger";
 
@@ -39,7 +40,9 @@ export function LedgerPartySection({
               const sold = isSold(item);
               return (
                 <tr key={item.id}>
-                  <td className="selectedCell">{item.managementNo}</td>
+                  <td className="selectedCell">
+                    <CopyableText value={item.managementNo} />
+                  </td>
                   <td>{item.sellerIdentification}</td>
                   <td>{sold ? "アメリカ" : ""}</td>
                   <td>{sold ? "buyer_sample" : ""}</td>

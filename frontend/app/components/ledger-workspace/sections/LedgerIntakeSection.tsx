@@ -1,3 +1,4 @@
+import { CopyableText } from "@/app/components/common/CopyableText";
 import { DragScrollArea } from "@/app/components/common/DragScrollArea";
 import type { LedgerItem } from "@/types/ledger";
 
@@ -45,7 +46,9 @@ export function LedgerIntakeSection({
             {items.map((item, index) => (
               <tr key={item.id}>
                 <td>{item.acquiredAt || (index % 5 === 0 ? "在庫" : "")}</td>
-                <td className="selectedCell">{item.managementNo}</td>
+                <td className="selectedCell">
+                  <CopyableText value={item.managementNo} />
+                </td>
                 <td>買受</td>
                 <td>{item.category}</td>
                 <td className="nameCell">{item.itemName}</td>

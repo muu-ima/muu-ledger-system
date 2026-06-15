@@ -1,3 +1,4 @@
+import { CopyableText } from "@/app/components/common/CopyableText";
 import { DragScrollArea } from "@/app/components/common/DragScrollArea";
 import type { LedgerItem, LedgerStatus } from "@/types/ledger";
 
@@ -59,14 +60,22 @@ export function LedgerPayoutSection({
               const sold = isSold(item);
               return (
                 <tr key={item.id}>
-                  <td className="selectedCell">{item.managementNo}</td>
+                  <td className="selectedCell">
+                    <CopyableText value={item.managementNo} />
+                  </td>
                   <td>{item.soldAt}</td>
                   <td>{sold ? "売却" : statusLabel[item.status]}</td>
                   <td className={sold ? "numberCell selectedCell" : "warningCell"}>
                     {saleValue(item)}
                   </td>
                   <td>{item.soldTo || "ebay"}</td>
-                  <td>{sold ? item.managementNo.replaceAll("_", "") : ""}</td>
+                  <td>
+                    {sold ? (
+                      <CopyableText value={item.managementNo.replaceAll("_", "")} />
+                    ) : (
+                      ""
+                    )}
+                  </td>
                 </tr>
               );
             })}

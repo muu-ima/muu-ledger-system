@@ -12,6 +12,12 @@ type DragScrollAreaProps = {
   className?: string;
 };
 
+function shouldIgnoreDragStart(target: EventTarget | null) {
+  return target instanceof HTMLElement
+    ? Boolean(target.closest("button, input, select, textarea, a"))
+    : false;
+}
+
 export function DragScrollArea({
   children,
   className = "ledgerTableFrame",
@@ -34,6 +40,7 @@ export function DragScrollArea({
   const handleMouseDown = (event: ReactMouseEvent<HTMLDivElement>) => {
     const container = containerRef.current;
     if (!container) return;
+    if (shouldIgnoreDragStart(event.target)) return;
 
     dragStateRef.current = {
       active: true,

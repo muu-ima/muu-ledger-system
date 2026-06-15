@@ -1,6 +1,7 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { CopyableText } from "@/app/components/common/CopyableText";
 import { DragScrollArea } from "@/app/components/common/DragScrollArea";
 import { PaginationControls } from "@/app/components/common/PaginationControls";
 import { fetchPayments } from "@/lib/payments";
@@ -273,7 +274,9 @@ function PaymentTransactionsTable({
           ) : (
             transactions.map((transaction) => (
               <tr key={transaction.id}>
-                <td>{transaction.orderNo}</td>
+                <td>
+                  <CopyableText value={transaction.orderNo} />
+                </td>
                 <td>{transaction.transactionDate}</td>
                 <td>{transaction.payoutDate}</td>
                 <td>{transaction.buyerUsername}</td>

@@ -1,3 +1,4 @@
+import { CopyableText } from "@/app/components/common/CopyableText";
 import type { EcSalesRecord, EcSalesSummaryView } from "@/types/ecSales";
 
 type EcSalesColumn = {
@@ -272,19 +273,40 @@ export function EcSalesTable({
             {columns.map((column) => (
               <td key={column.key} className={column.cellClassName}>
                 {column.editable ? (
-                  <input
-                    className="ecSalesCellInput"
-                    type={inputTypeForColumn(column)}
-                    value={record[column.key]}
-                    onChange={(event) =>
-                      onRecordChange(
-                        record.sku,
-                        record.orderNo,
-                        column.key,
-                        event.target.value,
-                      )
-                    }
-                  />
+                  column.key === "orderNo" ? (
+                    <span className="copyableInputGroup">
+                      <input
+                        className="ecSalesCellInput"
+                        type={inputTypeForColumn(column)}
+                        value={record[column.key]}
+                        onChange={(event) =>
+                          onRecordChange(
+                            record.sku,
+                            record.orderNo,
+                            column.key,
+                            event.target.value,
+                          )
+                        }
+                      />
+                      <CopyableText value={record.orderNo} showValue={false} />
+                    </span>
+                  ) : (
+                    <input
+                      className="ecSalesCellInput"
+                      type={inputTypeForColumn(column)}
+                      value={record[column.key]}
+                      onChange={(event) =>
+                        onRecordChange(
+                          record.sku,
+                          record.orderNo,
+                          column.key,
+                          event.target.value,
+                        )
+                      }
+                    />
+                  )
+                ) : column.key === "sku" ? (
+                  <CopyableText value={record.sku} />
                 ) : (
                   record[column.key]
                 )}
