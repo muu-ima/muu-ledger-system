@@ -55,6 +55,7 @@ function kobutsu_ledger_create_tables(): void
     $sales = kobutsu_ledger_table('sales');
     $settlements = kobutsu_ledger_table('sales_settlements');
     $payment_transactions = kobutsu_ledger_table('payment_transactions');
+    $shopee_orders = kobutsu_ledger_table('shopee_orders');
     $exchange_rates = kobutsu_ledger_table('exchange_rates');
     $import_batches = kobutsu_ledger_table('import_batches');
 
@@ -263,6 +264,46 @@ function kobutsu_ledger_create_tables(): void
         KEY order_no (order_no),
         KEY payout_id (payout_id),
         KEY sku (sku)
+    ) $charset_collate;");
+
+    dbDelta("CREATE TABLE $shopee_orders (
+        id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+        order_no varchar(120) NOT NULL DEFAULT '',
+        order_status varchar(191) NOT NULL DEFAULT '',
+        order_created_at datetime NULL,
+        order_paid_at datetime NULL,
+        order_completed_at datetime NULL,
+        ship_time datetime NULL,
+        estimated_ship_out_at datetime NULL,
+        buyer_username varchar(191) NOT NULL DEFAULT '',
+        country char(2) NOT NULL DEFAULT '',
+        parent_sku varchar(120) NOT NULL DEFAULT '',
+        sku varchar(120) NOT NULL DEFAULT '',
+        product_name text NULL,
+        variation_name varchar(191) NOT NULL DEFAULT '',
+        quantity int NOT NULL DEFAULT 0,
+        returned_quantity int NOT NULL DEFAULT 0,
+        gross_amount decimal(14,2) NOT NULL DEFAULT 0,
+        total_amount decimal(14,2) NOT NULL DEFAULT 0,
+        grand_total decimal(14,2) NOT NULL DEFAULT 0,
+        currency char(3) NOT NULL DEFAULT '',
+        tracking_number varchar(191) NOT NULL DEFAULT '',
+        shipping_option varchar(191) NOT NULL DEFAULT '',
+        shipment_method varchar(191) NOT NULL DEFAULT '',
+        cancel_reason text NULL,
+        return_refund_status varchar(191) NOT NULL DEFAULT '',
+        reference_id varchar(191) NOT NULL DEFAULT '',
+        source_line_number int unsigned NOT NULL DEFAULT 0,
+        raw_payload longtext NULL,
+        created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY  (id),
+        UNIQUE KEY reference_id (reference_id),
+        KEY order_no (order_no),
+        KEY order_status (order_status),
+        KEY order_created_at (order_created_at),
+        KEY country (country),
+        KEY sku (sku),
+        KEY tracking_number (tracking_number)
     ) $charset_collate;");
 
     dbDelta("CREATE TABLE $exchange_rates (
