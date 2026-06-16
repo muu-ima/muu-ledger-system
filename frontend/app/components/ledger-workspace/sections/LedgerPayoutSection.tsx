@@ -49,6 +49,10 @@ function linkSourceLabel(source: string) {
   return "";
 }
 
+function isShopeeSupplement(item: LedgerItem) {
+  return item.ledgerLinkSource === "shopee_orders";
+}
+
 export function LedgerPayoutSection({
   items,
 }: {
@@ -70,6 +74,7 @@ export function LedgerPayoutSection({
             <col className="sourceCol" />
             <col className="verifyCol" />
             <col className="buyerCol" />
+            <col className="sourceCol" />
             <col className="typeCol" />
             <col className="sourceCol" />
           </colgroup>
@@ -82,6 +87,7 @@ export function LedgerPayoutSection({
               <th>販売先</th>
               <th>確認方法 取引ID</th>
               <th>国名</th>
+              <th>配送番号</th>
               <th>注文状態</th>
               <th>反映元</th>
             </tr>
@@ -108,8 +114,13 @@ export function LedgerPayoutSection({
                     )}
                   </td>
                   <td>{item.buyerCountry}</td>
+                  <td>
+                    <CopyableText value={item.trackingNo} />
+                  </td>
                   <td>{item.shopeeOrderStatus}</td>
-                  <td>{linkSourceLabel(item.ledgerLinkSource)}</td>
+                  <td className={isShopeeSupplement(item) ? "supplementCell" : ""}>
+                    {linkSourceLabel(item.ledgerLinkSource)}
+                  </td>
                 </tr>
               );
             })}

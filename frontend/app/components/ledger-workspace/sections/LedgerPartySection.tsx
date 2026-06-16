@@ -12,6 +12,12 @@ function buyerAddress(item: LedgerItem) {
     .join(" ");
 }
 
+function linkSourceLabel(source: string) {
+  if (source === "sales") return "EC販売";
+  if (source === "shopee_orders") return "Shopee補完";
+  return "";
+}
+
 export function LedgerPartySection({
   items,
 }: {
@@ -35,6 +41,7 @@ export function LedgerPartySection({
             <col className="buyerCol" />
             <col className="buyerCol" />
             <col className="addressCol" />
+            <col className="sourceCol" />
           </colgroup>
           <thead>
             <tr className="headerRow">
@@ -48,6 +55,7 @@ export function LedgerPartySection({
               <th>州</th>
               <th>郵便番号</th>
               <th>送付先住所</th>
+              <th>反映元</th>
             </tr>
           </thead>
           <tbody>
@@ -69,6 +77,9 @@ export function LedgerPartySection({
                   <td>{sold ? item.buyerState : ""}</td>
                   <td>{sold ? item.buyerPostalCode : ""}</td>
                   <td>{sold ? buyerAddress(item) : ""}</td>
+                  <td className={item.ledgerLinkSource === "shopee_orders" ? "supplementCell" : ""}>
+                    {sold ? linkSourceLabel(item.ledgerLinkSource) : ""}
+                  </td>
                 </tr>
               );
             })}

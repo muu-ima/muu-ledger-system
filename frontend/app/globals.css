@@ -1017,6 +1017,12 @@ fieldset input:not([type="checkbox"]) {
   font-variant-numeric: tabular-nums;
 }
 
+.supplementCell {
+  background: #e9f3ff !important;
+  color: #174073;
+  font-weight: 800;
+}
+
 .dateCol {
   width: 112px;
 }
