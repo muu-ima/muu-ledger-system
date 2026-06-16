@@ -12,6 +12,7 @@ import { LedgerRecordSections } from "@/app/components/ledger-workspace/sections
 import EcSalesWorkspace from "@/app/components/EcSalesWorkspace";
 import ExchangeRateWorkspace from "@/app/components/ExchangeRateWorkspace";
 import PaymentWorkspace from "@/app/components/PaymentWorkspace";
+import ShopeeOrderWorkspace from "@/app/components/ShopeeOrderWorkspace";
 import SupplierManagement from "@/app/components/SupplierManagement";
 import type { LedgerItem } from "@/types/ledger";
 
@@ -86,6 +87,8 @@ export default function LedgerWorkspace({ items }: { items: LedgerItem[] }) {
             <ExchangeRateWorkspace />
           ) : activeTab === "ペイメント" ? (
             <PaymentWorkspace />
+          ) : activeTab === "Shopeeオーダー" ? (
+            <ShopeeOrderWorkspace />
           ) : (
             <>
               <LedgerWorkspaceTop

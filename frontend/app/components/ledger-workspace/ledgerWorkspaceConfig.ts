@@ -4,6 +4,7 @@ export const tabs = [
   "EC販売",
   "為替レート",
   "ペイメント",
+  "Shopeeオーダー",
 ] as const;
 
 export type WorkspaceTab = (typeof tabs)[number];
@@ -14,6 +15,7 @@ export const tabDescriptions: Record<WorkspaceTab, string> = {
   EC販売: "販売、精算、送料、損益を確認するビュー",
   為替レート: "販売日と出金日の換算レートを確認するビュー",
   ペイメント: "入金、手数料、Payoutを確認するビュー",
+  Shopeeオーダー: "Shopeeで受け付けた注文原票を確認するビュー",
 };
 
 export const categories = [

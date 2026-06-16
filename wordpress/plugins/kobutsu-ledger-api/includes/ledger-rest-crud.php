@@ -374,6 +374,45 @@ function kobutsu_ledger_get_payments(WP_REST_Request $request): WP_REST_Response
     ]);
 }
 
+function kobutsu_ledger_get_shopee_orders(WP_REST_Request $request): WP_REST_Response
+{
+    global $wpdb;
+
+    $shopee_orders = kobutsu_ledger_table('shopee_orders');
+    $import_batches = kobutsu_ledger_table('import_batches');
+
+    $orders = $wpdb->get_results(
+        "SELECT id, order_no, order_status, order_created_at, order_paid_at,
+            order_completed_at, ship_time, estimated_ship_out_at, buyer_username,
+            country, parent_sku, sku, product_name, variation_name, quantity,
+            returned_quantity, gross_amount, total_amount, grand_total, currency,
+            tracking_number, shipping_option, shipment_method, cancel_reason,
+            return_refund_status, source_line_number, created_at
+        FROM $shopee_orders
+        ORDER BY id DESC
+        LIMIT 500",
+        ARRAY_A
+    );
+
+    $batches = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT id, source_name, original_filename, status, imported_rows, error_rows,
+                notes, created_at, completed_at
+            FROM $import_batches
+            WHERE source_name = %s
+            ORDER BY id DESC
+            LIMIT 100",
+            'shopee_orders'
+        ),
+        ARRAY_A
+    );
+
+    return rest_ensure_response([
+        'orders' => array_map('kobutsu_ledger_format_payment_api_row', $orders),
+        'batches' => array_map('kobutsu_ledger_format_payment_api_row', $batches),
+    ]);
+}
+
 function kobutsu_ledger_get_exchange_rates(WP_REST_Request $request): WP_REST_Response
 {
     global $wpdb;
