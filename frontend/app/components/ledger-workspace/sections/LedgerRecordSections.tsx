@@ -36,6 +36,10 @@ function matchesLedgerSearch(item: LedgerItem, searchQuery: string) {
     item.category,
     item.acquiredFrom,
     item.soldTo,
+    item.saleOrderNo,
+    item.buyerId,
+    item.buyerName,
+    item.buyerCountry,
   ]
     .join(" ")
     .toLowerCase()

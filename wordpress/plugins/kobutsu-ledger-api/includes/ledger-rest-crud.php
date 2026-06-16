@@ -9,9 +9,12 @@ function kobutsu_ledger_get_items(WP_REST_Request $request): WP_REST_Response
     global $wpdb;
 
     $items = $wpdb->get_results(
-        "SELECT i.id, i.sku, i.category, i.item_name, i.accessories, i.condition_label, i.description, i.photo_url, i.status,
-            p.purchase_date, p.supplier_name_raw, p.seller_identification, p.purchase_price_jpy, p.source_order_no,
-            s.sale_date, s.marketplace, s.sale_amount, s.sale_currency, s.sale_amount_jpy
+        "SELECT i.id, i.sku, i.category, i.item_name, i.quantity, i.accessories, i.condition_label, i.description, i.photo_url, i.status,
+            p.purchase_date, p.transaction_type, p.supplier_name_raw, p.seller_identification, p.seller_address,
+            p.seller_name, p.seller_age, p.seller_occupation, p.purchase_price_jpy, p.source_order_no,
+            s.sale_date, s.marketplace, s.order_no, s.sale_type, s.sale_amount, s.sale_currency, s.sale_amount_jpy,
+            s.buyer_country, s.buyer_id, s.buyer_name, s.buyer_city, s.buyer_state, s.buyer_postal_code,
+            s.buyer_address1, s.buyer_address2, s.buyer_address3, s.tracking_no, s.shipping_site
         FROM " . kobutsu_ledger_table('items') . " i
         LEFT JOIN " . kobutsu_ledger_table('purchases') . " p ON p.item_id = i.id
         LEFT JOIN " . kobutsu_ledger_table('sales') . " s ON s.item_id = i.id
@@ -29,9 +32,12 @@ function kobutsu_ledger_get_item(WP_REST_Request $request): WP_REST_Response|WP_
 
     $row = $wpdb->get_row(
         $wpdb->prepare(
-            "SELECT i.id, i.sku, i.category, i.item_name, i.accessories, i.condition_label, i.description, i.photo_url, i.status,
-                p.purchase_date, p.supplier_name_raw, p.seller_identification, p.purchase_price_jpy, p.source_order_no,
-                s.sale_date, s.marketplace, s.sale_amount, s.sale_currency, s.sale_amount_jpy
+            "SELECT i.id, i.sku, i.category, i.item_name, i.quantity, i.accessories, i.condition_label, i.description, i.photo_url, i.status,
+                p.purchase_date, p.transaction_type, p.supplier_name_raw, p.seller_identification, p.seller_address,
+                p.seller_name, p.seller_age, p.seller_occupation, p.purchase_price_jpy, p.source_order_no,
+                s.sale_date, s.marketplace, s.order_no, s.sale_type, s.sale_amount, s.sale_currency, s.sale_amount_jpy,
+                s.buyer_country, s.buyer_id, s.buyer_name, s.buyer_city, s.buyer_state, s.buyer_postal_code,
+                s.buyer_address1, s.buyer_address2, s.buyer_address3, s.tracking_no, s.shipping_site
             FROM " . kobutsu_ledger_table('items') . " i
             LEFT JOIN " . kobutsu_ledger_table('purchases') . " p ON p.item_id = i.id
             LEFT JOIN " . kobutsu_ledger_table('sales') . " s ON s.item_id = i.id
@@ -370,6 +376,45 @@ function kobutsu_ledger_get_payments(WP_REST_Request $request): WP_REST_Response
 
     return rest_ensure_response([
         'transactions' => array_map('kobutsu_ledger_format_payment_api_row', $transactions),
+        'batches' => array_map('kobutsu_ledger_format_payment_api_row', $batches),
+    ]);
+}
+
+function kobutsu_ledger_get_shopee_orders(WP_REST_Request $request): WP_REST_Response
+{
+    global $wpdb;
+
+    $shopee_orders = kobutsu_ledger_table('shopee_orders');
+    $import_batches = kobutsu_ledger_table('import_batches');
+
+    $orders = $wpdb->get_results(
+        "SELECT id, order_no, order_status, order_created_at, order_paid_at,
+            order_completed_at, ship_time, estimated_ship_out_at, buyer_username,
+            country, parent_sku, sku, product_name, variation_name, quantity,
+            returned_quantity, gross_amount, total_amount, grand_total, currency,
+            tracking_number, shipping_option, shipment_method, cancel_reason,
+            return_refund_status, source_line_number, created_at
+        FROM $shopee_orders
+        ORDER BY id DESC
+        LIMIT 500",
+        ARRAY_A
+    );
+
+    $batches = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT id, source_name, original_filename, status, imported_rows, error_rows,
+                notes, created_at, completed_at
+            FROM $import_batches
+            WHERE source_name = %s
+            ORDER BY id DESC
+            LIMIT 100",
+            'shopee_orders'
+        ),
+        ARRAY_A
+    );
+
+    return rest_ensure_response([
+        'orders' => array_map('kobutsu_ledger_format_payment_api_row', $orders),
         'batches' => array_map('kobutsu_ledger_format_payment_api_row', $batches),
     ]);
 }
