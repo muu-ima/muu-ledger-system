@@ -35,5 +35,7 @@ export type LedgerItem = {
   buyerAddress3: string;
   trackingNo: string;
   shippingSite: string;
+  shopeeOrderStatus: string;
+  ledgerLinkSource: string;
   status: LedgerStatus;
 };

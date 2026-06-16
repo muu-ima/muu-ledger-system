@@ -8,16 +8,52 @@ function kobutsu_ledger_get_items(WP_REST_Request $request): WP_REST_Response
 {
     global $wpdb;
 
+    $items_table = kobutsu_ledger_table('items');
+    $purchases_table = kobutsu_ledger_table('purchases');
+    $sales_table = kobutsu_ledger_table('sales');
+    $shopee_orders_table = kobutsu_ledger_table('shopee_orders');
+    $query_collation = preg_replace('/[^A-Za-z0-9_]/', '', (string) $wpdb->collate);
+    if ($query_collation === '') {
+        $query_collation = 'utf8mb4_unicode_ci';
+    }
+
     $items = $wpdb->get_results(
         "SELECT i.id, i.sku, i.category, i.item_name, i.quantity, i.accessories, i.condition_label, i.description, i.photo_url, i.status,
             p.purchase_date, p.transaction_type, p.supplier_name_raw, p.seller_identification, p.seller_address,
             p.seller_name, p.seller_age, p.seller_occupation, p.purchase_price_jpy, p.source_order_no,
             s.sale_date, s.marketplace, s.order_no, s.sale_type, s.sale_amount, s.sale_currency, s.sale_amount_jpy,
             s.buyer_country, s.buyer_id, s.buyer_name, s.buyer_city, s.buyer_state, s.buyer_postal_code,
-            s.buyer_address1, s.buyer_address2, s.buyer_address3, s.tracking_no, s.shipping_site
-        FROM " . kobutsu_ledger_table('items') . " i
-        LEFT JOIN " . kobutsu_ledger_table('purchases') . " p ON p.item_id = i.id
-        LEFT JOIN " . kobutsu_ledger_table('sales') . " s ON s.item_id = i.id
+            s.buyer_address1, s.buyer_address2, s.buyer_address3, s.tracking_no, s.shipping_site,
+            so.order_no AS shopee_order_no, so.order_status AS shopee_order_status, DATE(so.order_created_at) AS shopee_order_date,
+            so.buyer_username AS shopee_buyer_username, so.country AS shopee_country,
+            so.gross_amount AS shopee_gross_amount, so.total_amount AS shopee_total_amount,
+            so.grand_total AS shopee_grand_total, so.currency AS shopee_currency,
+            so.tracking_number AS shopee_tracking_number, so.shipping_option AS shopee_shipping_option,
+            so.shipment_method AS shopee_shipment_method
+        FROM $items_table i
+        LEFT JOIN $purchases_table p ON p.item_id = i.id
+        LEFT JOIN $sales_table s ON s.item_id = i.id
+        LEFT JOIN $shopee_orders_table so ON so.id = (
+            SELECT so2.id
+            FROM $shopee_orders_table so2
+            WHERE so2.sku COLLATE $query_collation = i.sku COLLATE $query_collation
+                AND (
+                    s.order_no IS NULL
+                    OR s.order_no = ''
+                    OR so2.order_no COLLATE $query_collation = s.order_no COLLATE $query_collation
+                )
+            ORDER BY
+                CASE
+                    WHEN s.order_no IS NOT NULL
+                        AND s.order_no <> ''
+                        AND so2.order_no COLLATE $query_collation = s.order_no COLLATE $query_collation
+                    THEN 0
+                    ELSE 1
+                END,
+                so2.order_created_at DESC,
+                so2.id DESC
+            LIMIT 1
+        )
         ORDER BY COALESCE(p.purchase_date, i.created_at) DESC, i.id DESC
         LIMIT 100",
         ARRAY_A
@@ -30,6 +66,15 @@ function kobutsu_ledger_get_item(WP_REST_Request $request): WP_REST_Response|WP_
 {
     global $wpdb;
 
+    $items_table = kobutsu_ledger_table('items');
+    $purchases_table = kobutsu_ledger_table('purchases');
+    $sales_table = kobutsu_ledger_table('sales');
+    $shopee_orders_table = kobutsu_ledger_table('shopee_orders');
+    $query_collation = preg_replace('/[^A-Za-z0-9_]/', '', (string) $wpdb->collate);
+    if ($query_collation === '') {
+        $query_collation = 'utf8mb4_unicode_ci';
+    }
+
     $row = $wpdb->get_row(
         $wpdb->prepare(
             "SELECT i.id, i.sku, i.category, i.item_name, i.quantity, i.accessories, i.condition_label, i.description, i.photo_url, i.status,
@@ -37,10 +82,37 @@ function kobutsu_ledger_get_item(WP_REST_Request $request): WP_REST_Response|WP_
                 p.seller_name, p.seller_age, p.seller_occupation, p.purchase_price_jpy, p.source_order_no,
                 s.sale_date, s.marketplace, s.order_no, s.sale_type, s.sale_amount, s.sale_currency, s.sale_amount_jpy,
                 s.buyer_country, s.buyer_id, s.buyer_name, s.buyer_city, s.buyer_state, s.buyer_postal_code,
-                s.buyer_address1, s.buyer_address2, s.buyer_address3, s.tracking_no, s.shipping_site
-            FROM " . kobutsu_ledger_table('items') . " i
-            LEFT JOIN " . kobutsu_ledger_table('purchases') . " p ON p.item_id = i.id
-            LEFT JOIN " . kobutsu_ledger_table('sales') . " s ON s.item_id = i.id
+                s.buyer_address1, s.buyer_address2, s.buyer_address3, s.tracking_no, s.shipping_site,
+                so.order_no AS shopee_order_no, so.order_status AS shopee_order_status, DATE(so.order_created_at) AS shopee_order_date,
+                so.buyer_username AS shopee_buyer_username, so.country AS shopee_country,
+                so.gross_amount AS shopee_gross_amount, so.total_amount AS shopee_total_amount,
+                so.grand_total AS shopee_grand_total, so.currency AS shopee_currency,
+                so.tracking_number AS shopee_tracking_number, so.shipping_option AS shopee_shipping_option,
+                so.shipment_method AS shopee_shipment_method
+            FROM $items_table i
+            LEFT JOIN $purchases_table p ON p.item_id = i.id
+            LEFT JOIN $sales_table s ON s.item_id = i.id
+            LEFT JOIN $shopee_orders_table so ON so.id = (
+                SELECT so2.id
+                FROM $shopee_orders_table so2
+                WHERE so2.sku COLLATE $query_collation = i.sku COLLATE $query_collation
+                    AND (
+                        s.order_no IS NULL
+                        OR s.order_no = ''
+                        OR so2.order_no COLLATE $query_collation = s.order_no COLLATE $query_collation
+                    )
+                ORDER BY
+                    CASE
+                        WHEN s.order_no IS NOT NULL
+                            AND s.order_no <> ''
+                            AND so2.order_no COLLATE $query_collation = s.order_no COLLATE $query_collation
+                        THEN 0
+                        ELSE 1
+                    END,
+                    so2.order_created_at DESC,
+                    so2.id DESC
+                LIMIT 1
+            )
             WHERE i.id = %d",
             (int) $request['id']
         ),

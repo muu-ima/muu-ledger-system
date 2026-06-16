@@ -56,6 +56,8 @@ WordPressテーマは `wordpress/themes/kobutsu-ledger-shell` に置きます。
 | `supplier_master_sample.csv` | `supplier_sources`, `suppliers` | 仕入れ元データ。SKU、注文番号、販売日、送料、梱包、発送サイト、仕入先 |
 | `purchases_sample.csv` | `items`, `purchases`, `sales` | 仕入日、仕入先、品目、商品名、付属品、状態、出品日、販売日 |
 | `ledger_sample.csv` | `items`, `purchases`, `sales` | 古物台帳。受入れ・払出し、本人確認、相手方、買主住所 |
+| `docs/shopee-sample/ledger.csv` | 参照サンプル | 現場運用中の古物台帳シートを匿名化したサンプル。複数シート間のリンク確認に使う |
+| `docs/shopee-sample/orders.csv` | `shopee_orders` | Shopee注文原票。Order ID、SKU、注文状態、購入者、配送情報 |
 | `ec_sales_sample.csv` | `sales_settlements` | 販売額、手数料、為替、受取額、送料、還付、損益 |
 | `sales_payments_sample.csv` | `payment_transactions` | eBay/Payoneerの入金、手数料、Payout、トランザクション原票 |
 | `exchange_rates_sample.csv` | `exchange_rates` | みずほ銀行ヒストリカルデータ由来の日別為替 |
