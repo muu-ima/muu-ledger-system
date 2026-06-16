@@ -25,6 +25,15 @@ function kobutsu_ledger_get_items(WP_REST_Request $request): WP_REST_Response
             s.buyer_country, s.buyer_id, s.buyer_name, s.buyer_city, s.buyer_state, s.buyer_postal_code,
             s.buyer_address1, s.buyer_address2, s.buyer_address3, s.tracking_no, s.shipping_site,
             so.order_no AS shopee_order_no, so.order_status AS shopee_order_status, DATE(so.order_created_at) AS shopee_order_date,
+            CASE
+                WHEN so.order_no IS NOT NULL
+                    AND s.order_no IS NOT NULL
+                    AND s.order_no <> ''
+                    AND so.order_no COLLATE $query_collation = s.order_no COLLATE $query_collation
+                THEN 'order_id'
+                WHEN so.order_no IS NOT NULL THEN 'sku'
+                ELSE ''
+            END AS shopee_match_type,
             so.buyer_username AS shopee_buyer_username, so.country AS shopee_country,
             so.gross_amount AS shopee_gross_amount, so.total_amount AS shopee_total_amount,
             so.grand_total AS shopee_grand_total, so.currency AS shopee_currency,
@@ -84,6 +93,15 @@ function kobutsu_ledger_get_item(WP_REST_Request $request): WP_REST_Response|WP_
                 s.buyer_country, s.buyer_id, s.buyer_name, s.buyer_city, s.buyer_state, s.buyer_postal_code,
                 s.buyer_address1, s.buyer_address2, s.buyer_address3, s.tracking_no, s.shipping_site,
                 so.order_no AS shopee_order_no, so.order_status AS shopee_order_status, DATE(so.order_created_at) AS shopee_order_date,
+                CASE
+                    WHEN so.order_no IS NOT NULL
+                        AND s.order_no IS NOT NULL
+                        AND s.order_no <> ''
+                        AND so.order_no COLLATE $query_collation = s.order_no COLLATE $query_collation
+                    THEN 'order_id'
+                    WHEN so.order_no IS NOT NULL THEN 'sku'
+                    ELSE ''
+                END AS shopee_match_type,
                 so.buyer_username AS shopee_buyer_username, so.country AS shopee_country,
                 so.gross_amount AS shopee_gross_amount, so.total_amount AS shopee_total_amount,
                 so.grand_total AS shopee_grand_total, so.currency AS shopee_currency,

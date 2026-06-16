@@ -185,6 +185,7 @@ function kobutsu_ledger_format_row(array $row): array
             $row['shopee_shipping_option'] ?? '',
         ]),
         'shopee_order_status' => (string) ($row['shopee_order_status'] ?? ''),
+        'shopee_match_type' => (string) ($row['shopee_match_type'] ?? ''),
         'ledger_link_source' => $link_source,
         'status' => (string) ($row['status'] ?: 'in_stock'),
     ];

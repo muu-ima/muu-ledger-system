@@ -1023,6 +1023,12 @@ fieldset input:not([type="checkbox"]) {
   font-weight: 800;
 }
 
+.candidateCell {
+  background: #fff3d1 !important;
+  color: #725000;
+  font-weight: 800;
+}
+
 .dateCol {
   width: 112px;
 }

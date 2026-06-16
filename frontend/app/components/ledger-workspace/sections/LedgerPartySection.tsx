@@ -18,6 +18,12 @@ function linkSourceLabel(source: string) {
   return "";
 }
 
+function matchTypeLabel(matchType: string) {
+  if (matchType === "order_id") return "Order ID一致";
+  if (matchType === "sku") return "SKU候補";
+  return "";
+}
+
 export function LedgerPartySection({
   items,
 }: {
@@ -42,6 +48,7 @@ export function LedgerPartySection({
             <col className="buyerCol" />
             <col className="addressCol" />
             <col className="sourceCol" />
+            <col className="sourceCol" />
           </colgroup>
           <thead>
             <tr className="headerRow">
@@ -56,6 +63,7 @@ export function LedgerPartySection({
               <th>郵便番号</th>
               <th>送付先住所</th>
               <th>反映元</th>
+              <th>照合</th>
             </tr>
           </thead>
           <tbody>
@@ -79,6 +87,9 @@ export function LedgerPartySection({
                   <td>{sold ? buyerAddress(item) : ""}</td>
                   <td className={item.ledgerLinkSource === "shopee_orders" ? "supplementCell" : ""}>
                     {sold ? linkSourceLabel(item.ledgerLinkSource) : ""}
+                  </td>
+                  <td className={item.shopeeMatchType === "sku" ? "candidateCell" : ""}>
+                    {sold ? matchTypeLabel(item.shopeeMatchType) : ""}
                   </td>
                 </tr>
               );

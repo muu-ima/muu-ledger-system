@@ -47,6 +47,7 @@ type LedgerItemApiRow = {
   tracking_no?: ApiValue;
   shipping_site?: ApiValue;
   shopee_order_status?: ApiValue;
+  shopee_match_type?: ApiValue;
   ledger_link_source?: ApiValue;
   status?: ApiValue;
 };
@@ -88,6 +89,7 @@ const fallbackItems: LedgerItem[] = [
     trackingNo: "",
     shippingSite: "",
     shopeeOrderStatus: "",
+    shopeeMatchType: "",
     ledgerLinkSource: "",
     status: "in_stock",
   },
@@ -132,6 +134,7 @@ function normalizeItem(item: LedgerItemApiRow): LedgerItem {
     trackingNo: String(item.tracking_no ?? ""),
     shippingSite: String(item.shipping_site ?? ""),
     shopeeOrderStatus: String(item.shopee_order_status ?? ""),
+    shopeeMatchType: String(item.shopee_match_type ?? ""),
     ledgerLinkSource: String(item.ledger_link_source ?? ""),
     status: String(item.status ?? "in_stock") as LedgerItem["status"],
   };

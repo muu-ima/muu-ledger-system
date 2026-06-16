@@ -36,6 +36,7 @@ export type LedgerItem = {
   trackingNo: string;
   shippingSite: string;
   shopeeOrderStatus: string;
+  shopeeMatchType: string;
   ledgerLinkSource: string;
   status: LedgerStatus;
 };

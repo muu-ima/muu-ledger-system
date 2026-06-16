@@ -49,8 +49,18 @@ function linkSourceLabel(source: string) {
   return "";
 }
 
+function matchTypeLabel(matchType: string) {
+  if (matchType === "order_id") return "Order ID一致";
+  if (matchType === "sku") return "SKU候補";
+  return "";
+}
+
 function isShopeeSupplement(item: LedgerItem) {
   return item.ledgerLinkSource === "shopee_orders";
+}
+
+function isSkuCandidate(item: LedgerItem) {
+  return item.shopeeMatchType === "sku";
 }
 
 export function LedgerPayoutSection({
@@ -77,6 +87,7 @@ export function LedgerPayoutSection({
             <col className="sourceCol" />
             <col className="typeCol" />
             <col className="sourceCol" />
+            <col className="sourceCol" />
           </colgroup>
           <thead>
             <tr className="headerRow">
@@ -90,6 +101,7 @@ export function LedgerPayoutSection({
               <th>配送番号</th>
               <th>注文状態</th>
               <th>反映元</th>
+              <th>照合</th>
             </tr>
           </thead>
           <tbody>
@@ -120,6 +132,9 @@ export function LedgerPayoutSection({
                   <td>{item.shopeeOrderStatus}</td>
                   <td className={isShopeeSupplement(item) ? "supplementCell" : ""}>
                     {linkSourceLabel(item.ledgerLinkSource)}
+                  </td>
+                  <td className={isSkuCandidate(item) ? "candidateCell" : ""}>
+                    {matchTypeLabel(item.shopeeMatchType)}
                   </td>
                 </tr>
               );
