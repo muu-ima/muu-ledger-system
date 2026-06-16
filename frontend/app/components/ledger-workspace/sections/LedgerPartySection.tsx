@@ -6,6 +6,12 @@ function isSold(item: LedgerItem) {
   return item.status === "sold" || Boolean(item.soldAt);
 }
 
+function buyerAddress(item: LedgerItem) {
+  return [item.buyerAddress1, item.buyerAddress2, item.buyerAddress3]
+    .filter(Boolean)
+    .join(" ");
+}
+
 export function LedgerPartySection({
   items,
 }: {
@@ -22,6 +28,10 @@ export function LedgerPartySection({
           <colgroup>
             <col className="skuCol" />
             <col className="verifyCol" />
+            <col className="addressCol" />
+            <col className="buyerCol" />
+            <col className="buyerCol" />
+            <col className="buyerCol" />
             <col className="buyerCol" />
             <col className="buyerCol" />
             <col className="addressCol" />
@@ -30,8 +40,13 @@ export function LedgerPartySection({
             <tr className="headerRow">
               <th>SKU</th>
               <th>仕入れ確認</th>
+              <th>仕入れ相手方</th>
               <th>国名</th>
               <th>buyer ID</th>
+              <th>氏名</th>
+              <th>市</th>
+              <th>州</th>
+              <th>郵便番号</th>
               <th>送付先住所</th>
             </tr>
           </thead>
@@ -44,9 +59,16 @@ export function LedgerPartySection({
                     <CopyableText value={item.managementNo} />
                   </td>
                   <td>{item.sellerIdentification}</td>
-                  <td>{sold ? "アメリカ" : ""}</td>
-                  <td>{sold ? "buyer_sample" : ""}</td>
-                  <td>{sold ? "Sample address, city, country" : ""}</td>
+                  <td>{item.sellerName || item.sellerAddress}</td>
+                  <td>{sold ? item.buyerCountry : ""}</td>
+                  <td>
+                    {sold ? <CopyableText value={item.buyerId} /> : ""}
+                  </td>
+                  <td>{sold ? item.buyerName : ""}</td>
+                  <td>{sold ? item.buyerCity : ""}</td>
+                  <td>{sold ? item.buyerState : ""}</td>
+                  <td>{sold ? item.buyerPostalCode : ""}</td>
+                  <td>{sold ? buyerAddress(item) : ""}</td>
                 </tr>
               );
             })}

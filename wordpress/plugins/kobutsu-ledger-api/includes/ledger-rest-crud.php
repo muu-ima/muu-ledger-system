@@ -9,9 +9,12 @@ function kobutsu_ledger_get_items(WP_REST_Request $request): WP_REST_Response
     global $wpdb;
 
     $items = $wpdb->get_results(
-        "SELECT i.id, i.sku, i.category, i.item_name, i.accessories, i.condition_label, i.description, i.photo_url, i.status,
-            p.purchase_date, p.supplier_name_raw, p.seller_identification, p.purchase_price_jpy, p.source_order_no,
-            s.sale_date, s.marketplace, s.sale_amount, s.sale_currency, s.sale_amount_jpy
+        "SELECT i.id, i.sku, i.category, i.item_name, i.quantity, i.accessories, i.condition_label, i.description, i.photo_url, i.status,
+            p.purchase_date, p.transaction_type, p.supplier_name_raw, p.seller_identification, p.seller_address,
+            p.seller_name, p.seller_age, p.seller_occupation, p.purchase_price_jpy, p.source_order_no,
+            s.sale_date, s.marketplace, s.order_no, s.sale_type, s.sale_amount, s.sale_currency, s.sale_amount_jpy,
+            s.buyer_country, s.buyer_id, s.buyer_name, s.buyer_city, s.buyer_state, s.buyer_postal_code,
+            s.buyer_address1, s.buyer_address2, s.buyer_address3, s.tracking_no, s.shipping_site
         FROM " . kobutsu_ledger_table('items') . " i
         LEFT JOIN " . kobutsu_ledger_table('purchases') . " p ON p.item_id = i.id
         LEFT JOIN " . kobutsu_ledger_table('sales') . " s ON s.item_id = i.id
@@ -29,9 +32,12 @@ function kobutsu_ledger_get_item(WP_REST_Request $request): WP_REST_Response|WP_
 
     $row = $wpdb->get_row(
         $wpdb->prepare(
-            "SELECT i.id, i.sku, i.category, i.item_name, i.accessories, i.condition_label, i.description, i.photo_url, i.status,
-                p.purchase_date, p.supplier_name_raw, p.seller_identification, p.purchase_price_jpy, p.source_order_no,
-                s.sale_date, s.marketplace, s.sale_amount, s.sale_currency, s.sale_amount_jpy
+            "SELECT i.id, i.sku, i.category, i.item_name, i.quantity, i.accessories, i.condition_label, i.description, i.photo_url, i.status,
+                p.purchase_date, p.transaction_type, p.supplier_name_raw, p.seller_identification, p.seller_address,
+                p.seller_name, p.seller_age, p.seller_occupation, p.purchase_price_jpy, p.source_order_no,
+                s.sale_date, s.marketplace, s.order_no, s.sale_type, s.sale_amount, s.sale_currency, s.sale_amount_jpy,
+                s.buyer_country, s.buyer_id, s.buyer_name, s.buyer_city, s.buyer_state, s.buyer_postal_code,
+                s.buyer_address1, s.buyer_address2, s.buyer_address3, s.tracking_no, s.shipping_site
             FROM " . kobutsu_ledger_table('items') . " i
             LEFT JOIN " . kobutsu_ledger_table('purchases') . " p ON p.item_id = i.id
             LEFT JOIN " . kobutsu_ledger_table('sales') . " s ON s.item_id = i.id

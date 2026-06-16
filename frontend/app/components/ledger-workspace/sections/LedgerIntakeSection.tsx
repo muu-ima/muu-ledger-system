@@ -7,6 +7,12 @@ function formatYen(value: number) {
   return `¥${value.toLocaleString("ja-JP")}`;
 }
 
+function purchaseTypeLabel(type: string) {
+  if (type === "buy") return "買受";
+  if (type === "consignment") return "委託";
+  return type || "買受";
+}
+
 export function LedgerIntakeSection({
   items,
 }: {
@@ -29,6 +35,7 @@ export function LedgerIntakeSection({
             <col className="qtyCol" />
             <col className="moneyCol" />
             <col className="sourceCol" />
+            <col className="verifyCol" />
           </colgroup>
           <thead>
             <tr className="headerRow">
@@ -39,7 +46,8 @@ export function LedgerIntakeSection({
               <th>商品名</th>
               <th>数量</th>
               <th>代価</th>
-              <th>仕入れ先</th>
+              <th>区分</th>
+              <th>確認方法 取引ID</th>
             </tr>
           </thead>
           <tbody>
@@ -49,12 +57,15 @@ export function LedgerIntakeSection({
                 <td className="selectedCell">
                   <CopyableText value={item.managementNo} />
                 </td>
-                <td>買受</td>
+                <td>{purchaseTypeLabel(item.purchaseType)}</td>
                 <td>{item.category}</td>
                 <td className="nameCell">{item.itemName}</td>
-                <td className="numberCell">1</td>
+                <td className="numberCell">{item.quantity.toLocaleString("ja-JP")}</td>
                 <td className="numberCell">{formatYen(item.purchasePrice)}</td>
                 <td>{item.acquiredFrom}</td>
+                <td>
+                  <CopyableText value={item.sourceOrderNo || item.sellerIdentification} />
+                </td>
               </tr>
             ))}
           </tbody>

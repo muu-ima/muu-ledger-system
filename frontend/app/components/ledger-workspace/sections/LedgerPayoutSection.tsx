@@ -14,8 +14,27 @@ function formatYen(value: number) {
   return `¥${value.toLocaleString("ja-JP")}`;
 }
 
+function formatSaleAmount(item: LedgerItem) {
+  if (item.saleAmount) {
+    const currency = item.saleCurrency || "";
+    return `${currency} ${item.saleAmount.toLocaleString("ja-JP", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`.trim();
+  }
+
+  return formatYen(item.salePrice);
+}
+
+function saleTypeLabel(type: string) {
+  if (type === "sold") return "売却";
+  if (type === "returned") return "返品";
+  if (type === "disposed") return "処分";
+  return type || "売却";
+}
+
 function saleValue(item: LedgerItem) {
-  if (item.salePrice) return formatYen(item.salePrice);
+  if (item.saleAmount || item.salePrice) return formatSaleAmount(item);
   if (item.status === "in_stock") return "在庫";
   return "";
 }
@@ -44,6 +63,7 @@ export function LedgerPayoutSection({
             <col className="moneyCol" />
             <col className="sourceCol" />
             <col className="verifyCol" />
+            <col className="buyerCol" />
           </colgroup>
           <thead>
             <tr className="headerRow">
@@ -53,6 +73,7 @@ export function LedgerPayoutSection({
               <th>代価</th>
               <th>販売先</th>
               <th>確認方法 取引ID</th>
+              <th>国名</th>
             </tr>
           </thead>
           <tbody>
@@ -64,18 +85,19 @@ export function LedgerPayoutSection({
                     <CopyableText value={item.managementNo} />
                   </td>
                   <td>{item.soldAt}</td>
-                  <td>{sold ? "売却" : statusLabel[item.status]}</td>
+                  <td>{sold ? saleTypeLabel(item.saleType) : statusLabel[item.status]}</td>
                   <td className={sold ? "numberCell selectedCell" : "warningCell"}>
                     {saleValue(item)}
                   </td>
-                  <td>{item.soldTo || "ebay"}</td>
+                  <td>{item.soldTo}</td>
                   <td>
                     {sold ? (
-                      <CopyableText value={item.managementNo.replaceAll("_", "")} />
+                      <CopyableText value={item.saleOrderNo} />
                     ) : (
                       ""
                     )}
                   </td>
+                  <td>{item.buyerCountry}</td>
                 </tr>
               );
             })}
